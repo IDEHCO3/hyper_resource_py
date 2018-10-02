@@ -86,7 +86,7 @@ ENABLE_COMPLEX_REQUESTS = True
 if ENABLE_COMPLEX_REQUESTS:
     print ('***************************************************************************************************************************')
     print("** WARNING: Complex requests is enabled                                                                                  **")
-    print("** Certify that your API isn't using the follow caracter(s) for especific purposes:                                      **")
+    print("** Certify that your API isn't using the follow caracter(s) for specific purposes:                                       **")
     print("** '!' (exclamation point)                                                                                               **")
     print ('***************************************************************************************************************************')
 
@@ -295,12 +295,15 @@ class AbstractResource(APIView):
         context = self.get_context_by_only_attributes(request, attributes_functions_str)
         return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
 
-    def required_context_for_operation(self, request, attributes_functions_str):
-        if self.get_operation_name_from_path(attributes_functions_str) is None:
-            return RequiredObject(
-                representation_object={"This request has invalid attribute or operation: ": attributes_functions_str},
-                content_type=CONTENT_TYPE_JSON, origin_object=self, status_code=400)
+    def required_context_for_projection_operation(self, request, attributes_functions_str):
+        context = self.get_context_for_projection_operation(request, attributes_functions_str)
+        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
 
+    def required_context_for_join_operation(self, request, attributes_functions_str):
+        context = self.get_context_for_join_operation(request, attributes_functions_str)
+        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+
+    def required_context_for_operation(self, request, attributes_functions_str):
         context = self.get_context_for_operation(request, attributes_functions_str)
         return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
 
@@ -319,17 +322,25 @@ class AbstractResource(APIView):
         context['hydra:supportedOperations'] = supported_operation_dict
         return context
 
+    # WARNING: Not usefull for operations like 'projection' whose resource type depends of selected attribute
     def get_context_for_operation(self, request, attributes_functions_str):
         operation_name = self.get_operation_name_from_path(attributes_functions_str)
-        self.context_resource.set_context_to_operation(self.object_model, operation_name)
-        context = self.context_resource.get_dict_context()
-        resource_type = self.define_resource_type_by_operation(request, operation_name)
-        self.context_resource.set_context_to_resource_type(request, self.object_model, resource_type)
-        context["@type"] = self.context_resource.get_dict_context()["@type"]
-        context["@id"] = self.context_resource.get_dict_context()["@id"]
-        context['hydra:supportedOperations'] = self.context_resource.supportedOperationsFor(self.object_model, resource_type)
+        context = self.context_resource.get_context_to_operation(operation_name)
 
+        resource_type = self.define_resource_type_by_operation(request, operation_name)
+        context.update(self.context_resource.get_resource_type_identification(resource_type))
+
+        context['hydra:supportedOperations'] = self.context_resource.supportedOperationsFor(self.object_model, resource_type)
         return context
+
+    def get_context_for_projection_operation(self, request, attributes_functions_str):
+        projection_attrs = self.extract_projection_attributes(attributes_functions_str, as_string=True)
+        context = self.get_context_by_only_attributes(request, projection_attrs)
+        context['@context'].update(self.context_resource.get_context_to_operation( self.operation_controller.projection_operation_name )['@context'])
+        return context
+
+    def get_context_for_join_operation(self, request, attributes_functions_str):
+        raise NotImplementedError("'get_context_for_join_operation' must be implemented in subclasses")
 
     def required_object_for_simple_path(self, request):
         raise NotImplementedError("'required_object_for_simple_path' must be implemented in subclasses")
@@ -451,7 +462,12 @@ class AbstractResource(APIView):
         raise NotImplementedError("'define_resource_type_by_only_attributes' must be implemented in subclasses")
 
     def define_resource_type_by_operation(self, request, operation_name):
-        raise NotImplementedError("'define_resource_type_by_operation' must be implemented in subclasses")
+        return self.resource_type_or_default_resource_type(request)
+        #raise NotImplementedError("'define_resource_type_by_operation' must be implemented in subclasses")
+
+    def define_content_type_by_only_attributes(self, request, attributes_functions_str):
+        return self.content_type_or_default_content_type(request)
+        #raise NotImplementedError("'define_content_type_by_only_attributes' must be implemented in subclasses")
 
     def content_type_or_default_content_type(self, request):
         if request is None:
@@ -484,10 +500,6 @@ class AbstractResource(APIView):
             return self.default_resource_type()
 
         return self.resource_type_for_accept_header(accept)
-
-    # todo
-    def basic_response(self, request, serialized_object, status, content_type):
-        return Response(data=serialized_object, status=status, content_type=content_type)
 
     # Answer if a client's etag is equal server's etag
     def conditional_etag_match(self, request):
@@ -648,7 +660,7 @@ class AbstractResource(APIView):
 
     # Should be overridden
     def basic_get(self, request, *args, **kwargs):
-        pass
+        raise NotImplementedError("'basic_get' must be implemented in subclasses")
 
     # Could be overridden
     def get(self, request, format=None, *args, **kwargs):
@@ -707,6 +719,21 @@ class AbstractResource(APIView):
 
         return response
 
+    def basic_options(self, request, *args, **kwargs):
+        self.object_model = self.model_class()()
+        self.set_basic_context_resource(request)
+        attributes_functions_str = self.kwargs.get("attributes_functions", None)
+
+        if self.is_simple_path(attributes_functions_str):
+            return self.required_context_for_simple_path(request)
+        if self.path_has_only_attributes(attributes_functions_str):
+            return self.required_context_for_only_attributes(request, attributes_functions_str)
+
+        res = self.get_required_context_from_method_to_execute(request, attributes_functions_str)
+        if res is None:
+            return self.required_object_for_invalid_sintax(attributes_functions_str)
+        return res
+
     def operation_names_model(self):
         return self.object_model.operation_names()
 
@@ -760,6 +787,38 @@ class AbstractResource(APIView):
             return False
 
         return self.object_model.is_attribute(attrs_functs[0])
+
+    def path_has_projection(self, attributes_functions_name):
+        if attributes_functions_name == None or attributes_functions_name == '':
+            return False
+
+        attrs_funcs_arr = self.remove_last_slash(attributes_functions_name).split('/')
+        return attrs_funcs_arr[0] == 'projection'
+
+    def remove_projection_from_path(self, attributes_functions_str, remove_only_name=False):
+        attrs_functs_arr = self.remove_last_slash(attributes_functions_str).split('/')
+
+        if attrs_functs_arr[0] == 'projection':
+            attrs_functs_arr.pop(0)
+
+            if not remove_only_name:
+                attrs_functs_arr.pop(0)
+
+        return '/'.join(attrs_functs_arr)
+
+    def extract_projection_snippet(self, attributes_functions_str, as_string=False):
+        attrs_funcs_arr = self.remove_last_slash(attributes_functions_str).split('/')
+        projection_snippet = '/'.join(attrs_funcs_arr[:2])
+
+        return projection_snippet
+
+    def extract_projection_attributes(self, attributes_functions_str, as_string=False):
+        attrs_funcs_arr = self.remove_last_slash(attributes_functions_str).split('/')
+
+        if as_string:
+            return attrs_funcs_arr[1]
+
+        return sorted( attrs_funcs_arr[1].split(',') )
 
     def is_complex_request(self, request):
         absolute_uri = request.scheme + '://' + request.get_host() + request.path
@@ -843,6 +902,9 @@ class AbstractResource(APIView):
 
         return d
 
+    def get_dict_from_response(self, response):
+        return dict( json.loads(response.text) )
+
     def attributes_functions_splitted_by_url(self, attributes_functions_str_url):
         res = attributes_functions_str_url.lower().find('http:')
         if res == -1:
@@ -925,8 +987,7 @@ class AbstractResource(APIView):
                                                  array_of_attribute_or_method_name[1:])
 
     def array_of_operation_name(self):
-        collection_operations_array = list(self.operation_controller.dict_all_operation_dict().keys())
-        return collection_operations_array
+        return list(self.operation_controller.dict_all_operation_dict().keys())
 
     def get_operation_type_called(self, attributes_functions_str):
         raise NotImplementedError("'get_operation_type_called' must be implemented in subclasses")
@@ -934,9 +995,9 @@ class AbstractResource(APIView):
     def get_operation_name_from_path(self, attributes_functions_str):
         arr_att_funcs = self.remove_last_slash(attributes_functions_str).lower().split('/')
 
-        # spatialize operation has priority
-        if self.path_has_spatialize_operation(attributes_functions_str):
-            return self.operation_controller.spatialize_operation_name
+        # join operation has priority
+        if self.path_has_join_operation(attributes_functions_str):
+            return self.operation_controller.join_operation_name
         else:
             first_part_name =  arr_att_funcs[0]
 
@@ -965,7 +1026,7 @@ class AbstractResource(APIView):
     def get_context_for_resource_type(self, resource_type, attributes_functions_str):
         res_type_context = {}
         res_type_context['hydra:supportedOperations'] = self.context_resource.supportedOperationsFor(self.object_model, resource_type)
-        res_type_context.update( self.context_resource.get_resource_type_context(resource_type) )
+        res_type_context.update( self.context_resource.get_resource_type_identification(resource_type) )
         operation_name = self.get_operation_name_from_path(attributes_functions_str)
         res_type_context['@context'] = self.context_resource.get_context_to_operation(operation_name)['@context']
         return res_type_context
@@ -975,18 +1036,18 @@ class AbstractResource(APIView):
 
         return (attribute_or_method_name in dic) and len(dic[attribute_or_method_name].parameters)
 
-    def path_has_spatialize_operation(self, attributes_functions_str):
+    def path_has_join_operation(self, attributes_functions_str):
         arr_att_funcs = self.remove_last_slash(attributes_functions_str).split('/')
 
-        spatialize_counter = arr_att_funcs.count(self.operation_controller.spatialize_operation_name)
-        if spatialize_counter == 0:
+        join_counter = arr_att_funcs.count(self.operation_controller.join_operation_name)
+        if join_counter == 0:
             return False
 
         for att_func in arr_att_funcs:
-            spatialize_idx = arr_att_funcs.index(self.operation_controller.spatialize_operation_name)
-            if spatialize_idx != -1 and '&' in arr_att_funcs[spatialize_idx+1]:
+            join_idx = arr_att_funcs.index(self.operation_controller.join_operation_name)
+            if join_idx != -1 and '&' in arr_att_funcs[join_idx+1]:
                 return True
-            arr_att_funcs.pop(spatialize_idx)
+            arr_att_funcs.pop(join_idx)
         return False
 
     # method without use
@@ -1170,8 +1231,11 @@ class AbstractResource(APIView):
     def execute_complex_request(self, request):
         raise NotImplementedError("'execute_complex_request' must be implemented in subclasses")
 
-    def get_objects_by_only_attributes(self, attribute_names_str):
-        pass
+    def get_object_by_only_attributes(self, attribute_names_str):
+        raise NotImplementedError("'get_objects_by_only_attributes' must be implemented in subclasses")
+
+    def get_object_serialized_by_only_attributes(self, attributes_functions_str, object):
+        raise NotImplementedError("'get_objects_serialized_by_only_attributes' must be implemented in subclasses")
 
     def required_object_for_invalid_sintax(self, attributes_functions_str, message=None):
         representation_object = {
@@ -1190,53 +1254,56 @@ class AbstractResource(APIView):
         return RequiredObject(json.loads(response.json), self.content_type_or_default_content_type(request), self, 200)
 
     # must be overrided
-    def required_object_for_spatialize_operation(self, request, attributes_functions_str):
-        spatialized_objects_or_None = self.get_objects_from_spatialize_operation(request, attributes_functions_str)
-        if spatialized_objects_or_None:
-            return RequiredObject(spatialized_objects_or_None, self.content_type_or_default_content_type(request), self, 200)
+    def required_object_for_join_operation(self, request, attributes_functions_str):
+        join_objects_or_None = self.get_objects_from_join_operation(request, attributes_functions_str)
+        if join_objects_or_None:
+            return RequiredObject(join_objects_or_None, self.content_type_or_default_content_type(request), self, 200)
 
-        spatialize_oper_uri = self.split_spatialize_uri(request, attributes_functions_str)
-        message = spatialize_oper_uri[0] + " isn't joinable with " + spatialize_oper_uri[2]
+        join_oper_uri = self.split_join_uri(request, attributes_functions_str)
+        message = join_oper_uri[0] + " isn't joinable with " + join_oper_uri[2]
         return self.required_object_for_invalid_sintax(attributes_functions_str, message=message)
 
-    def get_objects_from_spatialize_operation(self, request, attributes_functions_str):
+    def required_object_for_projection_operation(self, request, attributes_functions_str):
+        projection_attrs_str = self.extract_projection_attributes(attributes_functions_str, as_string=True)
+        object = self.get_object_by_only_attributes(projection_attrs_str)
+        serialized_data = self.get_object_serialized_by_only_attributes(projection_attrs_str, object)
+        content_type = self.define_content_type_by_only_attributes(request, projection_attrs_str)
+        return RequiredObject(serialized_data, content_type, object, 200)
+
+    def get_objects_from_join_operation(self, request, attributes_functions_str):
         raise NotImplementedError("'get_operation_type_called' must be implemented in subclasses")
 
     #todo: need handle non 200 status code response
-    def build_spatialize_operation(self, request, attributes_functions_str):
-        uri_before_oper, join_attrs, uri_or_data_after_oper = self.split_spatialize_uri(request, attributes_functions_str)
+    def build_join_operation(self, request, attributes_functions_str):
+        uri_before_oper, join_attrs, uri_or_data_after_oper = self.split_join_uri(request, attributes_functions_str)
 
         data_before_oper = requests.get(uri_before_oper).json()
-        if uri_or_data_after_oper.startswith('http://') or\
-                uri_or_data_after_oper.startswith('https://') or\
-                uri_or_data_after_oper.startswith('www.'):
-            data_after_oper = requests.get(uri_or_data_after_oper, headers={'Accept': 'application/json'} ).json()
+        if uri_or_data_after_oper.startswith('http://') or uri_or_data_after_oper.startswith('https://') or uri_or_data_after_oper.startswith('www.'):
+            response = requests.get(uri_or_data_after_oper, headers={'Accept': 'application/json'})
+            data_after_oper = response.json()
         else:
             data_after_oper = json.loads(uri_or_data_after_oper)
 
-        return SpatializeOperation(
+        return JoinOperation(
             left_join_data=data_before_oper,
             left_join_attr=join_attrs[0],
             right_join_attr=join_attrs[1],
             right_join_data=data_after_oper
         )
 
-    def filter_spatialize_join_data(self, requests_data_dict):
-        pass
-
-    def split_spatialize_uri(self, request, attributes_functions_str):
+    def split_join_uri(self, request, attributes_functions_str):
         attrs_funcs_arr = self.remove_last_slash(attributes_functions_str).split('/')
 
 
-        spatialize_idx = attrs_funcs_arr.index(self.operation_controller.spatialize_operation_name)
+        join_idx = attrs_funcs_arr.index(self.operation_controller.join_operation_name)
 
-        spatialize_oper_snippet = attrs_funcs_arr[spatialize_idx] + '/' + attrs_funcs_arr[spatialize_idx+1]
+        join_oper_snippet = attrs_funcs_arr[join_idx] + '/' + attrs_funcs_arr[join_idx+1]
         absolute_uri = self.get_absolute_uri(request)
-        uri_before_oper = absolute_uri[:absolute_uri.find( spatialize_oper_snippet )]
+        uri_before_oper = absolute_uri[:absolute_uri.find( join_oper_snippet )]
 
-        join_attrs = attrs_funcs_arr[spatialize_idx+1].split('&')
+        join_attrs = attrs_funcs_arr[join_idx+1].split('&')
 
-        uri_after_oper = "/".join(attrs_funcs_arr[spatialize_idx+2:])
+        uri_after_oper = "/".join(attrs_funcs_arr[join_idx+2:])
 
         return (uri_before_oper, join_attrs, uri_after_oper)
 
@@ -1259,9 +1326,16 @@ class AbstractResource(APIView):
 
     # Must be overrided
     def operation_name_method_dic(self):
-        return {self.operation_controller.spatialize_operation_name: self.required_object_for_spatialize_operation}
+        d = {
+            self.operation_controller.join_operation_name: self.required_object_for_join_operation,
+            self.operation_controller.projection_operation_name: self.required_object_for_projection_operation
+        }
+        return d
 
     def operation_name_context_dic(self):
-        return {}
+        return {
+            self.operation_controller.join_operation_name: self.required_context_for_join_operation,
+            self.operation_controller.projection_operation_name: self.required_context_for_projection_operation
+        }
 
 

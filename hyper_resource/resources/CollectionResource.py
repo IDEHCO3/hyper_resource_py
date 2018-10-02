@@ -41,32 +41,28 @@ class CollectionResource(AbstractCollectionResource):
     def operations_with_parameters_type(self):
         return self.operation_controller.collection_operations_dict()
 
-    def get_objects_from_spatialize_operation(self, request, attributes_functions_str):
-        spatialize_operation = self.build_spatialize_operation(request, attributes_functions_str)
-        return self.join_dict_list_on_spatial_collection(spatialize_operation)
+    def get_objects_from_join_operation(self, request, attributes_functions_str):
+        join_operation = self.build_join_operation(request, attributes_functions_str)
+        return self.join_dict_list_on_spatial_collection(join_operation)
 
-    def join_dict_list_on_spatial_collection(self, spatialize_operation):
-        spatialized_data_list = []
-        for original_feature in spatialize_operation.right_join_data['features']:
+    def join_dict_list_on_spatial_collection(self, join_operation):
+        joined_data_list = []
+        for original_feature in join_operation.right_join_data['features']:
             updated_feature = deepcopy(original_feature)
-            for position, dict_to_spatialize in enumerate(spatialize_operation.left_join_data):
-                if updated_feature['properties'][spatialize_operation.right_join_attr] == dict_to_spatialize[spatialize_operation.left_join_attr]:
-                    updated_feature['properties']['joined__' + str(position) ] = deepcopy(dict_to_spatialize)#.pop(position)
+            for position, dict_to_join in enumerate(join_operation.left_join_data):
+                if updated_feature['properties'][join_operation.right_join_attr] == dict_to_join[join_operation.left_join_attr]:
+                    updated_feature['properties']['joined__' + str(position) ] = deepcopy(dict_to_join)#.pop(position)
 
             if sorted(list(updated_feature['properties'].keys())) != sorted(list(original_feature['properties'].keys())):
-                spatialized_data_list.append(updated_feature)
+                joined_data_list.append(updated_feature)
 
-        return {'type': 'FeatureCollection', 'features': spatialized_data_list}
+        return {'type': 'FeatureCollection', 'features': joined_data_list}
 
     def get_objects_serialized(self):
         objects = self.model_class().objects.all()
         return self.serializer_class(objects, many=True, context={'request': self.request}).data
 
-    def get_objects_by_only_attributes(self, attribute_names_str):
-        attribute_names_str_as_array = self.remove_last_slash(attribute_names_str).split(',')
-        return self.model_class().objects.values(*attribute_names_str_as_array)
-
-    def get_objects_serialized_by_only_attributes(self, attribute_names_str, query_set):
+    def get_object_serialized_by_only_attributes(self, attribute_names_str, query_set):
         arr = []
         attribute_names_str_as_array = self.remove_last_slash(attribute_names_str).split(',')
 

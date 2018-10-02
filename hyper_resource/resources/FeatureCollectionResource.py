@@ -63,10 +63,6 @@ class FeatureCollectionResource(SpatialCollectionResource):
 
         return dict
 
-    def define_resource_type_by_operation(self, request, operation_name):
-        #operation_type_called = self.operation_controller.dict_all_operation_dict()[operation_name]
-        return self.resource_type_or_default_resource_type(request)
-
     #todo: need prioritize in unity tests
     def define_resource_type_by_collect_operation(self, request, attributes_functions_str):
         collected_attrs = self.extract_collect_operation_attributes(attributes_functions_str)
@@ -97,6 +93,7 @@ class FeatureCollectionResource(SpatialCollectionResource):
 
         return res_type_by_accept
 
+    # todo: need refactoring to remove this method
     def define_resource_type(self, request, attributes_functions_str):
         operation_name = self.get_operation_name_from_path(attributes_functions_str)
         res_type_or_default = self.resource_type_or_default_resource_type(request)
@@ -165,9 +162,9 @@ class FeatureCollectionResource(SpatialCollectionResource):
     def get_operation_name_from_path(self, attributes_functions_str):
         first_part_name = super(FeatureCollectionResource, self).get_operation_name_from_path(attributes_functions_str)
 
-        # spatialize operation has priority
-        if self.path_has_spatialize_operation(attributes_functions_str):
-            return self.operation_controller.spatialize_operation_name
+        # join operation has priority
+        if self.path_has_join_operation(attributes_functions_str):
+            return self.operation_controller.join_operation_name
 
         if first_part_name not in self.array_of_operation_name():
             return None
@@ -232,17 +229,27 @@ class FeatureCollectionResource(SpatialCollectionResource):
     # Responds a path(string) normalized for spatial operation in IRI. Ex.: within/... => geom/within/...
     def inject_geometry_attribute_in_spatial_operation_for_path(self, arr_of_term):
         indexes = []
+        projection_snippet_arr = None
 
-        for idx, term in enumerate(arr_of_term):
+        if arr_of_term[0] == self.operation_controller.projection_operation_name:
+            projection_snippet_arr, arr_of_term_without_projection = arr_of_term[:2], arr_of_term[2:]
+        else:
+            arr_of_term_without_projection = arr_of_term
+
+        for idx, term in enumerate(arr_of_term_without_projection):
             array_django_name_operation = [type_called.name for type_called in self.operation_controller.feature_collection_operations_dict().values()]
             if term in array_django_name_operation:
                 indexes.append(idx)
         count = 0
         for i in indexes:
-            arr_of_term.insert(i + count, self.geometry_field_name())
+            arr_of_term_without_projection.insert(i + count, self.geometry_field_name())
             count += 1
 
-        return arr_of_term
+        if projection_snippet_arr is not None and arr_of_term_without_projection is not None:
+            projection_snippet_arr.extend(arr_of_term_without_projection)
+            return projection_snippet_arr
+
+        return arr_of_term_without_projection
 
     def path_has_geometry_attribute(self, term_of_path):
         return term_of_path.lower() == self.geometry_field_name()
@@ -339,7 +346,7 @@ class FeatureCollectionResource(SpatialCollectionResource):
              self.operation_controller.union_collection_operation_name: self.required_context_for_union_operation,
              self.operation_controller.extent_collection_operation_name: self.required_context_for_extent_operation,
              self.operation_controller.make_line_collection_operation_name: self.required_context_for_make_line_operation,
-             self.operation_controller.spatialize_operation_name: self.required_context_for_specialized_operation,
+             self.operation_controller.join_operation_name: self.required_context_for_specialized_operation,
         })
         return dicti
 
@@ -370,7 +377,7 @@ class FeatureCollectionResource(SpatialCollectionResource):
         spatial_objects = self.get_objects_from_specialized_operation(attributes_functions_str)
         if self.path_has_projection(attributes_functions_str):
             attrs_str = self.extract_projection_attributes(attributes_functions_str, as_string=True)
-            serialized_data = self.get_objects_serialized_by_only_attributes(attrs_str, spatial_objects)
+            serialized_data = self.get_object_serialized_by_only_attributes(attrs_str, spatial_objects)
             return RequiredObject(serialized_data,self.content_type_or_default_content_type(request), spatial_objects, 200)
         else:
             return self.required_object(request, spatial_objects)
@@ -425,26 +432,26 @@ class FeatureCollectionResource(SpatialCollectionResource):
         serialized_data = self.get_objects_serialized_by_collect_operation(collect_operation_snippet, business_objects)
         return RequiredObject(serialized_data, self.content_type_or_default_content_type(request), business_objects, 200)
 
-    def get_objects_from_spatialize_operation(self, request, attributes_functions_str):
-        spatialize_operatio = self.build_spatialize_operation(request, attributes_functions_str)
-        return self.join_feature_collection_on_dict_list(spatialize_operatio)
+    def get_objects_from_join_operation(self, request, attributes_functions_str):
+        join_operation = self.build_join_operation(request, attributes_functions_str)
+        return self.join_feature_collection_on_dict_list(join_operation)
 
-    def join_feature_collection_on_dict_list(self, spatialize_operation):
-        spatialized_data_list = []
-        for original_feature in spatialize_operation.left_join_data['features']:
+    def join_feature_collection_on_dict_list(self, join_operation):
+        joined_data_list = []
+        for original_feature in join_operation.left_join_data['features']:
             updated_feature = deepcopy(original_feature)
             updated_feature['properties']['__joined__'] = []
 
-            for dict_to_spatialize in spatialize_operation.right_join_data:
-                if updated_feature['properties'][spatialize_operation.left_join_attr] == dict_to_spatialize[spatialize_operation.right_join_attr]:
-                    updated_feature['properties']['__joined__'].append( deepcopy(dict_to_spatialize) )
+            for dict_to_join in join_operation.right_join_data:
+                if updated_feature['properties'][join_operation.left_join_attr] == dict_to_join[join_operation.right_join_attr]:
+                    updated_feature['properties']['__joined__'].append( deepcopy(dict_to_join) )
 
             # verify if the current feature was updated
             #if sorted(list(updated_feature['properties'].keys())) != sorted(list(original_feature['properties'].keys())):
             if len(updated_feature['properties']['__joined__']) > 0:
-                spatialized_data_list.append(updated_feature)
+                joined_data_list.append(updated_feature)
 
-        return {'type': 'FeatureCollection', 'features': spatialized_data_list}
+        return {'type': 'FeatureCollection', 'features': joined_data_list}
 
     def get_objects_from_specialized_operation(self, attributes_functions_str):
 
@@ -540,12 +547,12 @@ class FeatureCollectionResource(SpatialCollectionResource):
 
         return collected_objects_list
 
-    def get_objects_serialized_by_only_attributes(self, attribute_names_str, objects):
+    def get_object_serialized_by_only_attributes(self, attribute_names_str, object):
         arr = []
         attribute_names_str_as_array = self.remove_last_slash(attribute_names_str).split(',')
         has_geo_field = self.geometry_field_name() in attribute_names_str_as_array
 
-        for dic in objects:
+        for dic in object:
             a_dic = {}
             for att_name in attribute_names_str_as_array:
                 if has_geo_field and att_name == self.geometry_field_name():
@@ -581,14 +588,6 @@ class FeatureCollectionResource(SpatialCollectionResource):
             objects = self.get_objects_from_filter_operation(attributes_functions_str)
 
         return objects
-
-    '''
-    def get_context_for_collect_operation(self, request, attributes_functions_str):
-        resource_type = self.define_resource_type_by_collect_operation(request, attributes_functions_str)
-        context = self.get_context_for_resource_type(resource_type, attributes_functions_str)
-        context["@context"].update( self.get_context_for_attr_and_operation_in_collect(request, attributes_functions_str) )
-        return context
-    '''
 
     def get_context_for_offset_limit_operation(self, request, attributes_functions_str):
         context = {}
@@ -626,44 +625,10 @@ class FeatureCollectionResource(SpatialCollectionResource):
         context.update({'hydra:supportedOperations': supported_operations_list})
 
         self.context_resource.set_context_to_resource_type(request, self.object_model, resource_type)
-        resource_type_context = self.context_resource.get_resource_type_context(resource_type)
+        resource_type_context = self.context_resource.get_resource_type_identification(resource_type)
         context.update(resource_type_context)
 
         return context
-
-    '''
-    def get_context_for_operation_in_collect_operation(self, request, collect_operation_str):
-        context = {}
-        collect_operation_arr = collect_operation_str.split('/')
-        oper_name_in_collect_arr = collect_operation_arr[2]
-        attrs_from_collect = collect_operation_arr[1].split('&')
-        resource_type = self.define_resource_type(request, collect_operation_str)
-
-        base_oper_dict = BaseOperationController().dict_all_operation_dict()
-
-        if oper_name_in_collect_arr in base_oper_dict.keys():
-            oper_ret_type = base_oper_dict[oper_name_in_collect_arr].return_type
-
-            if issubclass(GEOSGeometry, oper_ret_type):
-                self.context_resource.set_context_to_operation(GeometryCollection(), oper_name_in_collect_arr)
-
-                if len(attrs_from_collect) == 1:
-                    # prioritizing operation return over default resource type
-                    resource_type = GeometryCollection if resource_type == self.default_resource_type() else resource_type
-
-                self.context_resource.set_context_to_resource_type(request, self.object_model, resource_type)
-                context.update(self.context_resource.dict_context)
-            else:
-                self.context_resource.set_context_to_resource_type(request, self.object_model, resource_type)
-                context.update(self.context_resource.dict_context)
-
-                supp_opers_list =  self.context_resource.supportedOperationsFor(self.object_model, resource_type)
-                self.context_resource.set_context_to_operation(resource_type, oper_name_in_collect_arr)
-                self.context_resource.dict_context['hydra:supportedOperations'] = supp_opers_list
-                context.update(self.context_resource.dict_context)
-
-        return context
-    '''
 
     def set_resource_type_context_by_operation(self, request, oper_name):
         resource_type = self.resource_type_or_default_resource_type(request)
@@ -678,7 +643,7 @@ class FeatureCollectionResource(SpatialCollectionResource):
 
         self.context_resource.set_context_to_resource_type(request, self.object_model, ret_type)
 
-        return self.context_resource.get_resource_type_context()
+        return self.context_resource.get_resource_type_identification()
 
     def get_png(self, queryset, request):
         geom_type = None
@@ -710,17 +675,6 @@ class FeatureCollectionResource(SpatialCollectionResource):
         builder_png = BuilderPNG(config)
 
         return builder_png.generate()
-
-    def basic_response(self, request, objects):
-        serialized_data =  self.serializer_class(objects, many=True, context={'request': request}).data
-        resp = Response(data= serialized_data,status=200, content_type=CONTENT_TYPE_JSON)
-        local_hash = self.hashed_value(None)
-
-        self.add_key_value_in_header(resp, ETAG, local_hash)
-        iri_with_content_type = request.build_absolute_uri() + request.META[HTTP_ACCEPT]
-        cache.set(iri_with_content_type,(local_hash, serialized_data), 3600)
-
-        return resp
 
     def get(self, request, format=None, *args, **kwargs):
         self.change_request_if_image_png_into_IRI(request)
