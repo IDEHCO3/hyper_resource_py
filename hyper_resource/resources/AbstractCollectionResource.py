@@ -799,9 +799,12 @@ class AbstractCollectionResource(AbstractResource):
 
     def options(self, request, *args, **kwargs):
         required_object = self.basic_options(request, *args, **kwargs)
-        response = Response(data=required_object.representation_object, content_type=required_object.content_type, status=required_object.status_code)
+        response = Response(data=required_object.representation_object, content_type=required_object.content_type,
+                            status=required_object.status_code)
+
         if required_object.status_code == 200:
-            self.add_base_headers(request, response)
+            self.add_options_headers(request, response)
+
         return response
 
     def head(self, request, *args, **kwargs):

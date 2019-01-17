@@ -239,6 +239,9 @@ class AbstractResource(APIView):
         response['access-control-allow-headers'] = self.access_control_allow_headers_str()
         response['access-control-expose-headers'] = self.access_control_expose_headers_str()
 
+    def add_options_headers(self, request, response):
+        self.add_cors_headers_in_header(response)
+
     def add_base_headers(self, request, response):
         iri_base = self.remove_last_slash(request.build_absolute_uri())
 
