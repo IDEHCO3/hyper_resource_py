@@ -1,7 +1,8 @@
-from hyper_resource.contexts import ContextResource, FeatureResouceContext, FeatureCollectionResourceContext
+from hyper_resource.contexts import ContextResource, FeatureResourceContext, FeatureCollectionResourceContext
 
-class UnidadeFederacaoContext(FeatureResouceContext):
+class UnidadeFederacaoListContext(FeatureCollectionResourceContext):
 
+    '''
     def attributes_contextualized_dict(self):
 
         dic_context = {            "id_objeto":  "http://schema.org/identifier",
@@ -14,8 +15,12 @@ class UnidadeFederacaoContext(FeatureResouceContext):
                        }
 
         return dic_context
+    '''
     def representation_name(self):
         return "sigla"
+
+    def get_default_resource_id_vocabulary(self):
+        return "https://schema.org/State"
 
     #def  supportedProperties(self):
     #dic = {"hydra:supportedProperties": [
@@ -25,8 +30,9 @@ class UnidadeFederacaoContext(FeatureResouceContext):
     #]}
     #return dic
 
-class UnidadeFederacaoDetailContext(FeatureResouceContext):
+class UnidadeFederacaoDetailContext(FeatureResourceContext):
 
+    '''
     def attributes_contextualized_dict(self):
 
         dic_context = {            "id_objeto":  "http://schema.org/identifier",
@@ -39,52 +45,56 @@ class UnidadeFederacaoDetailContext(FeatureResouceContext):
                        }
 
         return dic_context
+    '''
+    def get_default_resource_id_vocabulary(self):
+        return "https://schema.org/State"
 
     def representation_name(self):
         return "sigla"
 
-class TrechoDrenagemListContext(FeatureResouceContext):
-    pass
-class UnidadeFederacaoListContext(FeatureResouceContext):
-    pass
-class UnidadeFederacaoDetailContext(FeatureResouceContext):
-    pass
-class MunicipioListContext(FeatureResouceContext):
+class TrechoDrenagemListContext(FeatureResourceContext):
     pass
 
-class MunicipioDetailContext(FeatureResouceContext):
+class MunicipioListContext(FeatureResourceContext):
     pass
 
-class AldeiaIndigenaDetailContext(FeatureResouceContext):
+class MunicipioDetailContext(FeatureResourceContext):
     pass
 
-class AldeiaIndigenaListContext(FeatureResouceContext):
+class AldeiaIndigenaDetailContext(FeatureResourceContext):
     pass
 
-class OutrasUnidProtegidasContext(FeatureResouceContext):
+class AldeiaIndigenaListContext(FeatureCollectionResourceContext):
     pass
-class AglomeradoRuralDeExtensaoUrbanaContext(FeatureResouceContext):
+
+    # todo: can be defined programaticaly by checking model geometric attribute type
+    #def get_default_resource_id_vocabulary(self):
+    #    return "http://geojson.org/geojson-ld/vocab.html#Point"
+
+class OutrasUnidProtegidasContext(FeatureResourceContext):
     pass
-class AglomeradoRuralIsoladoContext(FeatureResouceContext):
+class AglomeradoRuralDeExtensaoUrbanaContext(FeatureResourceContext):
+    pass
+class AglomeradoRuralIsoladoContext(FeatureResourceContext):
     pass
 
 class TrechoFerroviarioListContext(FeatureCollectionResourceContext):
     pass
 
-class TrechoFerroviarioDetailContext(FeatureResouceContext):
+class TrechoFerroviarioDetailContext(FeatureResourceContext):
     pass
 
-class AreaDesenvolvimentoControleListContext(FeatureResouceContext):
+class AreaDesenvolvimentoControleListContext(FeatureResourceContext):
     pass
-class AreaEdificadaListContext(FeatureResouceContext):
+class AreaEdificadaListContext(FeatureResourceContext):
     pass
-class AreaEdificadaDetailContext(FeatureResouceContext):
+class AreaEdificadaDetailContext(FeatureResourceContext):
     pass
 
 class BancoAreiaListContext(FeatureCollectionResourceContext):
     pass
 
-class BancoAreiaDetailContext(FeatureResouceContext):
+class BancoAreiaDetailContext(FeatureResourceContext):
     pass
 class BarragemListContext(FeatureCollectionResourceContext):
     pass

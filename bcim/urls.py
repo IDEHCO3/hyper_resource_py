@@ -6,12 +6,14 @@ from bcim import views
 
 app_name = "bcim"
 urlpatterns = (
+    url(r'^(?P<attributes_functions>count-resource.*$|projection.*$|filter.*$|collect.*$|offset-limit.*$)/?$', views.APIRoot.as_view(), name='api_root_af'), # HARCODED
     url(r'^$', views.APIRoot.as_view(), name='api_root'),
 
     #unidades federativas
 
     url(r'^' + views.UnidadeFederacaoDetail.contextclassname + '/(?P<geocodigo>[0-9]{2})/(?P<attributes_functions>.*)/?$', views.UnidadeFederacaoDetail.as_view(), name='uf_detail_geocodigo'),
     url(r'^' + views.UnidadeFederacaoDetail.contextclassname + '/(?P<geocodigo>[0-9]{2})/?$', views.UnidadeFederacaoDetail.as_view(), name='uf_detail_geocodigo'),
+    url(r'^' + views.UnidadeFederacaoDetail.contextclassname + '/(?P<id_objeto>[0-9]+)/(?P<attributes_functions>.*)/?$', views.UnidadeFederacaoDetail.as_view(), name='uf_detail_id_objeto'),
     url(r'^' + views.UnidadeFederacaoDetail.contextclassname + '/(?P<id_objeto>[0-9]+)/?$', views.UnidadeFederacaoDetail.as_view(), name='uf_detail_id_objeto'),
     url(r'^' + views.UnidadeFederacaoDetail.contextclassname + '/(?P<sigla>[A-Za-z]{2})/?$', views.UnidadeFederacaoDetail.as_view(), name='uf_detail_sigla'),
     url(r'^' + views.UnidadeFederacaoDetail.contextclassname + '/(?P<sigla>[A-Za-z]{2})/(?P<attributes_functions>.*)/?$', views.UnidadeFederacaoDetail.as_view(), name='uf_detail_si'),

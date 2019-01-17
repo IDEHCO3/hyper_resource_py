@@ -11,12 +11,15 @@ from hyper_resource.resources.AbstractResource import AbstractResource
 class SpatialResource(AbstractResource):
     def __init__(self):
         super(SpatialResource, self).__init__()
-        self.iri_style = None
+        self.iri_style = ''
 
-    '''
     def spatial_field_name(self):
         return self.serializer_class.Meta.geo_field
-    '''
+
+    def attribute_names_to_web(self):
+        alpha_attrs_names = super(SpatialResource, self).attribute_names_to_web()
+        alpha_attrs_names.append(self.serializer_class.Meta.geo_field)
+        return alpha_attrs_names
 
     def make_geometrycollection_from_featurecollection(self, feature_collection):
         geoms = []
@@ -59,8 +62,17 @@ class SpatialResource(AbstractResource):
         return self.parametersConverted(parameters)
 
     def options(self, request, *args, **kwargs):
-        self.basic_get(request, *args, **kwargs)
-        resp = Response(data=self.context_resource.context(), content_type='application/ld+json' )
-        self.add_base_headers(request, resp)
+        required_object = self.basic_options(request, *args, **kwargs)
+        if required_object.status_code == 200:
+            response = Response(required_object.representation_object, content_type=required_object.content_type,
+                                status=200)
+            self.add_base_headers(request, response)
+        else:
+            response = Response(data={"This request is not supported": self.kwargs.get("attributes_functions", None)},
+                                status=required_object.status_code)
+        return response
 
-        return resp
+    def head(self, request, *args, **kwargs):
+        if self.is_simple_path(self.kwargs.get('attributes_functions')):
+            self.add_allowed_methods(['delete', 'put'])
+        return super(SpatialResource, self).head(request, *args, **kwargs)

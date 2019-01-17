@@ -26,37 +26,38 @@ class CollectionResource(AbstractCollectionResource):
 
         if not self.is_simple_path(attributes_functions_str): # if isn't simple path, is offset_limit operation
             offset_limit_arr = self.remove_last_slash(attributes_functions_str).split("/")
-            range_arr = offset_limit_arr[1].split("&")
+            range_arr = offset_limit_arr[1].split("&")#, offset_limit_arr[2]
             new_start_idx = str( int(range_arr[0]) + self.objs_per_page)
             new_offset_limit = offset_limit_arr[0] + "/" + new_start_idx + "&" + range_arr[1]
             pagination_link = absolute_uri[:absolute_uri.index(offset_limit_oper_name)] + new_offset_limit
         else:
-            pagination_link = absolute_uri + "/" + offset_limit_oper_name + "/" + str(self.objs_per_page +1 ) + "&" + str(self.objs_per_page)
+            pagination_link = absolute_uri + "/" + offset_limit_oper_name + "/" + str(self.objs_per_page +1 ) + "/" + str(self.objs_per_page)
 
         return pagination_link
 
-    def define_resource_type_by_collect_operation(self, request, attributes_functions_str):
-        return self.resource_type_or_default_resource_type(request)
+    def define_resource_representation_from_collect_operation(self, request, attributes_functions_str):
+        return self.resource_representation_or_default_resource_representation(request)
 
     def operations_with_parameters_type(self):
         return self.operation_controller.collection_operations_dict()
 
     def get_objects_from_join_operation(self, request, attributes_functions_str):
         join_operation = self.build_join_operation(request, attributes_functions_str)
-        return self.join_dict_list_on_spatial_collection(join_operation)
+        return self.join_collection_on_collection(join_operation)
 
-    def join_dict_list_on_spatial_collection(self, join_operation):
+    def join_collection_on_collection(self, join_operation):
         joined_data_list = []
-        for original_feature in join_operation.right_join_data['features']:
-            updated_feature = deepcopy(original_feature)
-            for position, dict_to_join in enumerate(join_operation.left_join_data):
-                if updated_feature['properties'][join_operation.right_join_attr] == dict_to_join[join_operation.left_join_attr]:
-                    updated_feature['properties']['joined__' + str(position) ] = deepcopy(dict_to_join)#.pop(position)
+        for original_element in join_operation.left_join_data:
+            updated_element = deepcopy(original_element)
+            updated_element["__joined__"] = []
+            for dict_to_join in join_operation.right_join_data:
+                if updated_element[join_operation.left_join_attr] == dict_to_join[join_operation.right_join_attr]:
+                    updated_element['__joined__'].append(deepcopy(dict_to_join))
 
-            if sorted(list(updated_feature['properties'].keys())) != sorted(list(original_feature['properties'].keys())):
-                joined_data_list.append(updated_feature)
+            if len(updated_element["__joined__"]) > 0:
+                joined_data_list.append(updated_element)
 
-        return {'type': 'FeatureCollection', 'features': joined_data_list}
+        return joined_data_list
 
     def get_objects_serialized(self):
         objects = self.model_class().objects.all()
@@ -86,10 +87,6 @@ class CollectionResource(AbstractCollectionResource):
             objects = self.get_objects_from_filter_operation(attributes_functions_str)
 
         return objects
-
-    def get_context_for_offset_limit_operation(self, request, attributes_functions_str):
-        context = {}
-        return context
 
     def get_objects_from_simple_path(self):
         if self.model_class().objects.count() > self.objs_per_page:

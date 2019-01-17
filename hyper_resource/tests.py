@@ -16,8 +16,11 @@ from hyper_resource.contexts import *
 from hyper_resource.resources.AbstractResource import AbstractResource
 from hyper_resource.resources.FeatureCollectionResource import FeatureCollectionResource
 from hyper_resource.resources.AbstractCollectionResource import AbstractCollectionResource
+from hyper_resource.resources.CollectionResource import CollectionResource
 from django.contrib.gis.geos import GEOSGeometry
 from django.test import SimpleTestCase
+from controle.views import UsuarioList, UsuarioDetail
+from controle.models import Usuario
 
 import json
 import requests
@@ -33,7 +36,7 @@ from django.test.runner import DiscoverRunner
 #python manage.py test hyper_resource.tests --testrunner=hyper_resource.tests.NoDbTestRunner
 from django.contrib.gis.db.models import Q
 
-HOST = 'LUC00557196:8000/'
+HOST = 'luc00557196:8000/'
 
 class NoDbTestRunner(DiscoverRunner):
    """ A test runner to test without database creation/deletion """
@@ -138,6 +141,7 @@ class SpatialResourceTest(SimpleTestCase):
     def test_attributeContextualized(self):
         pass
 
+'''
 class FeatureResourceTest(SimpleTestCase):
 
     def test_basic_get(self):
@@ -150,6 +154,7 @@ class FeatureResourceTest(SimpleTestCase):
         pass
     def test_options_url_with_spatia_functions(self):
         pass
+'''
 
 class FactoryComplexQueryTest(SimpleTestCase):
     def setUp(self):
@@ -188,11 +193,11 @@ class AbstractCollectionResourceTestCase(SimpleTestCase):
         self.assertEquals(self.acr.get_operation_name_from_path('filter/geom/buffer/0.2'), 'filter')
         self.assertEquals(self.acr.get_operation_name_from_path('filter/geom/containing/http://host/aldeias-indigenas/821/*collect/nome.geom/buffer/0.2'), 'filter_collect')
         self.assertEquals(self.acr.get_operation_name_from_path('collect/nome&geom/buffer/0.2/containing/http://host/aldeias-indigenas/821/*filter/nome/startswith/rio'), 'collect_filter')
-        self.assertEquals(self.acr.get_operation_name_from_path('count_resource'), 'count_resource')
-        self.assertEquals(self.acr.get_operation_name_from_path('group_by/nome'), 'group_by')
-        self.assertEquals(self.acr.get_operation_name_from_path('group_by_count/nome'), 'group_by_count')
+        self.assertEquals(self.acr.get_operation_name_from_path('count-resource'), 'count-resource')
+        self.assertEquals(self.acr.get_operation_name_from_path('group-by/nome'), 'group-by')
+        self.assertEquals(self.acr.get_operation_name_from_path('group-by-count/nome'), 'group-by-count')
         self.assertEquals(self.acr.get_operation_name_from_path('distinct'), 'distinct')
-        self.assertEquals(self.acr.get_operation_name_from_path('offset_limit/1&10'), 'offset_limit')
+        self.assertEquals(self.acr.get_operation_name_from_path('offset-limit/1&10'), 'offset-limit')
         self.assertEquals(self.acr.get_operation_name_from_path('nadahaver'), None)
     def test_attributes_functions_str_is_filter_with_spatial_operation(self):
         pass
@@ -337,32 +342,12 @@ class CollectionResourceTest(SimpleTestCase):
         self.assertEquals(res.headers['content-type'], 'application/json')
     """
 
+
 class AbstractRequestTest(SimpleTestCase):
     def setUp(self):
         self.bcim_base_uri = "http://" + HOST + "api/bcim/"
         self.controle_base_uri = "http://" + HOST + "controle-list/"
         self.raster_base_uri = "http://" + HOST + "raster/"
-        self.simple_path_options_dict_keys = ['@context', '@id', '@type', 'hydra:iriTemplate', 'hydra:representationName', 'hydra:supportedOperations', 'hydra:supportedProperties']
-        self.keys_from_attrs_context = ["@id", "@type", "hydra:supportedOperations"]
-        self.keys_from_oper_context = ["@id", "@type"]
-        self.spatial_operation_names = ['area', 'boundary', 'buffer', 'centroid', 'contains', 'convex_hull', 'coord_seq', 'coords', 'count', 'crosses',
-                                        'crs', 'difference', 'dims', 'disjoint', 'distance', 'empty', 'envelope', 'equals', 'equals_exact', 'ewkb',
-                                        'ewkt', 'extend', 'extent', 'geojson', 'geom_type', 'geom_typeid', 'get_coords', 'get_srid', 'get_x', 'get_y',
-                                        'get_z', 'has_cs', 'hasz', 'hex', 'hexewkb', 'index', 'interpolate', 'intersection', 'intersects', 'join', 'json', 'kml',
-                                        'length', 'normalize', 'num_coords', 'num_geom', 'num_points', 'ogr', 'overlaps', 'point_on_surface', 'relate',
-                                        'relate_pattern', 'ring', 'simple', 'simplify', 'srid',
-                                        'srs', 'sym_difference', 'touches', 'transform', 'union', 'valid', 'valid_reason', 'within', 'wkb', 'wkt', 'x', 'y', 'z']
-         #'set_coords', 'set_srid', 'set_x', 'set_y', 'set_z',
-        self.string_operations_names = ['capitalize', 'center', 'count', 'endswith', 'find', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isupper',
-                                        'join', 'lower', 'split', 'startswith', 'upper']
-        self.basic_operations_names = ['join']
-        self.spatial_collection_operation_names = ['bbcontains', 'bboverlaps', 'collect', 'contained', 'contains', 'contains_properly', 'count_resource',
-                                                    'covers', 'covers_by', 'crosses', 'disjoint', 'distance_gt', 'distance_gte', 'distance_lt', 'distance_lte',
-                                                    'distinct', 'dwithin', 'extent', 'filter', 'group_by', 'group_by_count', 'group_by_sum', 'intersects', 'isvalid', 'join', 'left',
-                                                    'make_line', 'offset_limit', 'overlaps', 'overlaps_above', 'overlaps_below', 'overlaps_left', 'overlaps_right', 'projection',
-                                                   'relate', 'right', 'strictly_above', 'strictly_below', 'touches', 'union', 'within']
-        self.collection_operation_names = ['collect', 'count_resource', 'distinct', 'filter', 'group_by', 'group_by_count', 'group_by_sum', 'offset_limit', 'projection']
-        self.non_simple_path_dict_keys = ["@context", '@id', '@type', 'hydra:supportedOperations']
 
     def aux_get_dict_from_response(self, response):
         return dict( json.loads(response.text) )
@@ -380,11 +365,6 @@ class AbstractRequestTest(SimpleTestCase):
         response_dict = self.aux_get_dict_from_response(response)
         context_dict = response_dict["@context"]
         return sorted( list( context_dict[attr_name].keys() ) )
-
-    def aux_get_supported_operations_names(self, response):
-        response_dict = self.aux_get_dict_from_response(response)
-        operations_names = [operation_dict['hydra:operation'] for operation_dict in response_dict['hydra:supportedOperations']]
-        return sorted(operations_names)
 
 class AbstractGetRequestTest(AbstractRequestTest):
     def setUp(self):
@@ -412,9 +392,24 @@ class AbstractGetRequestTest(AbstractRequestTest):
         first_feature = self.aux_get_first_feature(response)
         return sorted( list(first_feature['properties'].keys()) )
 
+    def aux_get_first_element_from_response_list(self, response):
+        return self.aux_get_list_from_response(response)[0]
+
     def aux_get_first_element_keys_from_response_list(self, response):
-        response_list = self.aux_get_list_from_response(response)
-        return sorted( list(response_list[0].keys()) )
+        first_element = self.aux_get_first_element_from_response_list(response)
+        return sorted( list(first_element.keys()) )
+
+    def aux_get_first_element_joined_length(self, response):
+        first_element = self.aux_get_first_element_from_response_list(response)
+        return len(first_element["__joined__"])
+
+    def aux_get_single_element_from_response(self, response):
+        response_text = json.loads(response.text)
+        return dict( response_text )
+
+    def aux_get_sigle_element_keys_from_response(self, response):
+        first_element = self.aux_get_single_element_from_response(response)
+        return sorted( list(first_element.keys()) )
 
     def aux_get_first_geometry_keys_from_response_list(self, response):
         response_dict = self.aux_get_dict_from_response(response)
@@ -425,6 +420,190 @@ class AbstractGetRequestTest(AbstractRequestTest):
         response_dict = self.aux_get_dict_from_response(response)
         return sorted( list(response_dict['properties'].keys()) )
 
+class AbstractOptionsRequestTest(AbstractRequestTest):
+    def setUp(self):
+        super(AbstractOptionsRequestTest, self).setUp()
+        self.supported_operation_key = 'hydra:supportedOperations'
+        self.supported_property_key = 'hydra:supportedProperties'
+        self.term_definition_default_keys = ['hydra', 'rdfs', 'subClassOf']
+
+        self.simple_path_options_dict_keys = ['@context', '@id', '@type', 'hydra:iriTemplate', 'hydra:representationName',
+                                              self.supported_operation_key, self.supported_property_key, 'subClassOf']
+
+        self.non_simple_path_dict_keys = ["@context", '@id', '@type', self.supported_operation_key, 'subClassOf']
+
+        self.keys_from_attrs_context = ["@id", "@type"]
+        self.keys_from_oper_context = ["@id", "@type"]
+
+        self.expected_supported_property_keys = ["@type", "hydra:property", "hydra:readable", "hydra:required",
+                                                 self.supported_operation_key, "hydra:writeable", "isExternal", "isIdentifier", "isUnique"]
+
+        self.spatial_operation_names = ['area', 'boundary', 'buffer', 'centroid', 'contains', 'convex_hull', 'coord_seq', 'coords', 'count', 'crosses',
+                                        'crs', 'difference', 'dims', 'disjoint', 'distance', 'empty', 'envelope', 'equals', 'equals_exact', 'ewkb',
+                                        'ewkt', 'extend', 'extent', 'geojson', 'geom_type', 'geom_typeid', 'get_coords', 'get_srid', 'get_x', 'get_y',
+                                        'get_z', 'has_cs', 'hasz', 'hex', 'hexewkb', 'index', 'interpolate', 'intersection', 'intersects', 'join', 'json', 'kml',
+                                        'length', 'normalize', 'num_coords', 'num_geom', 'num_points', 'ogr', 'overlaps', 'point_on_surface', 'projection',
+                                        'relate', 'relate_pattern', 'ring', 'simple', 'simplify', 'srid',
+                                        'srs', 'sym_difference', 'touches', 'transform', 'union', 'valid', 'valid_reason', 'within', 'wkb', 'wkt', 'x', 'y', 'z']
+
+        self.string_operations_names = ['capitalize', 'center', 'count', 'endswith', 'find', 'isalnum', 'isalpha', 'isdigit', 'islower', 'isupper',
+                                        'join', 'lower', 'split', 'startswith', 'upper']
+
+        self.basic_operations_names = ['join', 'projection']
+
+        self.spatial_collection_operation_names = ['bbcontains', 'bboverlaps', 'collect', 'contained', 'contains', 'contains-properly', 'count-resource',
+                                                    'covers', 'covers-by', 'crosses', 'disjoint', 'distance-gt', 'distance-gte', 'distance-lt', 'distance-lte',
+                                                    'distinct', 'dwithin', 'extent', 'filter', 'group-by-count', 'group-by-sum', 'intersects', 'isvalid', 'join', 'left',
+                                                    'make-line', 'offset-limit', 'overlaps', 'overlaps-above', 'overlaps-below', 'overlaps-left', 'overlaps-right', 'projection',
+                                                   'relate', 'right', 'strictly-above', 'strictly-below', 'touches', 'union', 'within']
+
+        self.collection_operation_names = ['collect', 'count-resource', 'distinct', 'filter', 'group-by-count', 'group-by-sum', 'offset-limit', 'projection']
+
+        self.raster_operation_names = ['bands', 'destructor', 'driver', 'extent', 'geotransform', 'height', 'info',
+                                       'metadata', 'name', 'origin', 'projection', 'ptr', 'ptr_type', 'scale', 'skew',
+                                       'srid', 'srs', 'transform', 'vsi_buffer', 'warp', 'width']
+
+        self.entrypoint_operation_names = ["collect", "count-resource", "filter", "offset-limit", "projection"]
+
+    def aux_get_context_keys_merged_with_default_keys(self, expected_context_keys):
+        expected_keys = deepcopy(expected_context_keys)
+        expected_keys.extend(self.term_definition_default_keys)
+        return sorted(expected_keys)
+
+    def aux_get_supported_property_keys(self, response):
+        response_dict = self.aux_get_dict_from_response(response)
+        supported_properties_keys = response_dict[self.supported_property_key][0].keys()
+        return sorted(supported_properties_keys)
+
+    def aux_get_supported_property_names(self, response):
+        response_dict = self.aux_get_dict_from_response(response)
+        supported_properties = response_dict[self.supported_property_key]
+        property_names = []
+        for sp in supported_properties:
+            property_names.append( sp['hydra:property'] )
+        return sorted(property_names)
+
+    def aux_get_supported_operations_names(self, response):
+        response_dict = self.aux_get_dict_from_response(response)
+        operations_names = [operation_dict['hydra:operation'] for operation_dict in response_dict[self.supported_operation_key]]
+        return sorted(operations_names)
+
+    def aux_get_supported_properties_names(self, response):
+        response_dict = self.aux_get_dict_from_response(response)
+        supp_props_names = [ supp_props["hydra:property"] for supp_props in response_dict[self.supported_property_key] ]
+        return sorted(supp_props_names)
+
+class AbstractHeadRequestTest(AbstractRequestTest):
+
+    def aux_get_headers_list_from_response(self, response):
+        return sorted( list(response.headers.keys()) )
+
+    def aux_get_allowed_methods(self, response, allow_header):
+        allowed_methods = []
+        for method in response.headers[allow_header].split(','):
+            if method != '':
+                allowed_methods.append(method.strip())
+        return sorted(allowed_methods)
+
+    def aux_get_hypermidia_control_dict_from_link_header(self, response):
+        link_header_content = response.headers['link']
+        hypermidia_control_list = [hypermidia_control.strip() for hypermidia_control in link_header_content.split(',')]
+
+        hypermidia_control_dict = {}
+        for hypermidia_control in hypermidia_control_list:
+            hypermidia_control_splited = hypermidia_control.split(";")
+            key = hypermidia_control_splited.pop(1).strip()[5:-1] # removing rel=""
+            val = ";".join(hypermidia_control_splited)
+            hypermidia_control_dict[key] = val
+        return hypermidia_control_dict
+
+    def aux_get_hypermidia_control_from_link_header(self, response, hypermidia_control_rel):
+        return self.aux_get_hypermidia_control_dict_from_link_header(response)[hypermidia_control_rel]
+
+
+#                               OPERATIONS SINTAX TEST
+#python manage.py test hyper_resource.tests.GenericOperationsSintaxTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class GenericOperationsSintaxTest(SimpleTestCase):
+    def setUp(self):
+        self.generic_object = UsuarioDetail()
+        self.generic_object.object_model = Usuario()
+
+    def test_projection_operation_sintax(self):
+        self.assertTrue( self.generic_object.projection_operation_sintax_is_ok("projection/nome,email") )
+        self.assertTrue( self.generic_object.projection_operation_sintax_is_ok("projection/nome") )
+        self.assertFalse( self.generic_object.projection_operation_sintax_is_ok("projection/this_attribute_doesnt_exists") )
+        self.assertFalse( self.generic_object.projection_operation_sintax_is_ok("projection/") )
+        self.assertFalse( self.generic_object.projection_operation_sintax_is_ok("projection/this_operation_doesnt_exists") )
+
+#python manage.py test hyper_resource.tests.CollectionOperationsSintaxTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class CollectionOperationsSintaxTest(SimpleTestCase):
+    def setUp(self):
+        self.collection_object = UsuarioList()
+        self.collection_object.object_model = Usuario()
+        """gastos (referencia),        id,        nome,        nome_usuario,        data_nascimento,        email,        senha"""
+
+    def test_filter_operation_sintax(self):
+        # testing arr[0]
+        self.assertFalse(self.collection_object.filter_operation_sintax_is_ok("filtering/nome/isnull")) # wrong name
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/isnull")) # right version
+        # testing arr[1]
+        self.assertFalse(self.collection_object.filter_operation_sintax_is_ok("filter/abc/isnull")) # inexistent attribute
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/isnull")) # right version
+        # testing arr[2]
+        self.assertFalse(self.collection_object.filter_operation_sintax_is_ok("filter/nome/xyz")) # not an boolean operator
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/isnull")) # right version
+        # testing arr[3]
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/isnull"))  # arr[3] can be empty
+        self.assertFalse(self.collection_object.filter_operation_sintax_is_ok("filter/nome/eq/"))  # 'eq' needs an value
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/eq/rio"))  # right version (literal value)
+        #self.assertFalse(self.collection_object.filter_operation_sintax_is_ok("filter/geom/within/http://gabriel:8001/api/bcim/unidades-federativas/FF"))  # reference to nowhere
+        #self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/geom/within/http://gabriel:8001/api/bcim/unidades-federativas/ES")))
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/eq/" + HOST + "/controle-list/usuario-list/1/abc")) # reference to nowhere
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/eq/" + HOST + "/controle-list/usuario-list/1/nome"))  # right version (external value)
+        # testing arr[4]
+        self.assertFalse(self.collection_object.filter_operation_sintax_is_ok("filter/nome/eq/rio/xyz/email/isnotnull")) # if arr[2] is an expression operator that expects a value, arr[4] must be AND or OR
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/eq/rio/and/email/isnotnull")) # right version
+        self.assertFalse(self.collection_object.filter_operation_sintax_is_ok("filter/data_nascimento/between/2000-01-01/or/2010-01-01/")) # if arr[2] is 'between', arr[4] must be AND
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/data_nascimento/between/2000-01-01/and/2010-01-01/")) # right version
+        # testing arr[-1] (without boolean operators AND or OR)
+        self.assertFalse(self.collection_object.filter_operation_sintax_is_ok("filter/data_nascimento/eq/not_an_operation")) # final index is not an operation nor a value that can be converted to Date type
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/data_nascimento/eq/2000-01-01")) # final index can be converted to Date type
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/isnull/count-resource")) # right version (has operation in the ending)
+
+        # another tests
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/isnull"))
+        self.assertFalse(self.collection_object.filter_operation_sintax_is_ok("filter/nome/isnull/and"))
+        self.assertFalse(self.collection_object.filter_operation_sintax_is_ok("filter/nome")) # inssuficient arguments (at least 3)
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/data_nascimento/between/2000-01-01/and/2010-01-01/and/nome/isnotnull"))
+
+        '''
+        # 1ยบ step test - testing array[:3]
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/data_nascimento/isnull")) # filter/local_attribute/boolean_operator
+        # 2ยบ step test - testing array[3]
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/eq/Rio")) # filter/local_attribute/boolean_operator/literal_value
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/eq/http://172.30.10.86/api/bcim/unidades-federativas/ES/nome")) # filter/local_attribute/boolean_operator/external_value
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/data_nascimento/isnull/and/nome/eq/r")) # filter/local_attribute/boolean_operator/literal_value/logical_operator
+        # 3ยบ step test - testing array[4]
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/eq/r/and/data_nascimento/isnull")) # filter/local_attribute/boolean_operator/literal_value/logical_operator/...
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/data_nascimento/isnull/and/nome/eq/r")) # filter/local_attribute/boolean_operator/logical_operator/local_attribute/...
+        # 4ยบ step test - testing array[5]
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/nome/eq/Rio/or/data_nascimento/isnull")) # filter/local_attribute/boolean_operator/literal_value/logical_operator/local_attribute...
+        self.assertTrue(self.collection_object.filter_operation_sintax_is_ok("filter/data_nascimento/isnull/or/nome/eq/Rio")) # filter/local_attribute/boolean_operator/logical_operator/local_attribute/boolean_operator...
+
+        self.assertFalse(self.collection_object.filter_operation_sintax_is_ok("filter/nome")) # less than 3 indexes
+        '''
+
+    def test_offset_limit_operation_sintax(self):
+        self.assertTrue( self.collection_object.offset_limit_operation_sintax_is_ok("offset-limit/0&2") )
+        self.assertFalse( self.collection_object.offset_limit_operation_sintax_is_ok("offset-limit/0&-2") )
+        self.assertFalse( self.collection_object.offset_limit_operation_sintax_is_ok("offset-limit/-1&5") )
+        self.assertFalse( self.collection_object.offset_limit_operation_sintax_is_ok("offset-limit/0&2/nome") )
+        self.assertFalse( self.collection_object.offset_limit_operation_sintax_is_ok("offset-limit/0&2/nome,email") )
+        self.assertTrue( self.collection_object.offset_limit_operation_sintax_is_ok("offset-limit/0&2/collect") )
+        self.assertFalse( self.collection_object.offset_limit_operation_sintax_is_ok("offset-limit/0") )
+
+
+#                               SPECIFIC OPERATIONS TEST
 #python manage.py test hyper_resource.tests.CollectOperationTest --testrunner=hyper_resource.tests.NoDbTestRunner
 class CollectOperationTest(AbstractGetRequestTest):
 
@@ -597,7 +776,7 @@ class CollectOperationTest(AbstractGetRequestTest):
         self.assertEquals(response.headers['content-type'], 'application/json')
 
 #python manage.py test hyper_resource.tests.OptionsForCollectOperationTest --testrunner=hyper_resource.tests.NoDbTestRunner
-class OptionsForCollectOperationTest(AbstractRequestTest):
+class OptionsForCollectOperationTest(AbstractOptionsRequestTest):
     # --------------- TESTS FOR FEATURE COLLECTION ---------------------------------
     # FeatureCollection return
     def test_options_collect_operation_for_feature_collection_buffer_operation(self):
@@ -608,14 +787,12 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ["buffer", "collect", "geom", "sigla"])
+        self.assertEquals(acontext_keys, ["hydra", "rdfs", "sigla", "subClassOf"])
 
-        geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
-        buffer_context_keys = self.aux_get_keys_from_acontext_attrs(response, "buffer")
-        self.assertEquals(buffer_context_keys, self.keys_from_oper_context)
+        #geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_oper_context)
         sigla_context_keys = self.aux_get_keys_from_acontext_attrs(response, "sigla")
         self.assertEquals(sigla_context_keys, self.keys_from_attrs_context)
 
@@ -623,7 +800,9 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(operations_names, self.spatial_collection_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], "FeatureCollection")
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
 
     def test_options_collect_operation_for_feature_collection_buffer_operation_accept_octet_stream(self):
         response = requests.options(self.bcim_base_uri + "unidades-federativas/collect/sigla&geom/buffer/0.2",
@@ -634,14 +813,12 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ["buffer", "collect", "geom", "sigla"])
+        self.assertEquals(acontext_keys, ["hydra", "rdfs", "sigla", "subClassOf"])
 
-        geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
-        buffer_context_keys = self.aux_get_keys_from_acontext_attrs(response, "buffer")
-        self.assertEquals(buffer_context_keys, self.keys_from_oper_context)
+        #geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_oper_context)
         sigla_context_keys = self.aux_get_keys_from_acontext_attrs(response, "sigla")
         self.assertEquals(sigla_context_keys, self.keys_from_attrs_context)
 
@@ -649,7 +826,9 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(operations_names, self.spatial_collection_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], "GeobufCollection")
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
 
     def test_options_collect_operation_for_feature_collection_lower_operation(self):
         response = requests.options(self.bcim_base_uri + "unidades-federativas/collect/geom&sigla/lower/")
@@ -659,22 +838,22 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ["collect", "geom", "lower", "sigla"])
+        self.assertEquals(acontext_keys, ["hydra", "lower", "rdfs", "subClassOf"])
 
-        geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
+        #geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_oper_context)
         lower_context_keys = self.aux_get_keys_from_acontext_attrs(response, "lower")
-        self.assertEquals(lower_context_keys, self.keys_from_oper_context)
-        sigla_context_keys = self.aux_get_keys_from_acontext_attrs(response, "sigla")
-        self.assertEquals(sigla_context_keys, self.keys_from_attrs_context)
+        self.assertEquals(lower_context_keys, self.keys_from_attrs_context)
 
         operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(operations_names, self.spatial_collection_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], "FeatureCollection")
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
 
     def test_options_collect_operation_for_feature_collection_lower_operation_accept_octet_stream(self):
         response = requests.options(self.bcim_base_uri + "unidades-federativas/collect/geom&sigla/lower",
@@ -685,22 +864,22 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ["collect", "geom", "lower", "sigla"])
+        self.assertEquals(acontext_keys, ["hydra", "lower", "rdfs", "subClassOf"])
 
-        geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
+        #geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
         lower_context_keys = self.aux_get_keys_from_acontext_attrs(response, "lower")
-        self.assertEquals(lower_context_keys, self.keys_from_oper_context)
-        sigla_context_keys = self.aux_get_keys_from_acontext_attrs(response, "sigla")
-        self.assertEquals(sigla_context_keys, self.keys_from_attrs_context)
+        self.assertEquals(lower_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(operations_names, self.spatial_collection_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], "GeobufCollection")
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], 'http://geojson.org/geojson-ld/vocab.html#FeatureCollection')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Collection')
 
     # GeometryCollection return
     def test_options_collect_operation_for_feature_collection_only_geometry_attribute_and_buffer_operation(self):
@@ -711,20 +890,20 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ["buffer", "collect", "geom"])
+        self.assertEquals(acontext_keys, ["hydra", "rdfs", "subClassOf"])
 
-        geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
-        buffer_context_keys = self.aux_get_keys_from_acontext_attrs(response, "buffer")
-        self.assertEquals(buffer_context_keys, self.keys_from_oper_context)
+        #geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_oper_context)
 
         operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(operations_names, self.spatial_collection_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], "GeometryCollection")
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#geometry")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#GeometryCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
 
     def test_options_collect_operation_for_feature_collection_only_geometry_attribute_and_buffer_operation_accept_octet_stream(self):
         response = requests.options(self.bcim_base_uri + "unidades-federativas/collect/geom/buffer/0.2",
@@ -735,20 +914,20 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ["buffer", "collect", "geom"])
+        self.assertEquals(acontext_keys, ["hydra", "rdfs", "subClassOf"])
 
-        geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
-        buffer_context_keys = self.aux_get_keys_from_acontext_attrs(response, "buffer")
-        self.assertEquals(buffer_context_keys, self.keys_from_oper_context)
+        #geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(operations_names, self.spatial_collection_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], "GeobufCollection")
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#geometry")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#GeometryCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
 
     # Collection return
     def test_options_collect_operation_for_feature_collection_area_operation(self):
@@ -759,20 +938,20 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ["area", "collect", "geom"])
+        self.assertEquals(acontext_keys, ["area", "hydra", "rdfs", "subClassOf"])
 
-        geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
-        area_context_keys = self.aux_get_keys_from_acontext_attrs(response, "area")
-        self.assertEquals(area_context_keys, self.keys_from_oper_context)
+        area_context_keys = self.aux_get_keys_from_acontext_attrs(response, "area")  # context for the float value, not the operation
+        self.assertEquals(area_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")  # context for the float value, not the operation
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(operations_names, self.collection_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], "Collection")
+        self.assertEquals(response_dict["@id"], "https://schema.org/Float")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
     def test_options_collect_operation_for_feature_collection_area_operation_accept_octet_stream(self):
         response = requests.options(self.bcim_base_uri + "unidades-federativas/collect/geom/area",
@@ -783,20 +962,20 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ["area", "collect", "geom"])
+        self.assertEquals(acontext_keys, ["area", "hydra", "rdfs", "subClassOf"])
 
-        geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
-        area_context_keys = self.aux_get_keys_from_acontext_attrs(response, "area")
-        self.assertEquals(area_context_keys, self.keys_from_oper_context)
+        area_context_keys = self.aux_get_keys_from_acontext_attrs(response, "area") # context for the float value, not the operation
+        self.assertEquals(area_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf") # context for the float value, not the operation
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(operations_names, [])
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], "bytes")
+        self.assertEquals(response_dict["@id"], "https://schema.org/Float")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
     def test_options_collect_operation_for_feature_collection_only_alphanumeric_attribute_and_lower_operation(self):
         response = requests.options(self.bcim_base_uri + "unidades-federativas/collect/sigla/lower")
@@ -806,20 +985,20 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ["collect", "lower", "sigla"])
+        self.assertEquals(acontext_keys, ["hydra", "lower", "rdfs", "subClassOf"])
 
         lower_context_keys = self.aux_get_keys_from_acontext_attrs(response, "lower")
-        self.assertEquals(lower_context_keys, self.keys_from_oper_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
-        sigla_context_keys = self.aux_get_keys_from_acontext_attrs(response, "sigla")
-        self.assertEquals(sigla_context_keys, self.keys_from_attrs_context)
+        self.assertEquals(lower_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(operations_names, self.collection_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], "Collection")
+        self.assertEquals(response_dict['@id'], "https://schema.org/Text")
+        self.assertEquals(response_dict['@type'], "hydra:Collection")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
 
     def test_options_collect_operation_for_feature_collection_only_alphanumeric_attribute_and_lower_operation_accept_octet_stream(self):
         response = requests.options(self.bcim_base_uri + "unidades-federativas/collect/sigla/lower",
@@ -830,20 +1009,20 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ["collect", "lower", "sigla"])
+        self.assertEquals(acontext_keys, ["hydra", "lower", "rdfs", "subClassOf"])
 
-        sigla_context_keys = self.aux_get_keys_from_acontext_attrs(response, "sigla")
-        self.assertEquals(sigla_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
         lower_context_keys = self.aux_get_keys_from_acontext_attrs(response, "lower")
-        self.assertEquals(lower_context_keys, self.keys_from_oper_context)
+        self.assertEquals(lower_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(operations_names, [])
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], "bytes")
+        self.assertEquals(response_dict['@id'], "https://schema.org/Text")
+        self.assertEquals(response_dict['@type'], "hydra:Collection")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
 
     # with projection
     def test_options_collect_operation_for_feature_collection_with_projection(self):
@@ -854,22 +1033,22 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ["buffer", "collect", "geom", "sigla"])
+        self.assertEquals(acontext_keys, ["hydra", 'rdfs', "sigla", 'subClassOf'])
 
-        geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
-        buffer_context_keys = self.aux_get_keys_from_acontext_attrs(response, "buffer")
-        self.assertEquals(buffer_context_keys, self.keys_from_oper_context)
+        #geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
         sigla_context_keys = self.aux_get_keys_from_acontext_attrs(response, "sigla")
         self.assertEquals(sigla_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(operations_names, self.spatial_collection_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], "FeatureCollection")
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
 
     def test_options_collect_operation_for_feature_collection_with_projection_accept_octet_stream(self):
         response = requests.options(self.bcim_base_uri + "unidades-federativas/projection/sigla,geom/collect/sigla&geom/buffer/0.2",
@@ -880,22 +1059,22 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ["buffer", "collect", "geom", "sigla"])
+        self.assertEquals(acontext_keys, ["hydra", 'rdfs', "sigla", 'subClassOf'])
 
-        geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
-        buffer_context_keys = self.aux_get_keys_from_acontext_attrs(response, "buffer")
-        self.assertEquals(buffer_context_keys, self.keys_from_oper_context)
+        #geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
         sigla_context_keys = self.aux_get_keys_from_acontext_attrs(response, "sigla")
         self.assertEquals(sigla_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(operations_names, self.spatial_collection_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], "GeobufCollection")
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
 
     def test_options_collect_operation_for_feature_collection_with_projection_attributes_different_from_collect_attributes(self):
         response = requests.options(self.bcim_base_uri + "unidades-federativas/projection/geom/collect/sigla&geom/buffer/0.2")
@@ -912,20 +1091,20 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_dict_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['collect', 'nome', 'upper'])
+        self.assertEquals(acontext_keys, ['hydra', 'rdfs', 'subClassOf', 'upper'])
 
-        nome_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
-        self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
         upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
-        self.assertEquals(upper_context_keys, self.keys_from_oper_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'collect')
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
+        self.assertEquals(upper_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(supported_operations_names, self.collection_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "Collection")
+        self.assertEquals(response_dict['@id'], "https://schema.org/Text")
+        self.assertEquals(response_dict['@type'], "hydra:Collection")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
 
     def test_options_collect_for_collection_with_lower_operation_accept_octet_stream(self):
         response = requests.options(self.controle_base_uri + 'usuario-list/collect/nome/upper',
@@ -936,20 +1115,20 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_dict_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['collect', 'nome', 'upper'])
+        self.assertEquals(acontext_keys, ['hydra', 'rdfs', 'subClassOf', 'upper'])
 
-        nome_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
-        self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
         upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
-        self.assertEquals(upper_context_keys, self.keys_from_oper_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'collect')
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
+        self.assertEquals(upper_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(supported_operations_names, [])
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "bytes")
+        self.assertEquals(response_dict['@id'], "https://schema.org/Text")
+        self.assertEquals(response_dict['@type'], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
     def test_options_collect_for_collection_with_lower_operation_two_attributes(self):
         response = requests.options(self.controle_base_uri + 'usuario-list/collect/nome&email/upper')
@@ -959,22 +1138,22 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_dict_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['collect', 'email', 'nome', 'upper'])
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf', 'upper'])
 
-        nome_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
-        self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
-        email_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
-        self.assertEquals(email_context_keys, self.keys_from_attrs_context)
         upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
-        self.assertEquals(upper_context_keys, self.keys_from_oper_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'collect')
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
+        self.assertEquals(upper_context_keys, self.keys_from_attrs_context)
+        nome_upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_upper_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(supported_operations_names, self.collection_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "Collection")
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@type'], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
     def test_options_collect_for_collection_with_lower_operation_two_attributes_accept_octet_stream(self):
         response = requests.options(self.controle_base_uri + 'usuario-list/collect/nome&email/upper',
@@ -985,22 +1164,22 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_dict_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['collect', 'email', 'nome', 'upper'])
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf', 'upper'])
 
-        nome_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
-        self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
-        email_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
-        self.assertEquals(email_context_keys, self.keys_from_attrs_context)
         upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
-        self.assertEquals(upper_context_keys, self.keys_from_oper_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'collect')
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
+        self.assertEquals(upper_context_keys, self.keys_from_attrs_context)
+        nome_upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_upper_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(supported_operations_names, [])
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "bytes")
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@type'], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
     # with projection
     def test_options_collect_for_collection_with_lower_operation_two_attributes_and_projection(self):
@@ -1011,22 +1190,22 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_dict_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['collect', 'email', 'nome', 'upper'])
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf', 'upper'])
 
-        email_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
-        self.assertEquals(email_context_keys, self.keys_from_attrs_context)
+        upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
+        self.assertEquals(upper_context_keys, self.keys_from_attrs_context)
         nome_upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
         self.assertEquals(nome_upper_context_keys, self.keys_from_attrs_context)
-        upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
-        self.assertEquals(upper_context_keys, self.keys_from_oper_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'collect')
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(supported_operations_names, self.collection_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "Collection")
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@type'], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
     def test_options_collect_for_collection_with_lower_operation_two_attributes_and_projection_accept_octet_stream(self):
         response = requests.options(self.controle_base_uri + 'usuario-list/projection/nome,email/collect/nome&email/upper',
@@ -1037,22 +1216,22 @@ class OptionsForCollectOperationTest(AbstractRequestTest):
         self.assertEquals(response_dict_keys, self.non_simple_path_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['collect', 'email', 'nome', 'upper'])
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf', 'upper'])
 
-        email_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
-        self.assertEquals(email_context_keys, self.keys_from_attrs_context)
+        upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
+        self.assertEquals(upper_context_keys, self.keys_from_attrs_context)
         nome_upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
         self.assertEquals(nome_upper_context_keys, self.keys_from_attrs_context)
-        upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
-        self.assertEquals(upper_context_keys, self.keys_from_oper_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'collect')
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(supported_operations_names, [])
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "bytes")
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@type'], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
     def test_options_collect_for_collection_with_projection_diferent_from_collect_attrs(self):
         response = requests.get(self.controle_base_uri + "usuario-list/projection/email/collect/email&nome/upper/")
@@ -1064,7 +1243,7 @@ class GroupBySumOperationTest(AbstractRequestTest):
         super(GroupBySumOperationTest, self).setUp()
 
     def test_group_by_sum_operation(self):
-        response = requests.get(self.controle_base_uri + "gasto-list/group_by_sum/data/valor")
+        response = requests.get(self.controle_base_uri + "gasto-list/group-by-sum/data&valor")
         self.assertEquals(response.status_code, 200)
         self.assertEquals(response.headers['content-type'], 'application/json')
 
@@ -1096,6 +1275,56 @@ class ProjectionOperationTest(AbstractGetRequestTest):
         self.assertEquals(explicit_projection_resp.status_code, 200)
         self.assertEquals(explicit_projection_resp.headers['content-type'], 'application/octet-stream')
 
+    # --------------- TESTS FOR TIFF RESOURCE ---------------------------------
+    def test_projection_for_tiff_resource_all_attributes(self):
+        implicit_projection_resp = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rid,rast')
+        self.assertEquals(implicit_projection_resp.status_code, 200)
+        self.assertEquals(implicit_projection_resp.headers["content-type"], 'image/tiff')
+
+        explicit_projection_resp = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/projection/rid,rast')
+        self.assertEquals(explicit_projection_resp.status_code, 200)
+        self.assertEquals(explicit_projection_resp.headers["content-type"], 'image/tiff')
+
+    def test_projection_for_tiff_resource_without_raster_attribute(self):
+        implicit_projection_resp = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rid')
+        self.assertEquals(implicit_projection_resp.status_code, 200)
+        self.assertEquals(implicit_projection_resp.headers["content-type"], 'application/json')
+
+        f_response_keys = self.aux_get_keys_from_response(implicit_projection_resp)
+        self.assertEquals(f_response_keys, ["rid"])
+
+        explicit_projection_resp = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/projection/rid')
+        self.assertEquals(explicit_projection_resp.status_code, 200)
+        self.assertEquals(explicit_projection_resp.headers["content-type"], 'application/json')
+
+        s_response_keys = self.aux_get_keys_from_response(explicit_projection_resp)
+        self.assertEquals(s_response_keys, ["rid"])
+
+    def test_projection_for_tiff_resource_only_raster_attribute(self):
+        implicit_projection_resp = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rast')
+        self.assertEquals(implicit_projection_resp.status_code, 200)
+        self.assertEquals(implicit_projection_resp.headers["content-type"], 'image/tiff')
+
+        explicit_projection_resp = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/projection/rast')
+        self.assertEquals(explicit_projection_resp.status_code, 200)
+        self.assertEquals(explicit_projection_resp.headers["content-type"], 'image/tiff')
+
+    def test_projection_for_tiff_resource_all_attributes_accept_octet_stream(self):
+        pass
+
+    def test_projection_for_tiff_resource_without_raster_attribute_accept_octet_stream(self):
+        implicit_projection_resp = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rid',
+                                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(implicit_projection_resp.status_code, 200)
+        self.assertEquals(implicit_projection_resp.headers["content-type"], 'application/octet-stream')
+
+        explicit_projection_resp = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/projection/rid',
+                                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(explicit_projection_resp.status_code, 200)
+        self.assertEquals(explicit_projection_resp.headers["content-type"], 'application/octet-stream')
+
+    def test_projection_for_tiff_resource_only_raster_attribute_accept_octet_stream(self):
+        pass
 
     # --------------- TESTS FOR FEATURE RESOURCE ---------------------------------
     def test_projection_for_feature_resource(self):
@@ -1325,7 +1554,7 @@ class ProjectionOperationTest(AbstractGetRequestTest):
         self.assertEquals(response.headers['content-type'], 'application/octet-stream')
 
 #python manage.py test hyper_resource.tests.OptionsForProjectionOperation --testrunner=hyper_resource.tests.NoDbTestRunner
-class OptionsForProjectionOperation(AbstractRequestTest):
+class OptionsForProjectionOperation(AbstractOptionsRequestTest):
 
     # --------------- TESTS FOR NONSPATIAL RESOURCE ---------------------------------
     def test_options_for_non_spatial_resource_projection_operation(self):
@@ -1340,15 +1569,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(f_supported_operations_names, self.basic_operations_names)
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
-        self.assertEquals(f_acontext_keys, ['email', 'nome'])
+        self.assertEquals(f_acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
 
         f_email_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'email')
         self.assertEquals(f_email_context_keys, self.keys_from_attrs_context)
         f_nome_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'nome')
         self.assertEquals(f_nome_context_keys, self.keys_from_attrs_context)
+        f_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'subClassOf')
+        self.assertEquals(f_subClassOf_context_keys, self.keys_from_attrs_context)
 
         f_resp_dict = self.aux_get_dict_from_response(implicit_projection_resp)
-        self.assertEqual(f_resp_dict['@type'], 'Thing')
+        self.assertEquals(f_resp_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(f_resp_dict['@type'], "https://schema.org/Thing")
+        self.assertEquals(f_resp_dict['subClassOf'], "hydra:Resource")
 
         # explicit projection
         explicit_projection_resp = requests.options(self.controle_base_uri + "usuario-list/1/projection/nome,email")
@@ -1361,17 +1594,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(s_supported_operations_names, self.basic_operations_names)
 
         s_acontext_keys = self.aux_get_keys_from_response_context(explicit_projection_resp)
-        self.assertEquals(s_acontext_keys, ['email', 'nome', 'projection'])
+        self.assertEquals(s_acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
 
         s_email_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'email')
         self.assertEquals(s_email_context_keys, self.keys_from_attrs_context)
         s_nome_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'nome')
         self.assertEquals(s_nome_context_keys, self.keys_from_attrs_context)
-        s_projection_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'projection')
-        self.assertEquals(s_projection_context_keys, self.keys_from_oper_context)
+        s_subClassOd_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'subClassOf')
+        self.assertEquals(s_subClassOd_context_keys, self.keys_from_oper_context)
 
         s_resp_dict = self.aux_get_dict_from_response(explicit_projection_resp)
-        self.assertEqual(s_resp_dict['@type'], 'Thing')
+        self.assertEquals(s_resp_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(s_resp_dict['@type'], "https://schema.org/Thing")
+        self.assertEquals(s_resp_dict['subClassOf'], "hydra:Resource")
 
     def test_options_for_non_spatial_resource_projection_operation_accept_octet_stream(self):
         # implicit projection
@@ -1386,15 +1621,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(f_supported_operations_names, [])
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
-        self.assertEquals(f_acontext_keys, ['email', 'nome'])
+        self.assertEquals(f_acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
 
         f_email_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'email')
         self.assertEquals(f_email_context_keys, self.keys_from_attrs_context)
         f_nome_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'nome')
         self.assertEquals(f_nome_context_keys, self.keys_from_attrs_context)
+        f_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'subClassOf')
+        self.assertEquals(f_subClassOf_context_keys, self.keys_from_attrs_context)
 
         f_resp_dict = self.aux_get_dict_from_response(implicit_projection_resp)
-        self.assertEqual(f_resp_dict['@type'], 'bytes')
+        self.assertEqual(f_resp_dict['@id'], 'https://schema.org/Thing')
+        self.assertEqual(f_resp_dict['@type'], 'https://schema.org/Thing')
+        self.assertEqual(f_resp_dict['subClassOf'], 'hydra:Resource')
 
         # explicit projection
         explicit_projection_resp = requests.options(self.controle_base_uri + "usuario-list/1/projection/nome,email",
@@ -1408,17 +1647,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(s_supported_operations_names, [])
 
         s_acontext_keys = self.aux_get_keys_from_response_context(explicit_projection_resp)
-        self.assertEquals(s_acontext_keys, ['email', 'nome', 'projection'])
+        self.assertEquals(s_acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
 
         s_email_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'email')
         self.assertEquals(s_email_context_keys, self.keys_from_attrs_context)
         s_nome_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'nome')
         self.assertEquals(s_nome_context_keys, self.keys_from_attrs_context)
-        s_projection_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'projection')
-        self.assertEquals(s_projection_context_keys, self.keys_from_oper_context)
+        s_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'subClassOf')
+        self.assertEquals(s_subClassOf_context_keys, self.keys_from_attrs_context)
 
         s_resp_dict = self.aux_get_dict_from_response(explicit_projection_resp)
-        self.assertEqual(s_resp_dict['@type'], 'bytes')
+        self.assertEqual(s_resp_dict['@id'], 'https://schema.org/Thing')
+        self.assertEqual(s_resp_dict['@type'], 'https://schema.org/Thing')
+        self.assertEqual(s_resp_dict['subClassOf'], 'hydra:Resource')
 
     # --------------- TESTS FOR FEATURE RESOURCE ---------------------------------
     def test_options_for_feature_resource_projection_operation(self):
@@ -1433,15 +1674,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(f_supported_operations_names, self.spatial_operation_names)
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
-        self.assertEquals(f_acontext_keys, ['geom', 'nome'])
+        self.assertEquals(f_acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
-        f_geom_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'geom')
-        self.assertEquals(f_geom_context_keys, self.keys_from_attrs_context)
+        #f_geom_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'geom')
+        #self.assertEquals(f_geom_context_keys, self.keys_from_attrs_context)
         f_nome_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'nome')
         self.assertEquals(f_nome_context_keys, self.keys_from_attrs_context)
+        f_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'subClassOf')
+        self.assertEquals(f_subClassOf_context_keys, self.keys_from_attrs_context)
 
         f_resp_dict = self.aux_get_dict_from_response(implicit_projection_resp)
-        self.assertEqual(f_resp_dict['@type'], 'Feature')
+        self.assertEqual(f_resp_dict['@id'], 'http://geojson.org/geojson-ld/vocab.html#Feature')
+        self.assertEqual(f_resp_dict['@type'], 'http://geojson.org/geojson-ld/vocab.html#Feature')
+        self.assertEqual(f_resp_dict['subClassOf'], 'hydra:Resource')
 
         # explicit projection
         explicit_projection_resp = requests.options(self.bcim_base_uri + "unidades-federativas/ES/projection/nome,geom/")
@@ -1454,17 +1699,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(s_supported_operations_names, self.spatial_operation_names)
 
         s_acontext_keys = self.aux_get_keys_from_response_context(explicit_projection_resp)
-        self.assertEquals(s_acontext_keys, ['geom', 'nome', 'projection'])
+        self.assertEquals(s_acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
-        s_geom_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'geom')
-        self.assertEquals(s_geom_context_keys, self.keys_from_attrs_context)
+        #s_geom_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'geom')
+        #self.assertEquals(s_geom_context_keys, self.keys_from_attrs_context)
         s_nome_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'nome')
         self.assertEquals(s_nome_context_keys, self.keys_from_attrs_context)
-        s_projection_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'projection')
-        self.assertEquals(s_projection_context_keys, self.keys_from_oper_context)
+        s_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'subClassOf')
+        self.assertEquals(s_subClassOf_context_keys, self.keys_from_attrs_context)
 
         s_resp_dict = self.aux_get_dict_from_response(explicit_projection_resp)
-        self.assertEqual(s_resp_dict['@type'], 'Feature')
+        self.assertEqual(s_resp_dict['@id'], 'http://geojson.org/geojson-ld/vocab.html#Feature')
+        self.assertEqual(s_resp_dict['@type'], 'http://geojson.org/geojson-ld/vocab.html#Feature')
+        self.assertEqual(s_resp_dict['subClassOf'], 'hydra:Resource')
 
     def test_options_for_feature_resource_projection_operation_only_geometric_attribute(self):
         # implicit project
@@ -1478,13 +1725,17 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(f_supported_operations_names, self.spatial_operation_names)
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
-        self.assertEquals(f_acontext_keys, ['geom'])
+        self.assertEquals(f_acontext_keys, ['hydra', 'rdfs', 'subClassOf'])
 
-        f_geom_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'geom')
-        self.assertEquals(f_geom_context_keys, self.keys_from_attrs_context)
+        #f_geom_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'geom')
+        #self.assertEquals(f_geom_context_keys, self.keys_from_attrs_context)
+        f_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'subClassOf')
+        self.assertEquals(f_subClassOf_context_keys, self.keys_from_attrs_context)
 
         f_resp_dict = self.aux_get_dict_from_response(implicit_projection_resp)
-        self.assertEqual(f_resp_dict['@type'], 'GeometryField')
+        self.assertEqual(f_resp_dict['@id'], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEqual(f_resp_dict['@type'], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEqual(f_resp_dict['subClassOf'], 'hydra:Resource')
 
         # explicit projection
         explicit_projection_resp = requests.options(self.bcim_base_uri + "unidades-federativas/ES/projection/geom/")
@@ -1497,15 +1748,17 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(s_supported_operations_names, self.spatial_operation_names)
 
         s_acontext_keys = self.aux_get_keys_from_response_context(explicit_projection_resp)
-        self.assertEquals(s_acontext_keys, ['geom', 'projection'])
+        self.assertEquals(s_acontext_keys, ['hydra', 'rdfs', 'subClassOf'])
 
-        s_geom_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'geom')
-        self.assertEquals(s_geom_context_keys, self.keys_from_attrs_context)
-        s_projection_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'projection')
-        self.assertEquals(s_projection_context_keys, self.keys_from_oper_context)
+        #s_geom_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'geom')
+        #self.assertEquals(s_geom_context_keys, self.keys_from_attrs_context)
+        s_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'subClassOf')
+        self.assertEquals(s_subClassOf_context_keys, self.keys_from_attrs_context)
 
         s_resp_dict = self.aux_get_dict_from_response(explicit_projection_resp)
-        self.assertEqual(s_resp_dict['@type'], 'GeometryField')
+        self.assertEqual(s_resp_dict['@id'], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEqual(s_resp_dict['@type'], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEqual(s_resp_dict['subClassOf'], 'hydra:Resource')
 
     def test_options_for_feature_resource_projection_operation_only_alphanumeric_attribute(self):
         # implicit project
@@ -1519,13 +1772,17 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(f_supported_operations_names, self.string_operations_names)
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
-        self.assertEquals(f_acontext_keys, ['nome'])
+        self.assertEquals(f_acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
         f_nome_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'nome')
         self.assertEquals(f_nome_context_keys, self.keys_from_attrs_context)
+        f_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'subClassOf')
+        self.assertEquals(f_subClassOf_context_keys, self.keys_from_attrs_context)
 
         f_resp_dict = self.aux_get_dict_from_response(implicit_projection_resp)
-        self.assertEqual(f_resp_dict['@type'], 'CharField')
+        self.assertEqual(f_resp_dict['@id'], 'https://schema.org/name')
+        self.assertEqual(f_resp_dict['@type'], 'https://schema.org/Text')
+        self.assertEqual(f_resp_dict['subClassOf'], 'hydra:Resource')
 
         # explicit projection
         explicit_projection_resp = requests.options(self.bcim_base_uri + "unidades-federativas/ES/projection/nome/")
@@ -1538,15 +1795,17 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(s_supported_operations_names, self.string_operations_names)
 
         s_acontext_keys = self.aux_get_keys_from_response_context(explicit_projection_resp)
-        self.assertEquals(s_acontext_keys, ['nome', 'projection'])
+        self.assertEquals(s_acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
         s_nome_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'nome')
         self.assertEquals(s_nome_context_keys, self.keys_from_attrs_context)
-        s_projection_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'projection')
-        self.assertEquals(s_projection_context_keys, self.keys_from_oper_context)
+        s_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'subClassOf')
+        self.assertEquals(s_subClassOf_context_keys, self.keys_from_attrs_context)
 
         s_resp_dict = self.aux_get_dict_from_response(explicit_projection_resp)
-        self.assertEqual(s_resp_dict['@type'], 'CharField')
+        self.assertEqual(s_resp_dict['@id'], 'https://schema.org/name')
+        self.assertEqual(s_resp_dict['@type'], 'https://schema.org/Text')
+        self.assertEqual(s_resp_dict['subClassOf'], 'hydra:Resource')
 
     # --------------- TESTS FOR COLLECTION ---------------------------------
     def test_options_for_collection_resource_projection_operation(self):
@@ -1560,15 +1819,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(f_supported_operations_names, self.collection_operation_names)
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
-        self.assertEquals(f_acontext_keys, ['email', 'nome'])
+        self.assertEquals(f_acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
 
         f_email_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'email')
         self.assertEquals(f_email_context_keys, self.keys_from_attrs_context)
         f_nome_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'nome')
         self.assertEquals(f_nome_context_keys, self.keys_from_attrs_context)
+        f_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'subClassOf')
+        self.assertEquals(f_nome_context_keys, self.keys_from_attrs_context)
 
         f_resp_dict = self.aux_get_dict_from_response(implicit_projection_resp)
-        self.assertEqual(f_resp_dict['@type'], 'Collection')
+        self.assertEqual(f_resp_dict['@id'], 'https://schema.org/Thing')
+        self.assertEqual(f_resp_dict['@type'], 'hydra:Collection')
+        self.assertEqual(f_resp_dict['subClassOf'], 'hydra:Resource')
 
         # explicit projection
         explicit_projection_resp = requests.options(self.controle_base_uri + "usuario-list/projection/nome,email")
@@ -1581,17 +1844,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(s_supported_operations_names, self.collection_operation_names)
 
         s_acontext_keys = self.aux_get_keys_from_response_context(explicit_projection_resp)
-        self.assertEquals(s_acontext_keys, ['email', 'nome', 'projection'])
+        self.assertEquals(s_acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
 
         s_email_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'email')
         self.assertEquals(s_email_context_keys, self.keys_from_attrs_context)
         s_nome_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'nome')
         self.assertEquals(s_nome_context_keys, self.keys_from_attrs_context)
-        s_projection_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'projection')
-        self.assertEquals(s_projection_context_keys, self.keys_from_oper_context)
+        s_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'subClassOf')
+        self.assertEquals(s_subClassOf_context_keys, self.keys_from_oper_context)
 
         s_resp_dict = self.aux_get_dict_from_response(explicit_projection_resp)
-        self.assertEqual(s_resp_dict['@type'], 'Collection')
+        self.assertEqual(s_resp_dict['@id'], 'https://schema.org/Thing')
+        self.assertEqual(s_resp_dict['@type'], 'hydra:Collection')
+        self.assertEqual(s_resp_dict['subClassOf'], 'hydra:Resource')
 
     def test_options_for_collection_resource_projection_operation_with_collect_operation(self):
         response = requests.options(self.controle_base_uri + "usuario-list/projection/nome,email/collect/nome&email/upper")
@@ -1604,19 +1869,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(supported_operations_names, self.collection_operation_names)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['collect', 'email', 'nome', 'upper'])
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf', 'upper'])
 
-        email_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
-        self.assertEquals(email_context_keys, self.keys_from_attrs_context)
+        upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
+        self.assertEquals(upper_context_keys, self.keys_from_attrs_context)
         nome_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
         self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'collect')
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
-        upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
-        self.assertEquals(upper_context_keys, self.keys_from_oper_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_context_keys, self.keys_from_oper_context)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "Collection")
+        self.assertEqual(response_dict['@id'], 'https://schema.org/Thing')
+        self.assertEqual(response_dict['@type'], 'hydra:Collection')
+        self.assertEqual(response_dict['subClassOf'], 'hydra:Resource')
 
     def test_options_for_collection_resource_projection_operation_with_collect_operation_projection_list_different_from_collect_list(self):
         response = requests.options(self.controle_base_uri + "usuario-list/projection/nome/collect/nome&email/upper")
@@ -1634,15 +1899,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(f_supported_operations_names, [])
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
-        self.assertEquals(f_acontext_keys, ['email', 'nome'])
+        self.assertEquals(f_acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
 
         f_email_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'email')
         self.assertEquals(f_email_context_keys, self.keys_from_attrs_context)
         f_nome_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'nome')
         self.assertEquals(f_nome_context_keys, self.keys_from_attrs_context)
+        f_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, 'subClassOf')
+        self.assertEquals(f_subClassOf_context_keys, self.keys_from_attrs_context)
 
         f_resp_dict = self.aux_get_dict_from_response(implicit_projection_resp)
-        self.assertEqual(f_resp_dict['@type'], 'bytes')
+        self.assertEqual(f_resp_dict['@id'], 'https://schema.org/Thing')
+        self.assertEqual(f_resp_dict['@type'], 'hydra:Collection')
+        self.assertEqual(f_resp_dict['subClassOf'], 'hydra:Resource')
 
         # explicit projection
         explicit_projection_resp = requests.options(self.controle_base_uri + "usuario-list/projection/nome,email",
@@ -1656,17 +1925,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(s_supported_operations_names, [])
 
         s_acontext_keys = self.aux_get_keys_from_response_context(explicit_projection_resp)
-        self.assertEquals(s_acontext_keys, ['email', 'nome', 'projection'])
+        self.assertEquals(s_acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
 
         s_email_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'email')
         self.assertEquals(s_email_context_keys, self.keys_from_attrs_context)
         s_nome_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'nome')
         self.assertEquals(s_nome_context_keys, self.keys_from_attrs_context)
-        s_projection_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'projection')
-        self.assertEquals(s_projection_context_keys, self.keys_from_oper_context)
+        s_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, 'subClassOf')
+        self.assertEquals(s_subClassOf_context_keys, self.keys_from_oper_context)
 
         s_resp_dict = self.aux_get_dict_from_response(explicit_projection_resp)
-        self.assertEqual(s_resp_dict['@type'], 'bytes')
+        self.assertEqual(s_resp_dict['@id'], 'https://schema.org/Thing')
+        self.assertEqual(s_resp_dict['@type'], 'hydra:Collection')
+        self.assertEqual(s_resp_dict['subClassOf'], 'hydra:Resource')
 
     def test_options_for_collection_resource_projection_operation_with_collect_operation_accept_octet_stream(self):
         response = requests.options(self.controle_base_uri + "usuario-list/projection/nome,email/collect/nome&email/upper",
@@ -1680,19 +1951,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(supported_operations_names, [])
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['collect', 'email', 'nome', 'upper'])
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf', 'upper'])
 
-        email_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
-        self.assertEquals(email_context_keys, self.keys_from_attrs_context)
+        upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
+        self.assertEquals(upper_context_keys, self.keys_from_attrs_context)
         nome_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
         self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'collect')
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
-        upper_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
-        self.assertEquals(upper_context_keys, self.keys_from_oper_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_context_keys, self.keys_from_oper_context)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "bytes")
+        self.assertEqual(response_dict['@id'], 'https://schema.org/Thing')
+        self.assertEqual(response_dict['@type'], 'hydra:Collection')
+        self.assertEqual(response_dict['subClassOf'], 'hydra:Resource')
 
     # --------------- TESTS FOR FEATURE COLLECTION ---------------------------------
     def test_options_for_feature_collection_projection_operation(self):
@@ -1706,15 +1977,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(f_supported_operations_names, self.spatial_collection_operation_names)
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
-        self.assertEquals(f_acontext_keys, ['geom', 'nome'])
+        self.assertEquals(f_acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
-        f_geom_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "geom")
-        self.assertEquals(f_geom_context_keys, self.keys_from_attrs_context)
-        nome_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "nome")
-        self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
+        #f_geom_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "geom")
+        #self.assertEquals(f_geom_context_keys, self.keys_from_attrs_context)
+        f_nome_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "nome")
+        self.assertEquals(f_nome_context_keys, self.keys_from_attrs_context)
+        f_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "subClassOf")
+        self.assertEquals(f_subClassOf_context_keys, self.keys_from_attrs_context)
 
         f_response_dict = self.aux_get_dict_from_response(implicit_projection_resp)
-        self.assertEquals(f_response_dict['@type'], "FeatureCollection")
+        self.assertEquals(f_response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(f_response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(f_response_dict["subClassOf"], "hydra:Collection")
 
         # explicit projection
         explicit_projection_resp = requests.options(self.bcim_base_uri + "unidades-federativas/projection/nome,geom")
@@ -1727,17 +2002,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(s_supported_operations_names, self.spatial_collection_operation_names)
 
         s_acontext_keys = self.aux_get_keys_from_response_context(explicit_projection_resp)
-        self.assertEquals(s_acontext_keys, ['geom', 'nome', 'projection'])
+        self.assertEquals(s_acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
-        s_geom_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "geom")
-        self.assertEquals(s_geom_context_keys, self.keys_from_attrs_context)
+        #s_geom_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "geom")
+        #self.assertEquals(s_geom_context_keys, self.keys_from_attrs_context)
         s_nome_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "nome")
         self.assertEquals(s_nome_context_keys, self.keys_from_attrs_context)
-        s_projection_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "projection")
-        self.assertEquals(s_projection_context_keys, self.keys_from_oper_context)
+        s_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "subClassOf")
+        self.assertEquals(s_subClassOf_context_keys, self.keys_from_oper_context)
 
         s_response_dict = self.aux_get_dict_from_response(explicit_projection_resp)
-        self.assertEquals(s_response_dict['@type'], "FeatureCollection")
+        self.assertEquals(s_response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(s_response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(s_response_dict["subClassOf"], "hydra:Collection")
 
     def test_options_for_feature_collection_projection_operation_only_geometric_attribute(self):
         implicit_projection_resp = requests.options(self.bcim_base_uri + "unidades-federativas/geom")
@@ -1750,13 +2027,17 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(f_supported_operations_names, self.spatial_collection_operation_names)
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
-        self.assertEquals(f_acontext_keys, ['geom'])
+        self.assertEquals(f_acontext_keys, ['hydra', 'rdfs', 'subClassOf'])
 
-        f_geom_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "geom")
-        self.assertEquals(f_geom_context_keys, self.keys_from_attrs_context)
+        #f_geom_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "geom")
+        #self.assertEquals(f_geom_context_keys, self.keys_from_attrs_context)
+        f_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "subClassOf")
+        self.assertEquals(f_subClassOf_context_keys, self.keys_from_attrs_context)
 
         f_response_dict = self.aux_get_dict_from_response(implicit_projection_resp)
-        self.assertEquals(f_response_dict['@type'], "GeometryCollection")
+        self.assertEquals(f_response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#geometry")
+        self.assertEquals(f_response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#GeometryCollection")
+        self.assertEquals(f_response_dict["subClassOf"], "hydra:Collection")
 
         # explicit projection
         explicit_projection_resp = requests.options(self.bcim_base_uri + "unidades-federativas/projection/geom")
@@ -1769,15 +2050,17 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(s_supported_operations_names, self.spatial_collection_operation_names)
 
         s_acontext_keys = self.aux_get_keys_from_response_context(explicit_projection_resp)
-        self.assertEquals(s_acontext_keys, ['geom', 'projection'])
+        self.assertEquals(s_acontext_keys, ['hydra', 'rdfs', 'subClassOf'])
 
-        s_geom_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "geom")
-        self.assertEquals(s_geom_context_keys, self.keys_from_attrs_context)
-        s_projection_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "projection")
-        self.assertEquals(s_projection_context_keys, self.keys_from_oper_context)
+        #s_geom_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "geom")
+        #self.assertEquals(s_geom_context_keys, self.keys_from_attrs_context)
+        s_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "subClassOf")
+        self.assertEquals(s_subClassOf_context_keys, self.keys_from_oper_context)
 
         s_response_dict = self.aux_get_dict_from_response(explicit_projection_resp)
-        self.assertEquals(s_response_dict['@type'], "GeometryCollection")
+        self.assertEquals(s_response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#geometry")
+        self.assertEquals(s_response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#GeometryCollection")
+        self.assertEquals(s_response_dict["subClassOf"], "hydra:Collection")
 
     def test_options_for_feature_collection_projection_operation_only_alphanumeric_attributes(self):
         implicit_projection_resp = requests.options(self.bcim_base_uri + "unidades-federativas/nome")
@@ -1790,13 +2073,17 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(f_supported_operations_names, self.collection_operation_names)
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
-        self.assertEquals(f_acontext_keys, ['nome'])
+        self.assertEquals(f_acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
-        nome_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "nome")
-        self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
+        f_nome_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "nome")
+        self.assertEquals(f_nome_context_keys, self.keys_from_attrs_context)
+        f_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "subClassOf")
+        self.assertEquals(f_subClassOf_context_keys, self.keys_from_attrs_context)
 
         f_response_dict = self.aux_get_dict_from_response(implicit_projection_resp)
-        self.assertEquals(f_response_dict['@type'], "Collection")
+        self.assertEqual(f_response_dict['@id'], 'https://schema.org/name')
+        self.assertEqual(f_response_dict['@type'], 'hydra:Collection')
+        self.assertEqual(f_response_dict['subClassOf'], 'hydra:Resource')
 
         # explicit projection
         explicit_projection_resp = requests.options(self.bcim_base_uri + "unidades-federativas/projection/nome")
@@ -1809,15 +2096,17 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(s_supported_operations_names, self.collection_operation_names)
 
         s_acontext_keys = self.aux_get_keys_from_response_context(explicit_projection_resp)
-        self.assertEquals(s_acontext_keys, ['nome', 'projection'])
+        self.assertEquals(s_acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
         s_nome_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "nome")
         self.assertEquals(s_nome_context_keys, self.keys_from_attrs_context)
-        s_projection_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "projection")
-        self.assertEquals(s_projection_context_keys, self.keys_from_oper_context)
+        s_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "subClassOf")
+        self.assertEquals(s_subClassOf_context_keys, self.keys_from_oper_context)
 
         s_response_dict = self.aux_get_dict_from_response(explicit_projection_resp)
-        self.assertEquals(s_response_dict['@type'], "Collection")
+        self.assertEqual(s_response_dict['@id'], 'https://schema.org/name')
+        self.assertEqual(s_response_dict['@type'], 'hydra:Collection')
+        self.assertEqual(s_response_dict['subClassOf'], 'hydra:Resource')
 
     def test_options_for_feature_collection_projection_operation_with_collect_operation(self):
         response = requests.options(self.bcim_base_uri + "unidades-federativas/projection/nome,geom/collect/nome&geom/buffer/0.2")
@@ -1830,19 +2119,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(supported_operations_names, self.spatial_collection_operation_names)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['buffer', 'collect', 'geom', 'nome'])
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
         nome_context_keys = self.aux_get_keys_from_acontext_attrs(response, "nome")
         self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
-        geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
-        buffer_context_keys = self.aux_get_keys_from_acontext_attrs(response, "buffer")
-        self.assertEquals(buffer_context_keys, self.keys_from_oper_context)
+        #geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_oper_context)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "FeatureCollection")
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
 
     def test_options_for_feature_collection_projection_operation_with_collect_operation_projection_list_different_from_collect_list(self):
         response = requests.options(self.bcim_base_uri + "unidades-federativas/projection/nome,geom/collect/geom/buffer/0.2")
@@ -1861,15 +2150,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(f_supported_operations_names, self.spatial_collection_operation_names)
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
-        self.assertEquals(f_acontext_keys, ['geom', 'nome'])
+        self.assertEquals(f_acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
-        f_geom_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "geom")
-        self.assertEquals(f_geom_context_keys, self.keys_from_attrs_context)
-        nome_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "nome")
-        self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
+        #f_geom_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "geom")
+        #self.assertEquals(f_geom_context_keys, self.keys_from_attrs_context)
+        f_nome_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "nome")
+        self.assertEquals(f_nome_context_keys, self.keys_from_attrs_context)
+        f_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "subClassOf")
+        self.assertEquals(f_subClassOf_context_keys, self.keys_from_attrs_context)
 
         f_response_dict = self.aux_get_dict_from_response(implicit_projection_resp)
-        self.assertEquals(f_response_dict['@type'], "GeobufCollection")
+        self.assertEquals(f_response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(f_response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(f_response_dict["subClassOf"], "hydra:Collection")
 
         #explicit projection
         explicit_projection_resp = requests.options(self.bcim_base_uri + "unidades-federativas/projection/nome,geom",
@@ -1883,17 +2176,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(s_supported_operations_names, self.spatial_collection_operation_names)
 
         s_acontext_keys = self.aux_get_keys_from_response_context(explicit_projection_resp)
-        self.assertEquals(s_acontext_keys, ['geom', 'nome', 'projection'])
+        self.assertEquals(s_acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
-        s_geom_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "geom")
-        self.assertEquals(s_geom_context_keys, self.keys_from_attrs_context)
+        #s_geom_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "geom")
+        #self.assertEquals(s_geom_context_keys, self.keys_from_attrs_context)
         s_nome_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "nome")
         self.assertEquals(s_nome_context_keys, self.keys_from_attrs_context)
-        s_projection_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "projection")
-        self.assertEquals(s_projection_context_keys, self.keys_from_oper_context)
+        s_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "subClassOf")
+        self.assertEquals(s_subClassOf_context_keys, self.keys_from_attrs_context)
 
         s_response_dict = self.aux_get_dict_from_response(explicit_projection_resp)
-        self.assertEquals(s_response_dict['@type'], "GeobufCollection")
+        self.assertEquals(s_response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(s_response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(s_response_dict["subClassOf"], "hydra:Collection")
 
     def test_options_for_feature_collection_projection_operation_only_geometric_attribute_accept_octet_stream(self):
         implicit_projection_resp = requests.options(self.bcim_base_uri + "unidades-federativas/geom",
@@ -1907,13 +2202,17 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(f_supported_operations_names, self.spatial_collection_operation_names)
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
-        self.assertEquals(f_acontext_keys, ['geom'])
+        self.assertEquals(f_acontext_keys, ['hydra', 'rdfs', 'subClassOf'])
 
-        f_geom_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "geom")
-        self.assertEquals(f_geom_context_keys, self.keys_from_attrs_context)
+        #f_geom_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "geom")
+        #self.assertEquals(f_geom_context_keys, self.keys_from_attrs_context)
+        f_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "subClassOf")
+        self.assertEquals(f_subClassOf_context_keys, self.keys_from_attrs_context)
 
         f_response_dict = self.aux_get_dict_from_response(implicit_projection_resp)
-        self.assertEquals(f_response_dict['@type'], "GeobufCollection")
+        self.assertEquals(f_response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#geometry")
+        self.assertEquals(f_response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#GeometryCollection")
+        self.assertEquals(f_response_dict["subClassOf"], "hydra:Collection")
 
         # explicit projection
         explicit_projection_resp = requests.options(self.bcim_base_uri + "unidades-federativas/projection/geom",
@@ -1927,15 +2226,17 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(s_supported_operations_names, self.spatial_collection_operation_names)
 
         s_acontext_keys = self.aux_get_keys_from_response_context(explicit_projection_resp)
-        self.assertEquals(s_acontext_keys, ['geom', 'projection'])
+        self.assertEquals(s_acontext_keys, ['hydra', 'rdfs', 'subClassOf'])
 
-        s_geom_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "geom")
-        self.assertEquals(s_geom_context_keys, self.keys_from_attrs_context)
-        s_projection_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "projection")
-        self.assertEquals(s_projection_context_keys, self.keys_from_oper_context)
+        #s_geom_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "geom")
+        #self.assertEquals(s_geom_context_keys, self.keys_from_attrs_context)
+        s_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "subClassOf")
+        self.assertEquals(s_subClassOf_context_keys, self.keys_from_oper_context)
 
         s_response_dict = self.aux_get_dict_from_response(explicit_projection_resp)
-        self.assertEquals(s_response_dict['@type'], "GeobufCollection")
+        self.assertEquals(s_response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#geometry")
+        self.assertEquals(s_response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#GeometryCollection")
+        self.assertEquals(s_response_dict["subClassOf"], "hydra:Collection")
 
     def test_options_for_feature_collection_projection_operation_only_alphanumeric_attributes_accept_octet_stream(self):
         implicit_projection_resp = requests.options(self.bcim_base_uri + "unidades-federativas/nome",
@@ -1949,13 +2250,17 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(f_supported_operations_names, [])
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
-        self.assertEquals(f_acontext_keys, ['nome'])
+        self.assertEquals(f_acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
         f_nome_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "nome")
         self.assertEquals(f_nome_context_keys, self.keys_from_attrs_context)
+        f_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(implicit_projection_resp, "subClassOf")
+        self.assertEquals(f_subClassOf_context_keys, self.keys_from_attrs_context)
 
         f_response_dict = self.aux_get_dict_from_response(implicit_projection_resp)
-        self.assertEquals(f_response_dict['@type'], "bytes")
+        self.assertEqual(f_response_dict['@id'], 'https://schema.org/name')
+        self.assertEqual(f_response_dict['@type'], 'hydra:Collection')
+        self.assertEqual(f_response_dict['subClassOf'], 'hydra:Resource')
 
         # explicit projection
         explicit_projection_resp = requests.options(self.bcim_base_uri + "unidades-federativas/projection/nome",
@@ -1969,15 +2274,17 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(s_supported_operations_names, [])
 
         s_acontext_keys = self.aux_get_keys_from_response_context(explicit_projection_resp)
-        self.assertEquals(s_acontext_keys, ['nome', 'projection'])
+        self.assertEquals(s_acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
         s_nome_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "nome")
         self.assertEquals(s_nome_context_keys, self.keys_from_attrs_context)
-        s_projection_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "projection")
-        self.assertEquals(s_projection_context_keys, self.keys_from_oper_context)
+        s_subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(explicit_projection_resp, "subClassOf")
+        self.assertEquals(s_subClassOf_context_keys, self.keys_from_attrs_context)
 
         s_response_dict = self.aux_get_dict_from_response(explicit_projection_resp)
-        self.assertEquals(s_response_dict['@type'], "bytes")
+        self.assertEqual(s_response_dict['@id'], 'https://schema.org/name')
+        self.assertEqual(s_response_dict['@type'], 'hydra:Collection')
+        self.assertEqual(s_response_dict['subClassOf'], 'hydra:Resource')
 
     def test_options_for_feature_collection_projection_operation_with_collect_operation_accept_octet_stream(self):
         response = requests.options(self.bcim_base_uri + "unidades-federativas/projection/nome,geom/collect/nome&geom/buffer/0.2",
@@ -1991,19 +2298,19 @@ class OptionsForProjectionOperation(AbstractRequestTest):
         self.assertEquals(supported_operations_names, self.spatial_collection_operation_names)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['buffer', 'collect', 'geom', 'nome'])
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
 
         nome_context_keys = self.aux_get_keys_from_acontext_attrs(response, "nome")
         self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
-        geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
-        collect_context_keys = self.aux_get_keys_from_acontext_attrs(response, "collect")
-        self.assertEquals(collect_context_keys, self.keys_from_oper_context)
-        buffer_context_keys = self.aux_get_keys_from_acontext_attrs(response, "buffer")
-        self.assertEquals(buffer_context_keys, self.keys_from_oper_context)
+        #geom_context_keys = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertEquals(geom_context_keys, self.keys_from_attrs_context)
+        subClassOf_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_context_keys, self.keys_from_oper_context)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "GeobufCollection")
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
 
 #python manage.py test hyper_resource.tests.FilterOperationTest --testrunner=hyper_resource.tests.NoDbTestRunner
 class FilterOperationTest(AbstractRequestTest):
@@ -2058,1424 +2365,13 @@ class FilterOperationTest(AbstractRequestTest):
         names_list = self.aux_get_attributes_from_features(response, "nome")
         self.assertEquals(names_list, ["Maranhão", "Piauí"])
 
-#python manage.py test hyper_resource.tests.RequestOptionsTest --testrunner=hyper_resource.tests.NoDbTestRunner
-class RequestOptionsTest(AbstractRequestTest):
-
-    # --------------- TESTS FOR FEATURE COLLECTION ---------------------------------
-    # tests for feature/geometry collection simple path
-    def test_options_for_feature_collection_simple_path(self):
-        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/")
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
-
-        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
-        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
-        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
-        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
-        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
-        codigofunai_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "codigofunai")
-        self.assertListEqual(codigofunai_context_keys_list, self.keys_from_attrs_context)
-        terraindigena_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "terraindigena")
-        self.assertListEqual(terraindigena_context_keys_list, self.keys_from_attrs_context)
-        etnia_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "etnia")
-        self.assertListEqual(etnia_context_keys_list, self.keys_from_attrs_context)
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'FeatureCollection')
-
-    def test_options_for_feature_collection_simple_path_with_accept_header(self):
-        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/", headers={'accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
-
-        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
-        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
-        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
-        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
-        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
-        codigofunai_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "codigofunai")
-        self.assertListEqual(codigofunai_context_keys_list, self.keys_from_attrs_context)
-        terraindigena_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "terraindigena")
-        self.assertListEqual(terraindigena_context_keys_list, self.keys_from_attrs_context)
-        etnia_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "etnia")
-        self.assertListEqual(etnia_context_keys_list, self.keys_from_attrs_context)
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'GeobufCollection')
-
-
-    # tests for feature/geometry collection attributes
-    def test_options_for_feature_collection_only_attributes(self):
-        attrs = ["geom", "nome"]
-        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/" + attrs[0] + "," + attrs[1])
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, attrs)
-
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'FeatureCollection')
-
-    def test_options_for_feature_collection_only_attributes_with_accept_header(self):
-        attrs = ["geom", "nome"]
-        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/" + attrs[0] + "," + attrs[1],
-                                    headers={'accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, attrs)
-
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'GeobufCollection')
-
-    def test_options_for_feature_collection_only_geometric_attribute(self):
-        attrs = ["geom"]
-        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/" + attrs[0])
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, attrs)
-
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'GeometryCollection')
-
-    def test_options_for_feature_collection_only_geometric_attribute_accept_header(self):
-        attrs = ["geom"]
-        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/" + attrs[0],
-                                    headers={'accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, attrs)
-
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'GeobufCollection')
-
-    def test_options_for_feature_collection_only_alphanumeric_attributes(self):
-        alpha_attrs = ["nome", "nomeabrev"]
-        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/" + alpha_attrs[0] + "," + alpha_attrs[1])
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_dict_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_dict_keys, alpha_attrs)
-
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
-        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Collection')
-
-    def test_options_for_feature_collection_only_alphanumeric_attributes_with_accept_header(self):
-        alpha_attrs = ["nome", "nomeabrev"]
-        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/" + alpha_attrs[0] + "," + alpha_attrs[1],
-                                    headers={'accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_dict_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_dict_keys, alpha_attrs)
-
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
-        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, [])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'bytes')
-
-
-    # tests for feature/geometry collection operation
-    def test_options_for_feature_collection_operation_with_geometry_collection_return(self):
-        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + "unidades-federativas/ES")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_dict_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_dict_keys, ['within'])
-
-        within_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "within")
-        self.assertListEqual(within_context_keys_list, ["@id", "@type"])
-
-        supported_operation_names = self.aux_get_supported_operations_names(response)
-        self.assertEquals(supported_operation_names, self.spatial_collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'FeatureCollection')
-
-    def test_options_for_feature_collection_operation_with_geometry_collection_return_and_accept_header(self):
-        response = requests.options(
-            self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + "unidades-federativas/ES",
-            headers={'accept': 'application/octet-stream'}
-        )
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_dict_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_dict_keys, ['within'])
-
-        within_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "within")
-        self.assertListEqual(within_context_keys_list, ["@id", "@type"])
-
-        supp_oper_for_ret_type = self.aux_get_supported_operations_names(response)
-        self.assertEquals(supp_oper_for_ret_type, self.spatial_collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'GeobufCollection')
-
-    def test_options_for_feature_collection_count_resource(self):
-        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/count_resource")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertEquals(supported_operations_names, [])
-
-        context_dict_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_dict_keys, ['count_resource'])
-
-        count_resource_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "count_resource")
-        self.assertListEqual(count_resource_context_keys_list, ["@id", "@type"])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'int')
-
-    def test_options_for_feature_collection_count_resource_accept_octet_stream(self):
-        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/count_resource",
-                                    headers={'accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertEquals(supported_operations_names, [])
-
-        context_dict_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_dict_keys, ['count_resource'])
-
-        count_resource_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "count_resource")
-        self.assertListEqual(count_resource_context_keys_list, ["@id", "@type"])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'bytes')
-
-
-    # --------------- TESTS FOR COLLECTION ---------------------------------
-    # tests for collection simple path
-    def test_options_for_collection_simple_path(self):
-        response = requests.options(self.controle_base_uri + 'gasto-list/')
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
-
-        id_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id")
-        self.assertListEqual(id_context_keys_list, self.keys_from_attrs_context)
-        data_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data")
-        self.assertListEqual(data_keys_list, self.keys_from_attrs_context)
-        tipo_gasto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "tipo_gasto")
-        self.assertListEqual(tipo_gasto_context_keys_list, self.keys_from_attrs_context)
-        usuario_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "usuario")
-        self.assertListEqual(usuario_context_keys_list, self.keys_from_attrs_context)
-        valor_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "valor")
-        self.assertListEqual(valor_context_keys_list, self.keys_from_attrs_context)
-
-        operation_name = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operation_name, self.collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Collection')
-
-    def test_options_for_collection_simple_path_with_accept_header(self):
-        response = requests.options(self.controle_base_uri + 'gasto-list/', headers={'accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
-
-        id_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id")
-        self.assertListEqual(id_context_keys_list, self.keys_from_attrs_context)
-        data_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data")
-        self.assertListEqual(data_keys_list, self.keys_from_attrs_context)
-        tipo_gasto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "tipo_gasto")
-        self.assertListEqual(tipo_gasto_context_keys_list, self.keys_from_attrs_context)
-        usuario_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "usuario")
-        self.assertListEqual(usuario_context_keys_list, self.keys_from_attrs_context)
-        valor_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "valor")
-        self.assertListEqual(valor_context_keys_list, self.keys_from_attrs_context)
-
-        operation_name = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operation_name, [])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'bytes')
-
-    # tests for collection attributes
-    def test_options_for_collection_only_attributes(self):
-        response = requests.options(self.controle_base_uri + 'gasto-list/data,valor')
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_keys, self.non_simple_path_dict_keys)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, ['data', 'valor'])
-
-        data_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data")
-        self.assertListEqual(data_context_keys_list, self.keys_from_attrs_context)
-        valor_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "valor")
-        self.assertListEqual(valor_context_keys_list, self.keys_from_attrs_context)
-
-        operation_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operation_names, self.collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Collection')
-
-    def test_options_for_collection_only_attributes_with_accept_header(self):
-        attrs = ['data', 'valor']
-        response = requests.options(self.controle_base_uri + 'gasto-list/' + attrs[0] + ',' + attrs[1],
-                                    headers={'Accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_keys, self.non_simple_path_dict_keys)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, attrs)
-
-        data_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data")
-        self.assertListEqual(data_context_keys_list, self.keys_from_attrs_context)
-        valor_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "valor")
-        self.assertListEqual(valor_context_keys_list, self.keys_from_attrs_context)
-
-        operation_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operation_names, [])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'bytes')
-
-    # tests for collection operation
-    def test_options_for_collection_operation_with_collection_return(self):
-        response = requests.options(self.controle_base_uri + 'usuario-list/group_by_count/nome')
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['count', 'nome'])
-
-        nome_context_keys = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
-        count_context_keys = self.aux_get_keys_from_acontext_attrs(response, "count")
-        self.assertEquals(count_context_keys, self.keys_from_attrs_context)
-
-        supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertEquals(supported_operations_names, self.collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "Collection")
-
-    def test_options_for_collection_operation_with_collection_return_and_accept_header(self):
-        response = requests.options(self.controle_base_uri + 'usuario-list/group_by_count/nome',
-                                headers={"Accept": "application/octet-stream"})
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['count', 'nome'])
-
-        nome_context_keys = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
-        count_context_keys = self.aux_get_keys_from_acontext_attrs(response, "count")
-        self.assertEquals(count_context_keys, self.keys_from_attrs_context)
-
-        supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertEquals(supported_operations_names, [])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "bytes")
-
-    def test_options_for_collection_operation_with_integer_return(self):
-        response = requests.options(self.controle_base_uri + 'usuario-list/count_resource')
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['count_resource'])
-
-        count_resource_context_keys = self.aux_get_keys_from_acontext_attrs(response, "count_resource")
-        self.assertEquals(count_resource_context_keys, ['@id', '@type'])
-
-        supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertEquals(supported_operations_names, [])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "int")
-
-    def test_options_for_collection_operation_with_integer_return_and_accept_header(self):
-        response = requests.options(self.controle_base_uri + 'usuario-list/count_resource',
-                                headers={"Accept": "application/octet-stream"})
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['count_resource'])
-
-        count_resource_context_keys = self.aux_get_keys_from_acontext_attrs(response, "count_resource")
-        self.assertEquals(count_resource_context_keys, ['@id', '@type'])
-
-        supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertEquals(supported_operations_names, [])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict['@type'], "bytes")
-
-
-    # --------------- TESTS FOR FEATURE RESOURCE ---------------------------------
-    # tests for feature simple path
-    def test_options_for_feature_resource_simple_path(self):
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES')
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.simple_path_options_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['geocodigo', 'geom', 'geometriaaproximada', 'id_objeto', 'iri_metadata', 'iri_style', 'nome', 'nomeabrev', 'sigla'])
-
-        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
-        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
-        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
-        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
-        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
-        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
-        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
-        sigla_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "sigla")
-        self.assertListEqual(sigla_context_keys_list, self.keys_from_attrs_context)
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-        iri_metadata_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "iri_metadata")
-        self.assertListEqual(iri_metadata_context_keys_list, self.keys_from_attrs_context)
-        iri_style_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "iri_style")
-        self.assertListEqual(iri_style_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Feature')
-
-    def test_options_for_feature_resource_simple_path_with_accept_header(self):
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES',
-                                    headers={'accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.simple_path_options_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['geocodigo', 'geom', 'geometriaaproximada', 'id_objeto', 'iri_metadata', 'iri_style', 'nome', 'nomeabrev', 'sigla'])
-
-        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
-        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
-        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
-        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
-        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
-        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
-        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
-        sigla_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "sigla")
-        self.assertListEqual(sigla_context_keys_list, self.keys_from_attrs_context)
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-        iri_metadata_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "iri_metadata")
-        self.assertListEqual(iri_metadata_context_keys_list, self.keys_from_attrs_context)
-        iri_style_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "iri_style")
-        self.assertListEqual(iri_style_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Geobuf')
-
-
-    # tests for feature attributes
-    def test_options_for_feature_resource_only_attributes(self):
-        attrs = ["geom", "nome"]
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/' + attrs[0] + "," + attrs[1],)
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, attrs)
-
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Feature')
-
-    def test_options_for_feature_resource_only_attributes_with_accept_header(self):
-        attrs = ["geom", "nome"]
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/' + attrs[0] + "," + attrs[1],
-                                    headers={'accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, attrs)
-
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Geobuf')
-
-    def test_options_for_feature_resource_only_alphanumeric_attributes(self):
-        alpha_attrs = ["geocodigo", "nome"]
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/' + alpha_attrs[0] + "," + alpha_attrs[1])
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, alpha_attrs)
-
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
-        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.basic_operations_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Thing')
-
-    def test_options_for_feature_resource_only_alphanumeric_attributes_with_accept_header(self):
-        alpha_attrs = ["geocodigo", "nome"]
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/' + alpha_attrs[0] + "," + alpha_attrs[1],
-                                    headers={'accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, alpha_attrs)
-
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
-        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, [])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'bytes')
-
-    def test_options_for_feature_resource_only_geometric_attribute(self):
-        geom_attrs = ["geom"]
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/' + geom_attrs[0])
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, geom_attrs)
-
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'GeometryField')
-
-    def test_options_for_feature_resource_only_geometric_attribute_with_accept_header(self):
-        alpha_attrs = ["geom"]
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/' + alpha_attrs[0],
-                                    headers={'accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, alpha_attrs)
-
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Geobuf')
-
-    def test_options_for_feature_resource_pointfield_attribute(self):
-        response = requests.options(self.bcim_base_uri + 'aldeias-indigenas/623/geom')
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, ['geom'])
-
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'PointField')
-
-    def test_options_for_feature_resource_pointfield_attribute_accept_octet_stream(self):
-        response = requests.options(self.bcim_base_uri + 'aldeias-indigenas/623/geom', headers={"Accept": "application/octet-stream"})
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, ['geom'])
-
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Geobuf')
-
-
-    # tests for feature operations
-    def test_options_for_feature_resource_operation_with_geometry_return(self):
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/buffer/1.2')
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        a_context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(a_context_keys, ['buffer'])
-
-        buffer_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "buffer")
-        self.assertListEqual(buffer_context_keys_list, ["@id", "@type"])
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Feature')
-
-    def test_options_for_feature_resource_operation_with_geometry_return_accept_header(self):
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/buffer/1.2',
-                                    headers={'Accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        a_context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(a_context_keys, ['buffer'])
-
-        buffer_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "buffer")
-        self.assertListEqual(buffer_context_keys_list, ["@id", "@type"])
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Geobuf')
-
-    def test_options_for_feature_resource_area_operation(self):
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/area')
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        a_context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(a_context_keys, ['area'])
-
-        area_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "area")
-        self.assertListEqual(area_context_keys_list, ["@id", "@type"])
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, [])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'float')
-
-    def test_options_for_feature_resource_area_operation_accept_octet_stream(self):
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/area',
-                                    headers={'Accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        a_context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(a_context_keys, ['area'])
-
-        area_context_keys_list_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "area")
-        self.assertListEqual(area_context_keys_list_context_keys_list, ["@id", "@type"])
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, [])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'bytes')
-
-    def test_options_for_feature_resource_operation_with_point_return(self):
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/point_on_surface')
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        a_context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(a_context_keys, ['point_on_surface'])
-
-        point_on_surface_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "point_on_surface")
-        self.assertListEqual(point_on_surface_context_keys_list, ["@id", "@type"])
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Point')
-
-    def test_options_for_feature_resource_operation_with_point_return_accept_header(self):
-        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/point_on_surface',
-                                    headers={'Accept': 'application/octet-stream'})
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        a_context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(a_context_keys, ['point_on_surface'])
-
-        point_on_surface_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "point_on_surface")
-        self.assertListEqual(point_on_surface_context_keys_list, ["@id", "@type"])
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Geobuf')
-
-
-    # --------------- TESTS FOR NON SPATIAL RESOURCE ---------------------------------
-    # tests for NonSpatialResource simple path
-    def test_options_for_non_spatial_resource_simple_path(self):
-        response = requests.options(self.controle_base_uri + "usuario-list/1/")
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['avatar', 'data_nascimento', 'email', 'id', 'nome', 'nome_usuario', 'senha'])
-
-        id_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id")
-        self.assertListEqual(id_context_keys_list, self.keys_from_attrs_context)
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        nome_usuario_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome_usuario")
-        self.assertListEqual(nome_usuario_context_keys_list, self.keys_from_attrs_context)
-        senha_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "senha")
-        self.assertListEqual(senha_context_keys_list, self.keys_from_attrs_context)
-        data_nascimento_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data_nascimento")
-        self.assertListEqual(data_nascimento_context_keys_list, self.keys_from_attrs_context)
-        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
-        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
-        avatar_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "avatar")
-        self.assertListEqual(avatar_context_keys_list, self.keys_from_attrs_context)
-
-        operation_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operation_names, self.basic_operations_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Thing')
-
-    def test_options_for_non_spatial_resource_simple_path_with_accept_header(self):
-        response = requests.options(self.controle_base_uri + "usuario-list/1/",
-                                    headers={'Accept': "application/octet-stream"})
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['avatar', 'data_nascimento', 'email', 'id', 'nome', 'nome_usuario', 'senha'])
-
-        id_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id")
-        self.assertListEqual(id_context_keys_list, self.keys_from_attrs_context)
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        nome_usuario_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome_usuario")
-        self.assertListEqual(nome_usuario_context_keys_list, self.keys_from_attrs_context)
-        senha_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "senha")
-        self.assertListEqual(senha_context_keys_list, self.keys_from_attrs_context)
-        data_nascimento_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data_nascimento")
-        self.assertListEqual(data_nascimento_context_keys_list, self.keys_from_attrs_context)
-        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
-        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
-        avatar_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "avatar")
-        self.assertListEqual(avatar_context_keys_list, self.keys_from_attrs_context)
-
-        operation_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operation_names, [])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'bytes')
-
-    # tests for NonSpatialResource only attributes
-    def test_options_for_non_spatial_resource_only_attributes(self):
-        response = requests.options(self.controle_base_uri + "usuario-list/1/nome,email")
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_keys, self.non_simple_path_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['email', 'nome'])
-
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
-        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
-
-        supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, self.basic_operations_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Thing')
-
-    def test_options_for_non_spatial_resource_only_attributes_with_accept_header(self):
-        response = requests.options(self.controle_base_uri + "usuario-list/1/nome,email",
-                                    headers={'Accept': "application/octet-stream"})
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_keys, self.non_simple_path_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['email', 'nome'])
-
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
-        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
-
-        operation_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operation_names, [])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'bytes')
-
-
-    # ------------------- TESTS FOR ENTRY POINTS -------------------------------------
-    def test_options_for_feature_entrypoint(self):
-        response = requests.options(self.bcim_base_uri)
-        self.assertEquals(response.status_code, 200)
-
-        #self.assertEqual(response.headers['Link'],
-        #'<http://luc00557196:8000/api/bcim/>; rel="http://schema.org/EntryPoint" , <http://luc00557196:8000/api/bcim.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"')
-
-        a_context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(a_context_keys, ['aglomerados rurais de extensao urbana', 'aglomerados rurais isolado',
-                                              'aldeias indigenas', 'areas de desenvolvimento de controle', 'areas edificadas',
-                                              'bancos de areia', 'barragens', 'brejos e pantanos', 'capitais', 'cidades',
-                                              'corredeiras', 'curvas batimetricas', 'curvas de nivel', 'dunas', 'eclusas',
-                                              'edificacoes agropecuarias de extracao vegetal e pesca',
-                                              'edificacoes de construcao aeroportuaria', 'edificacoes de construcao portuaria',
-                                              'edificacoes de metro ferroviaria', 'edificacoes industrial', 'edificacoes publica militar',
-                                              'edificacoes religiosa', 'elementos fisiografico natural',
-                                              'estacoes geradoras de energia eletrica', 'extracoes minerais', 'fozes maritima',
-                                              'fundeadouros', 'hidreletricas', 'ilhas', 'mangues', 'marcos de limite', 'massas dagua',
-                                              'municipios', 'outros limites oficiais', 'paises', 'picos', 'pistas de ponto pouso',
-                                              'pontes', 'pontos cotados altimetricos', 'pontos cotados batimetricos', 'postos fiscais',
-                                              'quedas dagua', 'recifes', 'rochas em agua', 'sinalizacoes', 'sumidouros vertedouros',
-                                              'termeletricas', 'terras indigenas', 'terrenos sujeito a inundacao',
-                                              'torres de energia', 'travessias', 'trechos de drenagem', 'trechos de massa dagua',
-                                              'trechos dutos', 'trechos ferroviarios', 'trechos hidroviarios', 'trechos rodoviarios',
-                                              'tuneis', 'unidades de conservacao nao snuc', 'unidades de protecao integral',
-                                              'unidades de uso sustentavel', 'unidades federativas', 'vegetacoes de restinga', 'vilas'])
-
-        response_dict = self.aux_get_dict_from_response(response)
-
-        self.assertEquals("https://www.hydra-cg.com/spec/latest/core/#hydra:entrypoint", response_dict["@id"])
-        self.assertEquals("http://geojson.org/geojson-ld/vocab.html#FeatureCollection",
-                          response_dict["@context"]['aglomerados rurais de extensao urbana']["@id"])
-
-    def test_options_for_raster_entrypoint(self):
-        response = requests.options(self.raster_base_uri)
-        self.assertEquals(response.status_code, 200)
-
-        a_context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(a_context_keys, ['imagem-exemplo-tile1-list',
-                                           'imagem-exemplo1-list',
-                                           'imagem-exemplo2-list',
-                                           'imagem-exemplo4-tile2-list'])
-
-        response_dict = self.aux_get_dict_from_response(response)
-
-        self.assertEquals("https://www.hydra-cg.com/spec/latest/core/#hydra:entrypoint", response_dict["@id"])
-        # todo: find more specific vocabulary for raster
-        self.assertEquals("https://schema.org/Thing",
-                          response_dict["@context"]['imagem-exemplo-tile1-list']["@id"])
-
-    def test_options_for_non_spatial_entrypoint(self):
-        response = requests.options(self.controle_base_uri)
-        self.assertEquals(response.status_code, 200)
-
-        a_context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(a_context_keys, ['gasto-list', 'tipo-gasto-list', 'usuario-list'])
-
-        response_dict = self.aux_get_dict_from_response(response)
-
-        self.assertEquals("https://www.hydra-cg.com/spec/latest/core/#hydra:entrypoint", response_dict["@id"])
-        # todo: find more specific vocabulary for non spatial resource
-        self.assertEquals("https://schema.org/Thing",
-                          response_dict["@context"]['gasto-list']["@id"])
-
-#python manage.py test hyper_resource.tests.GetRequestContextTest --testrunner=hyper_resource.tests.NoDbTestRunner
-class GetRequestContextTest(AbstractRequestTest):
-
-    # --------------- TESTS FOR FEATURE RESOURCE ---------------------------------
-    # tests for feature resource simple path
-    def test_suffixed_request_to_feature_resource_simple_path(self):
-        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES.jsonld")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.simple_path_options_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['geocodigo', 'geom', 'geometriaaproximada', 'id_objeto', 'iri_metadata', 'iri_style', 'nome', 'nomeabrev', 'sigla'])
-
-        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
-        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
-        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
-        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
-        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
-        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
-        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
-        sigla_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "sigla")
-        self.assertListEqual(sigla_context_keys_list, self.keys_from_attrs_context)
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Feature')
-
-    # tests for feature resource attributes
-    def test_suffixed_request_to_feature_resource_only_attributes(self):
-        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES/geom,geocodigo,sigla.jsonld")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['geocodigo', 'geom', 'sigla'])
-
-        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
-        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
-        sigla_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "sigla")
-        self.assertListEqual(sigla_context_keys_list, self.keys_from_attrs_context)
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Feature')
-
-    def test_suffixed_request_to_feature_resource_only_alphanumeric_attributes(self):
-        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES/geocodigo,sigla.jsonld")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['geocodigo', 'sigla'])
-
-        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
-        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
-        sigla_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "sigla")
-        self.assertListEqual(sigla_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.basic_operations_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Thing')
-
-    def test_suffixed_request_to_feature_resource_only_geometric_attribute(self):
-        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES/geom.jsonld")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['geom'])
-
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'GeometryField')
-
-    # tests for feature resource operations
-    def test_sufixed_request_to_feature_resource_operation_with_float_return(self):
-        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES/area.jsonld')
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        a_context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(a_context_keys, ['area'])
-
-        area_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "area")
-        self.assertListEqual(area_context_keys_list, ["@id", "@type"])
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, [])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'float')
-
-    def test_suffixed_request_to_feature_resource_operation_with_geometry_return(self):
-        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES/buffer/1.2.jsonld')
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        a_context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(a_context_keys, ['buffer'])
-
-        buffer_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "buffer")
-        self.assertListEqual(buffer_context_keys_list, ["@id", "@type"])
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Feature')
-
-    def test_suffixed_request_to_feature_resource_point_on_surface_operation(self):
-        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES/point_on_surface.jsonld')
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        a_context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(a_context_keys, ['point_on_surface'])
-
-        point_on_surface_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "point_on_surface")
-        self.assertListEqual(point_on_surface_context_keys_list, ["@id", "@type"])
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Point')
-
-
-    # --------------- TESTS FOR FEATURE COLLECTION ---------------------------------
-    # tests for feature collection simple path
-    def test_suffixed_request_to_feature_collection_resource_simple_path(self):
-        response = requests.get(self.bcim_base_uri + "unidades-federativas.jsonld")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.simple_path_options_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['geocodigo', 'geom', 'geometriaaproximada', 'id_objeto', 'iri_metadata', 'iri_style', 'nome', 'nomeabrev', 'sigla'])
-
-        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
-        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
-        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
-        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
-        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
-        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
-        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
-        sigla_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "sigla")
-        self.assertListEqual(sigla_context_keys_list, self.keys_from_attrs_context)
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'FeatureCollection')
-
-    # tests for feature collection attributes
-    def test_suffixed_request_to_feature_collection_resource_only_attributes(self):
-        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/nome,geom.jsonld")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['geom', 'nome'])
-
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'FeatureCollection')
-
-    def test_suffixed_request_feature_collection_only_geometric_attribute(self):
-        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/geom.jsonld")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['geom'])
-
-        geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
-        self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'GeometryCollection')
-
-    def test_suffixed_request_feature_collection_only_alphanumeric_attributes(self):
-        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/nome,nomeabrev.jsonld")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_dict_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_dict_keys, ['nome', 'nomeabrev'])
-
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
-        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Collection')
-
-    # tests for feature collection operations
-    def test_suffixed_request_feature_collection_operation_with_geometry_collection_return(self):
-        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + "unidades-federativas/ES.jsonld")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        context_dict_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_dict_keys, ['within'])
-
-        within_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "within")
-        self.assertListEqual(within_context_keys_list, ["@id", "@type"])
-
-        supported_operation_names = self.aux_get_supported_operations_names(response)
-        self.assertEquals(supported_operation_names, self.spatial_collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'FeatureCollection')
-
-    def test_suffixed_request_feature_collection_operation_with_integer_return(self):
-        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/count_resource.jsonld")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
-
-        supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertEquals(supported_operations_names, [])
-
-        context_dict_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_dict_keys, ['count_resource'])
-
-        count_resource_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "count_resource")
-        self.assertListEqual(count_resource_context_keys_list, ["@id", "@type"])
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'int')
-
-
-    # --------------- TESTS FOR NON SPATIAL RESOURCE ---------------------------------
-    # tests for nonspatialresource simple path
-    def test_suffixed_request_to_non_spatial_resource_simple_path(self):
-        response = requests.get(self.controle_base_uri + "usuario-list/1.jsonld")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.simple_path_options_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['avatar', 'data_nascimento', 'email', 'id', 'nome', 'nome_usuario', 'senha'])
-
-        avatar_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "avatar")
-        self.assertListEqual(avatar_context_keys_list, self.keys_from_attrs_context)
-        data_nascimento_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data_nascimento")
-        self.assertListEqual(data_nascimento_context_keys_list, self.keys_from_attrs_context)
-        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
-        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
-        id_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id")
-        self.assertListEqual(id_context_keys_list, self.keys_from_attrs_context)
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        nome_usuario_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome_usuario")
-        self.assertListEqual(nome_usuario_context_keys_list, self.keys_from_attrs_context)
-        senha_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "senha")
-        self.assertListEqual(senha_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.basic_operations_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Thing')
-
-    # tests for nonspatialresource attributes
-    def test_suffixed_request_to_non_spatial_resource_only_attributes(self):
-        response = requests.get(self.controle_base_uri + "usuario-list/1/nome,email.jsonld")
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_keys, self.non_simple_path_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['email', 'nome'])
-
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
-        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
-
-        supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, self.basic_operations_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Thing')
-
-
-    # --------------- TESTS FOR COLLECTION ---------------------------------
-    # tests for collection simple path
-    def test_suffixed_request_to_collection_resource_simple_path(self):
-        response = requests.get(self.controle_base_uri + "usuario-list.jsonld")
-        self.assertEquals(response.status_code, 200)
-
-        response_dict_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_dict_keys, self.simple_path_options_dict_keys)
-
-        acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['avatar', 'data_nascimento', 'email', 'id', 'nome', 'nome_usuario', 'senha'])
-
-        avatar_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "avatar")
-        self.assertListEqual(avatar_context_keys_list, self.keys_from_attrs_context)
-        data_nascimento_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data_nascimento")
-        self.assertListEqual(data_nascimento_context_keys_list, self.keys_from_attrs_context)
-        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
-        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
-        id_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id")
-        self.assertListEqual(id_context_keys_list, self.keys_from_attrs_context)
-        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
-        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
-        nome_usuario_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome_usuario")
-        self.assertListEqual(nome_usuario_context_keys_list, self.keys_from_attrs_context)
-        senha_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "senha")
-        self.assertListEqual(senha_context_keys_list, self.keys_from_attrs_context)
-
-        operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operations_names, self.collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Collection')
-
-    # tests for collection attributes
-    def test_suffixed_request_to_collection_resource_only_attributes(self):
-        response = requests.get(self.controle_base_uri + 'gasto-list/data,valor.jsonld')
-        self.assertEquals(response.status_code, 200)
-
-        response_keys = self.aux_get_keys_from_response(response)
-        self.assertListEqual(response_keys, self.non_simple_path_dict_keys)
-
-        context_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(context_keys, ['data', 'valor'])
-
-        data_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data")
-        self.assertListEqual(data_context_keys_list, self.keys_from_attrs_context)
-        valor_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "valor")
-        self.assertListEqual(valor_context_keys_list, self.keys_from_attrs_context)
-
-        operation_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(operation_names, self.collection_operation_names)
-
-        response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], 'Collection')
-
-    # tests for collection operation
-
-    # tests for collection collect operation
-
-
-    # ------------------- TESTS FOR ENTRY POINTS -------------------------------------
-
 #python manage.py test hyper_resource.tests.JoinOperationTest --testrunner=hyper_resource.tests.NoDbTestRunner
 class JoinOperationTest(AbstractGetRequestTest):
     def setUp(self):
         super(JoinOperationTest, self).setUp()
         self.pesquisa_esporte_base_url = "http://172.30.10.86/esporte-list/"
         self.munic_2015_base_uri = "http://172.30.10.86/api/munic-2015/"
-        self.pib_municipio = "http://172.30.10.86/api/pib-municipio/"
+        self.pib_municipio_base_uri = "http://172.30.10.86/api/pib-municipio/"
         self.feature_keys = ["geometry", "id", "properties", "type"]
 
     def aux_get_first_joined_dict_attributes_from_first_feature(self, response):
@@ -3487,18 +2383,109 @@ class JoinOperationTest(AbstractGetRequestTest):
         first_feature = self.aux_get_first_feature(response)
         return len(first_feature['properties']['__joined__'])
 
+    def aux_get_first_joined_dict_attributes_from_single_element_response(self, response):
+        first_element = self.aux_get_single_element_from_response(response)
+        return sorted( first_element["__joined__"][0].keys() )
+
+    def aux_get_first_joined_dict_attributes_from_first_element_response(self, response):
+        first_element = self.aux_get_first_element_from_response_list(response)
+        return sorted( list(first_element["__joined__"][0].keys()) )
+
+    def aux_get_single_element_joined_length(self, response):
+        first_element = self.aux_get_single_element_from_response(response)
+        return len(first_element['__joined__'])
+
     # --------------- TESTS FOR NON SPATIAL RESOURCE ---------------------------------
     def test_join_operation_for_non_spatial_resource_one_to_one_rel(self):
-        pass
+        response = requests.get(self.controle_base_uri + "gasto-list/7/join/cod_municipio&geocodigo/" + self.munic_2015_base_uri + "variaveis-externas-list/3243")
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers['content-type'], 'application/json')
+
+        first_element_keys = self.aux_get_sigle_element_keys_from_response(response)
+        self.assertEquals(first_element_keys, ['__joined__', 'cod_municipio', 'data', 'id', 'tipo_gasto', 'usuario', 'valor'])
+
+        joined_dicts_len = self.aux_get_single_element_joined_length(response)
+        self.assertEquals(joined_dicts_len, 1)
+
+        joined_attrs_list = self.aux_get_first_joined_dict_attributes_from_single_element_response(response)
+        self.assertEquals(joined_attrs_list, ['classe_tama_populacao_estimada_2015', 'codfigo_uf', 'geocodigo',
+                                              'id_variaveis_externas', 'nome_municipio', 'populacao_estimada_2015',
+                                              'regiao', 'sigla_unidade_federacao'])
 
     def test_join_operation_for_non_spatial_resource_one_to_one_rel_accept_octet_stream(self):
-        pass
+        response = requests.get(self.controle_base_uri + "gasto-list/7/join/cod_municipio&geocodigo/" + self.munic_2015_base_uri + "variaveis-externas-list/3243",
+                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers['content-type'], 'application/octet-stream')
 
     def test_join_operation_for_non_spatial_resource_one_to_many_rel(self):
-        pass
+        response = requests.get(self.controle_base_uri + "gasto-list/7/join/cod_municipio&cod_municipio/" + self.pib_municipio_base_uri + "faturamento-list/filter/cod_municipio/eq/3304557/")
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers['content-type'], 'application/json')
+
+        first_element_keys = self.aux_get_sigle_element_keys_from_response(response)
+        self.assertEquals(first_element_keys, ['__joined__', 'cod_municipio', 'data', 'id', 'tipo_gasto', 'usuario', 'valor'])
+
+        joined_dicts_len = self.aux_get_single_element_joined_length(response)
+        self.assertEquals(joined_dicts_len, 6)
+
+        joined_attrs_list = self.aux_get_first_joined_dict_attributes_from_single_element_response(response)
+        self.assertEquals(joined_attrs_list, ['ano', 'cod_municipio', 'id', 'id_municipio', 'impostos_produtos',
+                                              'num_habitantes', 'valor_bruto_adm', 'valor_bruto_agro', 'valor_bruto_ind',
+                                              'valor_bruto_serv'])
 
     def test_join_operation_for_non_spatial_resource_one_to_many_rel_accept_octet_stream(self):
-        pass
+        response = requests.get(self.controle_base_uri + "gasto-list/7/join/cod_municipio&cod_municipio/" + self.pib_municipio_base_uri + "faturamento-list/filter/cod_municipio/eq/3304557/",
+                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers['content-type'], 'application/octet-stream')
+
+
+    # --------------- TESTS FOR COLLECTION RESOURCE ---------------------------------
+    def test_join_operations_for_collection_resource_one_to_one_rel(self):
+        response = requests.get(self.controle_base_uri + "gasto-list/join/cod_municipio&geocodigo/" + self.munic_2015_base_uri + "variaveis-externas-list/")
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers['content-type'], 'application/json')
+
+        first_element_keys = self.aux_get_first_element_keys_from_response_list(response)
+        self.assertEquals(first_element_keys, ['__joined__', 'cod_municipio', 'data', 'id', 'tipo_gasto', 'usuario', 'valor'])
+
+        joined_dicts_len = self.aux_get_first_element_joined_length(response)
+        self.assertEquals(joined_dicts_len, 1)
+
+        joined_attrs_list = self.aux_get_first_joined_dict_attributes_from_first_element_response(response)
+        self.assertEquals(joined_attrs_list, ['classe_tama_populacao_estimada_2015', 'codfigo_uf', 'geocodigo',
+                                              'id_variaveis_externas', 'nome_municipio', 'populacao_estimada_2015',
+                                              'regiao', 'sigla_unidade_federacao'])
+
+    def test_join_operations_for_collection_resource_one_to_one_rel_accept_octet_stream(self):
+        response = requests.get(self.controle_base_uri + "gasto-list/join/cod_municipio&geocodigo/" + self.munic_2015_base_uri + "variaveis-externas-list/",
+                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers['content-type'], 'application/octet-stream')
+
+    def test_join_operations_for_collection_resource_one_to_many_rel(self):
+        response = requests.get(self.controle_base_uri + "gasto-list/join/cod_municipio&cod_municipio/" + self.pib_municipio_base_uri + "faturamento-list/filter/cod_municipio/in/3550308&3304557")
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers['content-type'], 'application/json')
+
+        first_element_keys = self.aux_get_first_element_keys_from_response_list(response)
+        self.assertEquals(first_element_keys, ['__joined__', 'cod_municipio', 'data', 'id', 'tipo_gasto', 'usuario', 'valor'])
+
+        joined_dicts_len = self.aux_get_first_element_joined_length(response)
+        self.assertEquals(joined_dicts_len, 6)
+
+        joined_attrs_list = self.aux_get_first_joined_dict_attributes_from_first_element_response(response)
+        self.assertEquals(joined_attrs_list, ['ano', 'cod_municipio', 'id', 'id_municipio', 'impostos_produtos',
+                                              'num_habitantes', 'valor_bruto_adm', 'valor_bruto_agro', 'valor_bruto_ind',
+                                              'valor_bruto_serv'])
+
+    def test_join_operations_for_collection_resource_one_to_many_rel_accept_octet_stream(self):
+        response = requests.get(self.controle_base_uri + "gasto-list/join/cod_municipio&cod_municipio/" + self.pib_municipio_base_uri + "faturamento-list/filter/cod_municipio/in/3550308&3304557",
+                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers['content-type'], 'application/octet-stream')
+
 
     # --------------- TESTS FOR FEATURE RESOURCE ---------------------------------
     def test_join_operation_for_feature_resource_one_to_one_rel(self):
@@ -3568,7 +2555,7 @@ class JoinOperationTest(AbstractGetRequestTest):
         self.assertEquals(response.headers['content-type'], 'application/octet-stream')
 
     def test_join_operation_for_feature_resource_one_to_many_rel(self):
-        response = requests.get(self.bcim_base_uri + "municipios/3304557/join/geocodigo&cod_municipio/" + self.pib_municipio + "faturamento-list/filter/cod_municipio/eq/3304557")
+        response = requests.get(self.bcim_base_uri + "municipios/3304557/join/geocodigo&cod_municipio/" + self.pib_municipio_base_uri + "faturamento-list/filter/cod_municipio/eq/3304557")
         self.assertEquals(response.status_code, 200)
         self.assertEquals(response.headers['content-type'], 'application/vnd.geo+json')
 
@@ -3587,14 +2574,14 @@ class JoinOperationTest(AbstractGetRequestTest):
                                               'valor_bruto_ind', 'valor_bruto_serv'])
 
     def test_join_operation_for_feature_resource_one_to_many_rel_accept_octet_stream(self):
-        response = requests.get(self.bcim_base_uri + "municipios/3304557/join/geocodigo&cod_municipio/" + self.pib_municipio + "faturamento-list/filter/cod_municipio/eq/3304557",
+        response = requests.get(self.bcim_base_uri + "municipios/3304557/join/geocodigo&cod_municipio/" + self.pib_municipio_base_uri + "faturamento-list/filter/cod_municipio/eq/3304557",
                                 headers={"Accept": "application/octet-stream"})
         self.assertEquals(response.status_code, 200)
         self.assertEquals(response.headers['content-type'], 'application/octet-stream')
 
 
     # --------------- TESTS FOR FEATURE COLLECTION ---------------------------------
-    def test_join_operation_for_feature_collection_with_filter(self):
+    def test_join_operation_for_feature_collection_one_to_one_rel(self):
         response = requests.get(self.bcim_base_uri + "unidades-federativas/filter/sigla/in/RJ&ES&MG/join/geocodigo&cod_estado/" + self.pesquisa_esporte_base_url + "cond-funcionamento-list/filter/cod_estado/in/31&32&33&35/")
         self.assertEquals(response.status_code, 200)
         self.assertEquals(response.headers['content-type'], 'application/vnd.geo+json')
@@ -3606,7 +2593,7 @@ class JoinOperationTest(AbstractGetRequestTest):
         self.assertEquals(first_feature_keys, self.feature_keys)
 
         first_feature_properties_keys = self.aux_get_first_feature_properties_keys(response)
-        self.assertEquals(first_feature_properties_keys, ["__joined__", "geocodigo", "nome", "nomeabrev", "sigla"])
+        self.assertEquals(first_feature_properties_keys, ["__joined__", "geocodigo", "geometriaaproximada", "nome", "nomeabrev", "sigla"])
 
         joined_alfanumeric_attrs = self.aux_get_first_joined_dict_attributes_from_first_feature(response)
         self.assertEquals(joined_alfanumeric_attrs, ['ano', 'autodromo_func', 'autodromo_parado', 'cod_estado',
@@ -3615,14 +2602,42 @@ class JoinOperationTest(AbstractGetRequestTest):
                                                      'gin_parado', 'id', 'id_estado', 'kartodromo_func',
                                                      'kartodromo_parado'] )
 
-    def test_join_operation_for_feature_collection_with_filter_accept_octet_stream(self):
+    def test_join_operation_for_feature_collection_one_to_one_rel_accept_octet_stream(self):
         response = requests.get(self.bcim_base_uri + "unidades-federativas/filter/sigla/in/RJ&ES&MG/join/geocodigo&cod_estado/" + self.pesquisa_esporte_base_url + "cond-funcionamento-list/filter/cod_estado/in/31&32&33&35/",
                                 headers={"accept": "application/octet-stream"})
         self.assertEquals(response.status_code, 200)
         self.assertEquals(response.headers['content-type'], 'application/octet-stream')
 
+    def test_join_operation_for_feature_collection_one_to_many_rel(self):
+        response = requests.get(self.bcim_base_uri + "municipios/filter/nome/in/Rio de Janeiro&Belo Horizonte&Sรฃo Paulo/join/geocodigo&cod_municipio/" + self.pib_municipio_base_uri + "faturamento-list/filter/cod_municipio/in/3304557&3106200&3550308&4106902")
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers["content-type"], 'application/vnd.geo+json')
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.feature_collection_keys)
+
+        first_feature_keys = self.aux_get_first_feature_keys(response)
+        self.assertEquals(first_feature_keys, self.feature_keys)
+
+        first_feature_properties_keys = self.aux_get_first_feature_properties_keys(response)
+        self.assertEquals(first_feature_properties_keys, ["__joined__", "anodereferencia", "geocodigo", "geometriaaproximada", "nome", "nomeabrev"])
+
+        joined_dicts_len = self.aux_get_first_feature_joined_length(response)
+        self.assertEquals(joined_dicts_len, 6)
+
+        joined_dict_attrs = self.aux_get_first_joined_dict_attributes_from_first_feature(response)
+        self.assertEquals(joined_dict_attrs, ['ano', 'cod_municipio', 'id', 'id_municipio', 'impostos_produtos',
+                                              'num_habitantes', 'valor_bruto_adm', 'valor_bruto_agro',
+                                              'valor_bruto_ind', 'valor_bruto_serv'])
+
+    def test_join_operation_for_feature_collection_one_to_many_rel_accept_octet_stream(self):
+        response = requests.get(self.bcim_base_uri + "municipios/filter/nome/in/Rio de Janeiro&Belo Horizonte&Sรฃo Paulo/join/geocodigo&cod_municipio/" + self.pib_municipio_base_uri + "faturamento-list/filter/cod_municipio/in/3304557&3106200&3550308&4106902",
+                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers["content-type"], 'application/octet-stream')
+
 #python manage.py test hyper_resource.tests.OptionsForJoinOperationTest --testrunner=hyper_resource.tests.NoDbTestRunner
-class OptionsForJoinOperationTest(AbstractRequestTest):
+class OptionsForJoinOperationTest(AbstractOptionsRequestTest):
     def setUp(self):
         super(OptionsForJoinOperationTest, self).setUp()
         self.pesquisa_esporte_base_url = "http://172.30.10.86/esporte-list/"
@@ -3644,13 +2659,14 @@ class OptionsForJoinOperationTest(AbstractRequestTest):
         self.assertEquals(supported_operations_names, self.spatial_operation_names)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['anodereferencia', 'geocodigo', 'geom', 'geometriaaproximada', 'id_objeto', 'iri_metadata', 'iri_style', 'nome', 'nomeabrev'])
+        self.assertEquals(acontext_keys, ['anodereferencia', 'geocodigo', 'geom', 'geometriaaproximada', 'hydra', 'id_objeto', 'nome', 'nomeabrev'])
 
         geocodigo_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
         self.assertEquals(geocodigo_acontext_keys, self.keys_from_attrs_context)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@type"], "Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
 
 
         # todo: test for join full context
@@ -3809,15 +2825,4413 @@ class OptionsForJoinOperationTest(AbstractRequestTest):
         self.assertEquals(response_dict["@type"], 'FeatureCollection')
     """
 
+
+#                               RESOURCE TYPES TEST (GET, HEAD and OPTIONS requests)
+# EntryPointResource
+#python manage.py test hyper_resource.tests.EntryPointTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class EntryPointTest(AbstractGetRequestTest):
+
+    # simple path
+    def test_entry_point_resource_simple_path(self):
+        response = requests.get(self.controle_base_uri)
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, ['gasto-list', 'tipo-gasto-list', 'usuario-list'])
+
+    def test_entry_point_resource_simple_path_accept_octet_stream(self):
+        response = requests.get(self.controle_base_uri, headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+    def test_entry_point_resource_simple_path_accept_image_png(self):
+        pass
+
+    # operations
+    def test_entry_point_resource_count_resource_operation(self):
+        response = requests.get(self.controle_base_uri + 'count-resource')
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, ['count-resource'])
+
+    def test_entry_point_resource_count_resource_operation_accept_octet_stream(self):
+        response = requests.get(self.controle_base_uri + 'count-resource')
+        self.assertEquals(response.status_code, 200)
+
+    def test_entry_point_resource_count_resource_operation_accept_image_png(self):
+        pass
+
+#python manage.py test hyper_resource.tests.OptionsEntryPointTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class OptionsEntryPointTest(AbstractOptionsRequestTest):
+    '''
+    Class for tests every possible OPTIONS request for EntryPointResource
+    '''
+
+    # simple path
+    def test_options_for_entry_point_resource_simple_path(self):
+        response = requests.options(self.controle_base_uri)
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['gasto-list', 'hydra', 'rdfs', 'subClassOf', 'tipo-gasto-list', 'usuario-list'])
+
+        gasto_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'gasto-list') # for each key of the entrypoint {@type: hydra:link}
+        self.assertEquals(gasto_acontext_keys, self.keys_from_attrs_context)
+        tipo_gasto_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'tipo-gasto-list')
+        self.assertEquals(tipo_gasto_acontext_keys, self.keys_from_attrs_context)
+        usuario_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'usuario-list')
+        self.assertEquals(usuario_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.entrypoint_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "hydra:Link")
+        self.assertEquals(response_dict["@type"], "hydra:entrypoint")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_for_entry_point_resource_simple_path_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri, headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['gasto-list', 'hydra', 'rdfs', 'subClassOf', 'tipo-gasto-list', 'usuario-list'])
+
+        gasto_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'gasto-list')
+        self.assertEquals(gasto_acontext_keys, self.keys_from_attrs_context)
+        tipo_gasto_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'tipo-gasto-list')
+        self.assertEquals(tipo_gasto_acontext_keys, self.keys_from_attrs_context)
+        usuario_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'usuario-list')
+        self.assertEquals(usuario_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "hydra:Link")
+        self.assertEquals(response_dict["@type"], "hydra:entrypoint")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_for_entry_point_resource_simple_path_accept_image_png(self):
+        pass
+
+    # operations
+    def test_options_for_entry_point_resource_count_resource_operation(self):
+        response = requests.options(self.controle_base_uri + "count-resource")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['count-resource', 'hydra', 'rdfs', 'subClassOf'])
+
+        count_resource_resource_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'count-resource')
+        self.assertEquals(count_resource_resource_acontext_keys, self.keys_from_oper_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_oper_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "hydra:totalItems")
+        self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_for_entry_point_resource_count_resource_operation_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "count-resource", headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['count-resource', 'hydra', 'rdfs', 'subClassOf'])
+
+        count_resource_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'count-resource')
+        self.assertEquals(count_resource_acontext_keys, self.keys_from_oper_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "hydra:totalItems")
+        self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_for_entry_point_resource_count_resource_operation_accept_image_png(self):
+        pass
+
+#python manage.py test hyper_resource.tests.HeadEntryPointTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class HeadEntryPointTest(AbstractHeadRequestTest):
+
+    # simple path
+    def test_head_for_entry_point_resource_simple_path(self):
+        response_head = requests.head(self.controle_base_uri)
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.controle_base_uri)
+        self.assertEquals(response_get.status_code, 200)
+        response_options = requests.options(self.controle_base_uri)
+        self.assertEquals(response_options.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        options_headers = self.aux_get_headers_list_from_response(response_options)
+        self.assertListEqual(head_headers, get_headers)
+        self.assertListEqual(head_headers, options_headers)
+
+        # compare HEAD with GET headers
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+
+        # compare HEAD with OPTIONS headers
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_options.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_options.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_options.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_options.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_options.headers["allow"])
+        self.assertEquals(response_head.headers["link"],                            response_options.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_options.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_options.headers["vary"])
+        self.assertIn("Date", options_headers)
+        self.assertIn("Content-Type", options_headers)
+
+    def test_head_for_entry_point_resource_simple_path_accept_octet_stream(self):
+        response_head = requests.head(self.controle_base_uri, headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.controle_base_uri, headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_get.status_code, 200)
+        response_options = requests.options(self.controle_base_uri, headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_options.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        options_headers = self.aux_get_headers_list_from_response(response_options)
+        self.assertListEqual(head_headers, get_headers)
+        self.assertListEqual(head_headers, options_headers)
+
+        # compare HEAD with GET headers
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+
+        # compare HEAD with OPTIONS headers
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_options.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_options.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_options.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_options.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_options.headers["allow"])
+        self.assertEquals(response_head.headers["link"],                            response_options.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_options.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_options.headers["vary"])
+        self.assertIn("Date", options_headers)
+        self.assertIn("Content-Type", options_headers)
+
+    def test_head_for_entry_point_resource_simple_path_accept_image_png(self):
+        pass
+
+    #operations
+    def test_head_for_entry_point_resource_count_resource_operation(self):
+        response_head = requests.head(self.controle_base_uri + "count-resource")
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.controle_base_uri + "count-resource")
+        self.assertEquals(response_get.status_code, 200)
+        response_options = requests.options(self.controle_base_uri + "count-resource")
+        self.assertEquals(response_options.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        options_headers = self.aux_get_headers_list_from_response(response_options)
+        self.assertListEqual(head_headers, get_headers)
+        self.assertListEqual(head_headers, options_headers)
+
+        # compare HEAD with GET headers
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+
+        # compare HEAD with OPTIONS headers
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_options.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_options.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_options.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_options.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_options.headers["allow"])
+        self.assertEquals(response_head.headers["link"],                            response_options.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_options.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_options.headers["vary"])
+        self.assertIn("Date", options_headers)
+        self.assertIn("Content-Type", options_headers)
+
+    def test_head_for_entry_point_resource_count_resource_operation_accept_octet_stream(self):
+        response_head = requests.head(self.controle_base_uri + "count-resource", headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.controle_base_uri + "count-resource", headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_get.status_code, 200)
+        response_options = requests.options(self.controle_base_uri + "count-resource", headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_options.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        options_headers = self.aux_get_headers_list_from_response(response_options)
+        self.assertListEqual(head_headers, get_headers)
+        self.assertListEqual(head_headers, options_headers)
+
+        # compare HEAD with GET headers
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+
+        # compare HEAD with OPTIONS headers
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_options.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_options.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_options.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_options.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_options.headers["allow"])
+        self.assertEquals(response_head.headers["link"],                            response_options.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_options.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_options.headers["vary"])
+        self.assertIn("Date", options_headers)
+        self.assertIn("Content-Type", options_headers)
+
+    def test_head_for_entry_point_resource_count_resource_operation_accept_image_png(self):
+        pass
+
+# RasterResource
+#python manage.py test hyper_resource.tests.RasterTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class RasterTest(AbstractRequestTest):
+    '''
+    Class for tests every possible GET request for RasterResources
+    '''
+
+    # simple path
+    def test_tiff_resource_simple_path(self):
+        response = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers["content-type"], 'image/tiff')
+
+    # only attributes
+    def test_tiff_resource_all_attributes(self):
+        response = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rid,rast')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers["content-type"], 'image/tiff')
+
+    def test_tiff_resource_only_raster_attribute(self):
+        response = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rast')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers["content-type"], 'image/tiff')
+
+    def test_tiff_resource_only_alphanumeric_attributes(self):
+        response = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rid')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers["content-type"], 'application/json')
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, ["rid"])
+
+    def test_tiff_resource_only_alphanumeric_attributes_accept_octet_stream(self):
+        response = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rid',
+                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers["content-type"], 'application/octet-stream')
+
+    # operations
+    def test_tiff_resource_driver_operation(self):
+        response = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/driver')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers["content-type"], 'application/json')
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, ["driver"])
+
+    def test_tiff_resource_transform_operation(self):
+        response = requests.get(self.raster_base_uri + "imagem-exemplo-tile1-list/61/transform/3086")
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers["content-type"], 'image/tiff')
+
+    def test_tiff_resource_driver_operation_accept_octet_stream(self):
+        response = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/driver',
+                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers["content-type"], 'application/octet-stream')
+
+    def test_tiff_resource_transform_operation_accept_octet_stream(self):
+        response = requests.get(self.raster_base_uri + "imagem-exemplo-tile1-list/61/transform/3086",
+                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers["content-type"], 'application/octet-stream')
+
+#python manage.py test hyper_resource.tests.OptionsForRasterTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class OptionsForRasterTest(AbstractOptionsRequestTest):
+    '''
+    Class for tests every possible OPTIONS request for RasterResources
+    '''
+
+    def test_options_raster_resource_simple_path(self):
+        response = requests.options(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/')
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ["hydra", "rdfs", "subClassOf"])
+
+        #rast_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "rast")
+        #self.assertEquals(rast_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.raster_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["@type"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_raster_resource_simple_path_accept_octet_stream(self):
+        response = requests.options(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/',
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ["hydra", "rdfs", "subClassOf"])
+
+        #rast_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "rast")
+        #self.assertEquals(rast_acontext_keys, self.keys_from_attrs_context)
+        #rid_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "rid")
+        #self.assertEquals(rid_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["@type"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    # only attributes
+    def test_options_tiff_resource_all_attributes(self):
+        response = requests.options(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rid,rast')
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ["hydra", "rdfs", "subClassOf"])
+
+        #rast_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "rast")
+        #self.assertEquals(rast_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.raster_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["@type"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_tiff_resource_only_raster_attribute(self):
+        response = requests.options(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rast')
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ["hydra", 'rdfs', 'subClassOf'])
+
+        #rast_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "rast")
+        #self.assertEquals(rast_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.raster_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["@type"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_tiff_resource_only_alphanumeric_attributes(self):
+        response = requests.options(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rid')
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ["hydra", "rdfs", "rid", "subClassOf"])
+
+        rid_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "rid")
+        self.assertEquals(rid_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/identifier")
+        self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_tiff_resource_all_attributes_accept_octet_stream(self):
+        response = requests.options(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rid,rast',
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ["hydra", "rdfs", "subClassOf"])
+
+        #rast_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "rast")
+        #self.assertEquals(rast_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["@type"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_tiff_resource_only_raster_attribute_accept_octet_stream(self):
+        response = requests.options(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rast',
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ["hydra", 'rdfs', 'subClassOf'])
+
+        #rast_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "rast")
+        #self.assertEquals(rast_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["@type"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_tiff_resource_only_alphanumeric_attributes_accept_octet_stream(self):
+        response = requests.options(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rid',
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ["hydra", "rdfs", "rid", "subClassOf"])
+
+        rid_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "rid")
+        self.assertEquals(rid_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/identifier")
+        self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    # operations
+    def test_options_tiff_resource_driver_operation(self):
+        response = requests.options(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/driver')
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ["driver", "hydra", "rdfs", "subClassOf"])
+
+        driver_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "driver")
+        self.assertEquals(driver_acontext_keys, self.keys_from_oper_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_oper_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.string_operations_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Text")
+        self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_tiff_resource_transform_operation(self):
+        response = requests.options(self.raster_base_uri + "imagem-exemplo-tile1-list/61/transform/3086")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ["hydra", "rdfs", "subClassOf"])
+
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_oper_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.raster_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["@type"], "https://schema.org/ImageObject")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+# FeatureCollectionResource
+#python manage.py test hyper_resource.tests.FeatureCollectionTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class FeatureCollectionTest(AbstractGetRequestTest):
+    '''
+    Class for tests every possible GET request for FeatureCollectionResource
+    '''
+
+    pass
+
+#python manage.py test hyper_resource.tests.OptionsFeatureCollectionTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class OptionsFeatureCollectionTest(AbstractOptionsRequestTest):
+    '''
+    Class for tests every possible OPTIONS request for FeatureCollectionResource
+    '''
+
+    # simple path
+    def test_options_feature_collection_simple_path(self):
+        response = requests.options(self.bcim_base_uri + "unidades-federativas/")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['geocodigo', 'geometriaaproximada', 'hydra', 'id_objeto', 'nome', 'nomeabrev', 'rdfs', 'sigla', 'subClassOf'])
+
+        geocodigo_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'geocodigo')
+        self.assertEquals(geocodigo_acontext_keys, self.keys_from_attrs_context)
+        geometriaaproximada_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'geometriaaproximada')
+        self.assertEquals(geometriaaproximada_acontext_keys, self.keys_from_attrs_context)
+        id_objeto_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id_objeto')
+        self.assertEquals(id_objeto_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        nomeabrev_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nomeabrev')
+        self.assertEquals(nomeabrev_acontext_keys, self.keys_from_attrs_context)
+        sigla_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'sigla')
+        self.assertEquals(sigla_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_property_keys = self.aux_get_supported_property_keys(response)
+        self.assertEquals(supported_property_keys, self.expected_supported_property_keys)
+
+        supported_properties_names = self.aux_get_supported_properties_names(response)
+        self.assertEquals(supported_properties_names, ['geocodigo', 'geom', 'geometriaaproximada',
+                                                       'id_objeto', 'nome', 'nomeabrev', 'sigla'])
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/State")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    # only attributes
+    def test_options_feature_collection_with_geometry_attribute(self):
+        response = requests.options(self.bcim_base_uri + "unidades-federativas/geom,nome")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    def test_options_feature_collection_only_geometry_attribute(self):
+        response = requests.options(self.bcim_base_uri + "unidades-federativas/geom")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['hydra', 'rdfs', 'subClassOf'])
+
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#geometry")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#GeometryCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    def test_options_feature_collection_without_geometry_attribute(self):
+        response = requests.options(self.bcim_base_uri + "unidades-federativas/nome,sigla")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'sigla', 'subClassOf'])
+
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        sigla_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'sigla')
+        self.assertEquals(sigla_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations_names, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], 'hydra:Collection')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    def test_options_feature_collection_only_one_alphanumeric_attribute(self):
+        response = requests.options(self.bcim_base_uri + "unidades-federativas/nome")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/name")
+        self.assertEquals(response_dict["@type"], 'hydra:Collection')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    # operations
+    def test_options_feature_collection_within_operation(self):
+        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + "unidades-federativas/ES")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys,
+                          ['codigofunai', 'etnia', 'geometriaaproximada', 'hydra', 'id_objeto', 'nome', 'nomeabrev',
+                           'rdfs', 'subClassOf', 'terraindigena'])
+
+        codigofunai_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'codigofunai')
+        self.assertEquals(codigofunai_acontext_keys, self.keys_from_attrs_context)
+        geometriaaproximada_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'geometriaaproximada')
+        self.assertEquals(geometriaaproximada_acontext_keys, self.keys_from_attrs_context)
+        id_objeto_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id_objeto')
+        self.assertEquals(id_objeto_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        nomeabrev_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nomeabrev')
+        self.assertEquals(nomeabrev_acontext_keys, self.keys_from_attrs_context)
+        etnia_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'etnia')
+        self.assertEquals(etnia_acontext_keys, self.keys_from_attrs_context)
+        terraindigena_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'terraindigena')
+        self.assertEquals(terraindigena_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+
+    # simple path (binary)
+    def test_options_feature_collection_simple_path_accept_octet_stream(self):
+        response = requests.options(self.bcim_base_uri + "unidades-federativas/",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys,
+                          ['geocodigo', 'geometriaaproximada', 'hydra', 'id_objeto', 'nome', 'nomeabrev', 'rdfs',
+                           'sigla', 'subClassOf'])
+
+        geocodigo_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'geocodigo')
+        self.assertEquals(geocodigo_acontext_keys, self.keys_from_attrs_context)
+        geometriaaproximada_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'geometriaaproximada')
+        self.assertEquals(geometriaaproximada_acontext_keys, self.keys_from_attrs_context)
+        id_objeto_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id_objeto')
+        self.assertEquals(id_objeto_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        nomeabrev_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nomeabrev')
+        self.assertEquals(nomeabrev_acontext_keys, self.keys_from_attrs_context)
+        sigla_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'sigla')
+        self.assertEquals(sigla_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_property_keys = self.aux_get_supported_property_keys(response)
+        self.assertEquals(supported_property_keys, self.expected_supported_property_keys)
+
+        supported_properties_names = self.aux_get_supported_properties_names(response)
+        self.assertEquals(supported_properties_names, ['geocodigo', 'geom', 'geometriaaproximada', 'id_objeto', 'nome',
+                                                       'nomeabrev', 'sigla'])
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/State")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    # only attributes (binary)
+    def test_options_feature_collection_with_geometry_attribute_accept_octet_stream(self):
+        response = requests.options(self.bcim_base_uri + "unidades-federativas/geom,nome",
+                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    def test_options_feature_collection_only_geometry_attribute_accept_octet_stream(self):
+        response = requests.options(self.bcim_base_uri + "unidades-federativas/geom",
+                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['hydra', 'rdfs', 'subClassOf'])
+
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#geometry")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#GeometryCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    def test_options_feature_collection_without_geometry_attribute_accept_octet_stream(self):
+        response = requests.options(self.bcim_base_uri + "unidades-federativas/nome,sigla",
+                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'sigla', 'subClassOf'])
+
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        sigla_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'sigla')
+        self.assertEquals(sigla_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations_names, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], 'hydra:Collection')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    def test_options_feature_collection_only_one_alphanumeric_attribute_accept_octet_stream(self):
+        response = requests.options(self.bcim_base_uri + "unidades-federativas/nome",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/name")
+        self.assertEquals(response_dict["@type"], 'hydra:Collection')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    # operations (binary)
+    def test_options_feature_collection_within_operation_accept_octet_stream(self):
+        response = requests.options(
+            self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + "unidades-federativas/ES",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys,
+                          ['codigofunai', 'etnia', 'geometriaaproximada', 'hydra', 'id_objeto', 'nome', 'nomeabrev',
+                           'rdfs', 'subClassOf', 'terraindigena'])
+
+        codigofunai_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'codigofunai')
+        self.assertEquals(codigofunai_acontext_keys, self.keys_from_attrs_context)
+        geometriaaproximada_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'geometriaaproximada')
+        self.assertEquals(geometriaaproximada_acontext_keys, self.keys_from_attrs_context)
+        id_objeto_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id_objeto')
+        self.assertEquals(id_objeto_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        nomeabrev_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nomeabrev')
+        self.assertEquals(nomeabrev_acontext_keys, self.keys_from_attrs_context)
+        etnia_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'etnia')
+        self.assertEquals(etnia_acontext_keys, self.keys_from_attrs_context)
+        terraindigena_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'terraindigena')
+        self.assertEquals(terraindigena_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+
+    # simple path (image)
+    def test_options_feature_collection_simple_path_accept_image_png(self):
+        pass
+
+    # only attributes (image)
+    def test_options_feature_collection_with_geometry_attribute_accept_image_png(self):
+        pass
+
+    def test_options_feature_collection_only_geometry_attribute_accept_image_png(self):
+        pass
+
+    def test_options_feature_collection_without_geometry_attribute_accept_image_png(self):
+        pass
+
+    # operations (image)
+    def test_options_feature_collection_within_operation_accept_image_png(self):
+        pass
+
+#python manage.py test hyper_resource.tests.HeadFeatureCollectionTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class HeadFeatureCollectionTest(AbstractHeadRequestTest):
+    '''
+    Tests if GET response headers is the same as HEAD response headers and OPTIONS response headers. Requests for FeatureCollectionResource
+    '''
+
+    # feature entry point
+    def test_head_entry_point(self):
+        response_head = requests.head(self.bcim_base_uri)
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.bcim_base_uri)
+        self.assertEquals(response_get.status_code, 200)
+        response_options = requests.options(self.bcim_base_uri)
+        self.assertEquals(response_options.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        options_headers = self.aux_get_headers_list_from_response(response_options)
+        self.assertListEqual(head_headers, get_headers)
+        self.assertListEqual(head_headers, options_headers)
+
+        # compare HEAD with GET headers
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+
+        # compare HEAD with OPTIONS headers
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_options.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_options.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_options.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_options.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_options.headers["allow"])
+        #self.assertEquals(response_head.headers["content-type"],                    response_options.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_options.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_options.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_options.headers["vary"])
+        self.assertIn("Date", options_headers)
+        self.assertIn("Content-Type", options_headers)
+
+    # features entry point (binary) todo
+    def test_head_feature_entry_point_accept_octet_stream(self):
+        response_head = requests.head(self.bcim_base_uri,
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_head.status_code, 200)
+
+    # features entry point (image)
+    def test_head_feature_entry_point_accept_image_png(self):
+        pass
+
+    '''
+    # raster entry point
+    def test_head_raster_entry_point(self):
+        response_head = requests.head(self.raster_base_uri)
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.raster_base_uri)
+        self.assertEquals(response_get.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        self.assertEquals(head_headers, get_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        #self.assertEquals(response_head.headers["connection"],                      response_get.headers["connection"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+
+    def test_head_raster_entry_point_accept_octet_stream(self):
+        response_head = requests.head(self.raster_base_uri,
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_head.status_code, 406)
+
+    def test_head_raster_entry_point_accept_image_png(self):
+        pass
+
+    '''
+
+    # simple path
+    def test_head_feature_collection_simple_path(self):
+        response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/")
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.bcim_base_uri + "aldeias-indigenas/")
+        self.assertEquals(response_get.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        self.assertListEqual(head_headers, get_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+        self.assertIn("Etag", head_headers)
+        self.assertIn("Etag", get_headers)
+
+    # simple path (binary)
+    def test_head_feature_collection_simple_path_accept_octet_stream(self):
+        response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/",
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.bcim_base_uri + "aldeias-indigenas/",
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_get.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        self.assertEquals(head_headers, get_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+        self.assertIn("Etag", head_headers)
+        self.assertIn("Etag", get_headers)
+
+    # simple path (image)
+    def test_head_feature_collection_simple_path_accept_image_png(self):
+        pass
+
+
+    # only attributes (default)
+    def test_head_feature_collection_with_geometry_attribute(self):
+        response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/nome,geom")
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.bcim_base_uri + "aldeias-indigenas/nome,geom")
+        self.assertEquals(response_get.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        self.assertListEqual(head_headers, get_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+        self.assertIn("Etag", head_headers)
+        self.assertIn("Etag", get_headers)
+
+    def test_head_feature_collection_only_geometry_attribute(self):
+        response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/geom")
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.bcim_base_uri + "aldeias-indigenas/geom")
+        self.assertEquals(response_get.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        self.assertListEqual(head_headers, get_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+        self.assertIn("Etag", head_headers)
+        self.assertIn("Etag", get_headers)
+
+    def test_head_feature_collection_without_geometry_attribute(self):
+        response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/nome")
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.bcim_base_uri + "aldeias-indigenas/nome")
+        self.assertEquals(response_get.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        self.assertListEqual(head_headers, get_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+        self.assertIn("Etag", head_headers)
+        self.assertIn("Etag", get_headers)
+
+    # only attributes (binary)
+    def test_head_feature_collection_with_geometry_attribute_accept_octet_stream(self):
+        response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/nome,geom",
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.bcim_base_uri + "aldeias-indigenas/nome,geom",
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_get.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        self.assertListEqual(head_headers, get_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+        self.assertIn("Etag", head_headers)
+        self.assertIn("Etag", get_headers)
+
+    def test_head_feature_collection_only_geometry_attribute_accept_octet_stream(self):
+        response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/geom",
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.bcim_base_uri + "aldeias-indigenas/geom",
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_get.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        self.assertEquals(head_headers, get_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+        self.assertIn("Etag", head_headers)
+        self.assertIn("Etag", get_headers)
+
+    def test_head_feature_collection_without_geometry_attribute_accept_octet_stream(self):
+        response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/nome",
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.bcim_base_uri + "aldeias-indigenas/nome",
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_get.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        self.assertListEqual(head_headers, get_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+        self.assertIn("Etag", head_headers)
+        self.assertIn("Etag", get_headers)
+
+    # only attributes (image)
+    def test_head_feature_collection_with_geometry_attribute_accept_image_png(self):
+        pass
+
+    def test_head_feature_collection_only_geometry_attribute_accept_image_png(self):
+        pass
+
+    def test_head_feature_collection_without_geometry_attribute_accept_image_png(self):
+        pass
+
+
+    # operations (default)
+    def test_head_feature_collection_within_operation(self):
+        response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + 'unidades-federativas/ES')
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + 'unidades-federativas/ES')
+        self.assertEquals(response_get.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        self.assertListEqual(head_headers, get_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+        self.assertIn("Etag", head_headers)
+        self.assertIn("Etag", get_headers)
+
+    def test_head_feature_collection_count_resource_operations(self):
+        response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/count-resource")
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.bcim_base_uri + "aldeias-indigenas/count-resource")
+        self.assertEquals(response_get.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        self.assertListEqual(head_headers, get_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+        self.assertIn("Etag", head_headers)
+        self.assertIn("Etag", get_headers)
+
+    # operations (binary)
+    def test_head_feature_collection_within_operation_accept_octet_stream(self):
+        response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + 'unidades-federativas/ES',
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + 'unidades-federativas/ES',
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_get.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        self.assertListEqual(head_headers, get_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+        self.assertIn("Etag", head_headers)
+        self.assertIn("Etag", get_headers)
+
+    def test_head_feature_collection_count_resource_operations_accept_octet_stream(self):
+        response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/count-resource",
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_head.status_code, 200)
+        response_get = requests.get(self.bcim_base_uri + "aldeias-indigenas/count-resource",
+                                      headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response_get.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        self.assertListEqual(head_headers, get_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+        self.assertIn("Etag", head_headers)
+        self.assertIn("Etag", get_headers)
+
+    # operations (image)
+    def test_head_feature_collection_within_operation_accept_image_png(self):
+        pass
+
+    def test_head_feature_collection_count_resource_operations_accept_image_png(self):
+        pass
+
+# CollectionResource
+#python manage.py test hyper_resource.tests.OptionsCollectionResource --testrunner=hyper_resource.tests.NoDbTestRunner
+class OptionsCollectionResource(AbstractOptionsRequestTest):
+
+    # simple path
+    def test_options_collection_simple_path(self):
+        response = requests.options(self.controle_base_uri + "usuario-list")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys,
+                          ['data_nascimento', 'email', 'hydra', 'id', 'nome', 'nome_usuario', 'rdfs',
+                           'senha', 'subClassOf'])
+
+        data_nascimento_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'data_nascimento')
+        self.assertEquals(data_nascimento_acontext_keys, self.keys_from_attrs_context)
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        id_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id')
+        self.assertEquals(id_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        nome_usuario_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome_usuario')
+        self.assertEquals(nome_usuario_acontext_keys, self.keys_from_attrs_context)
+        senha_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'senha')
+        self.assertEquals(senha_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_property_keys = self.aux_get_supported_property_keys(response)
+        self.assertListEqual(supported_property_keys, self.expected_supported_property_keys)
+
+        supported_properties_names = self.aux_get_supported_properties_names(response)
+        self.assertListEqual(supported_properties_names, ['data_nascimento', 'email', 'id', 'nome', 'nome_usuario', 'senha'])
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    # only attributes
+    def test_options_collection_only_attributes(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/nome,email")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_only_one_attribute(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/nome")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/name")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    # operations
+    def test_options_collection_filter_operation(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/filter/eq/Rio")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys,
+                          ['data_nascimento', 'email', 'hydra', 'id', 'nome', 'nome_usuario', 'rdfs',
+                           'senha', 'subClassOf'])
+
+        data_nascimento_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'data_nascimento')
+        self.assertEquals(data_nascimento_acontext_keys, self.keys_from_attrs_context)
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        id_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id')
+        self.assertEquals(id_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        nome_usuario_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome_usuario')
+        self.assertEquals(nome_usuario_acontext_keys, self.keys_from_attrs_context)
+        senha_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'senha')
+        self.assertEquals(senha_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_collect_operation(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/collect/email&nome/upper")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['email', 'hydra', 'rdfs', 'subClassOf', 'upper'])
+
+        upper_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
+        self.assertEquals(upper_acontext_keys, self.keys_from_attrs_context)
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_count_resource_operation(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/count-resource")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['count-resource', 'hydra', 'rdfs', 'subClassOf'])
+
+        count_resource_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'count-resource')
+        self.assertEquals(count_resource_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "hydra:totalItems")
+        self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_offset_limit_operation(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/offset-limit/0&2")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys,
+                          ['data_nascimento', 'email', 'hydra', 'id', 'nome', 'nome_usuario', 'rdfs',
+                           'senha', 'subClassOf'])
+
+        data_nascimento_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'data_nascimento')
+        self.assertEquals(data_nascimento_acontext_keys, self.keys_from_attrs_context)
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        id_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id')
+        self.assertEquals(id_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        nome_usuario_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome_usuario')
+        self.assertEquals(nome_usuario_acontext_keys, self.keys_from_attrs_context)
+        senha_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'senha')
+        self.assertEquals(senha_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_distinct_operation(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/distinct/nome")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys,
+                          ['data_nascimento', 'email', 'hydra', 'id', 'nome', 'nome_usuario', 'rdfs',
+                           'senha', 'subClassOf'])
+
+        data_nascimento_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'data_nascimento')
+        self.assertEquals(data_nascimento_acontext_keys, self.keys_from_attrs_context)
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        id_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id')
+        self.assertEquals(id_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        nome_usuario_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome_usuario')
+        self.assertEquals(nome_usuario_acontext_keys, self.keys_from_attrs_context)
+        senha_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'senha')
+        self.assertEquals(senha_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_group_by_count_operation(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/group-by-count/nome")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['count', 'hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        count_nascimento_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'count')
+        self.assertEquals(count_nascimento_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_group_by_sum_operation(self):
+        response = requests.options(self.controle_base_uri + "gasto-list/group-by-sum/data&valor")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['data', 'hydra', 'rdfs', 'subClassOf', 'sum'])
+
+        data_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'data')
+        self.assertEquals(data_acontext_keys, self.keys_from_attrs_context)
+        sum_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'sum')
+        self.assertEquals(sum_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_projection_operation(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/projection/nome,email")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+
+    # simple path (binary)
+    def test_options_collection_simple_path_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys,
+                          ['data_nascimento', 'email', 'hydra', 'id', 'nome', 'nome_usuario', 'rdfs',
+                           'senha', 'subClassOf'])
+
+        data_nascimento_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'data_nascimento')
+        self.assertEquals(data_nascimento_acontext_keys, self.keys_from_attrs_context)
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        id_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id')
+        self.assertEquals(id_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        nome_usuario_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome_usuario')
+        self.assertEquals(nome_usuario_acontext_keys, self.keys_from_attrs_context)
+        senha_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'senha')
+        self.assertEquals(senha_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_property_keys = self.aux_get_supported_property_keys(response)
+        self.assertListEqual(supported_property_keys, self.expected_supported_property_keys)
+
+        supported_properties_names = self.aux_get_supported_properties_names(response)
+        self.assertListEqual(supported_properties_names,
+                             ['data_nascimento', 'email', 'id', 'nome', 'nome_usuario', 'senha'])
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    # only attributes (binary)
+    def test_options_collection_only_attributes_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/nome,email",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_only_one_attribute_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/nome",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/name")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    # operations (binary)
+    def test_options_collection_filter_operation_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/filter/eq/Rio",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys,
+                          ['data_nascimento', 'email', 'hydra', 'id', 'nome', 'nome_usuario', 'rdfs',
+                           'senha', 'subClassOf'])
+
+        data_nascimento_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'data_nascimento')
+        self.assertEquals(data_nascimento_acontext_keys, self.keys_from_attrs_context)
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        id_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id')
+        self.assertEquals(id_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        nome_usuario_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome_usuario')
+        self.assertEquals(nome_usuario_acontext_keys, self.keys_from_attrs_context)
+        senha_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'senha')
+        self.assertEquals(senha_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_collect_operation_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/collect/email&nome/upper",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['email', 'hydra', 'rdfs', 'subClassOf', 'upper'])
+
+        upper_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'upper')
+        self.assertEquals(upper_acontext_keys, self.keys_from_attrs_context)
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_count_resource_operation_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/count-resource",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['count-resource', 'hydra', 'rdfs', 'subClassOf'])
+
+        count_resource_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'count-resource')
+        self.assertEquals(count_resource_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "hydra:totalItems")
+        self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_offset_limit_operation_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/offset-limit/0&2",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys,
+                          ['data_nascimento', 'email', 'hydra', 'id', 'nome', 'nome_usuario', 'rdfs',
+                           'senha', 'subClassOf'])
+
+        data_nascimento_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'data_nascimento')
+        self.assertEquals(data_nascimento_acontext_keys, self.keys_from_attrs_context)
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        id_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id')
+        self.assertEquals(id_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        nome_usuario_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome_usuario')
+        self.assertEquals(nome_usuario_acontext_keys, self.keys_from_attrs_context)
+        senha_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'senha')
+        self.assertEquals(senha_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_distinct_operation_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/distinct/nome",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys,
+                          ['data_nascimento', 'email', 'hydra', 'id', 'nome', 'nome_usuario', 'rdfs',
+                           'senha', 'subClassOf'])
+
+        data_nascimento_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'data_nascimento')
+        self.assertEquals(data_nascimento_acontext_keys, self.keys_from_attrs_context)
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        id_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id')
+        self.assertEquals(id_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        nome_usuario_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome_usuario')
+        self.assertEquals(nome_usuario_acontext_keys, self.keys_from_attrs_context)
+        senha_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'senha')
+        self.assertEquals(senha_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_group_by_count_operation_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/group-by-count/nome",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['count', 'hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        count_nascimento_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'count')
+        self.assertEquals(count_nascimento_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_group_by_sum_operation_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "gasto-list/group-by-sum/data&valor",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['data', 'hydra', 'rdfs', 'subClassOf', 'sum'])
+
+        data_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'data')
+        self.assertEquals(data_acontext_keys, self.keys_from_attrs_context)
+        sum_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'sum')
+        self.assertEquals(sum_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_collection_projection_operation_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/projection/nome,email",
+                                    headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
+        self.assertEquals(email_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertEquals(nome_acontext_keys, self.keys_from_attrs_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+# FeatureResource
+#python manage.py test hyper_resource.tests.FeatureResourceTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class FeatureResourceTest(AbstractGetRequestTest):
+
+    def test_feature_resource_simple_path(self):
+        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals(response.headers["content-type"], 'application/vnd.geo+json')
+
+        feature_keys = self.aux_get_first_feature_keys(response)
+        self.assertListEqual(feature_keys, ['geometry', 'id_objeto', 'properties', 'type'])
+
+        feature_properties_keys = self.aux_get_first_feature_properties_keys(response)
+        self.assertListEqual(feature_properties_keys, ['geocodigo', 'geometriaaproximada', 'nome', 'nomeabrev', 'sigla'])
+
+#python manage.py test hyper_resource.tests.OptionsFeatureResourceTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
+
+    # simple path
+    def test_options_feature_resource_simple_path(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES')
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
+
+        resource_properties = ['geocodigo', 'geometriaaproximada', 'id_objeto', 'nome', 'nomeabrev', 'sigla']
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        expected_keys = self.aux_get_context_keys_merged_with_default_keys(resource_properties)
+        self.assertListEqual(acontext_keys, expected_keys)
+
+        geocodigo_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'geocodigo')
+        self.assertListEqual(geocodigo_acontext_keys, self.keys_from_attrs_context)
+        geometriaaproximada_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'geometriaaproximada')
+        self.assertListEqual(geometriaaproximada_acontext_keys, self.keys_from_attrs_context)
+        id_objeto_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id_objeto')
+        self.assertListEqual(id_objeto_acontext_keys, self.keys_from_attrs_context)
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertListEqual(nome_acontext_keys, self.keys_from_attrs_context)
+        nomeabrev_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nomeabrev')
+        self.assertListEqual(nomeabrev_acontext_keys, self.keys_from_attrs_context)
+        sigla_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'sigla')
+        self.assertListEqual(sigla_acontext_keys, self.keys_from_attrs_context)
+
+        response_supported_property_keys = self.aux_get_supported_property_keys(response)
+        self.assertListEqual(response_supported_property_keys, self.expected_supported_property_keys)
+
+        supported_property_names = self.aux_get_supported_property_names(response)
+        resource_properties.append('geom') # geom is a supportedProperty to
+        self.assertListEqual(supported_property_names, sorted(resource_properties))
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(supported_operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/State")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    # only attributes
+    def test_options_feature_resource_only_attributes(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/geom,nome')
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.non_simple_path_dict_keys)
+
+        resource_properties = ['nome']
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        expected_keys = self.aux_get_context_keys_merged_with_default_keys(resource_properties)
+        self.assertListEqual(acontext_keys, expected_keys)
+
+        nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
+        self.assertListEqual(nome_acontext_keys, self.keys_from_attrs_context)
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(supported_operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_feature_resource_only_geometry_attributes(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/geom')
+        self.assertEquals(response.status_code, 200)
+
+    def test_options_feature_resource_only__alphanumeric_attributes(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/sigla,nome')
+        self.assertEquals(response.status_code, 200)
+
+    def test_options_feature_resource_only_one_alphanumeric_attributes(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/nome')
+        self.assertEquals(response.status_code, 200)
+
+    # operations
+    def test_options_feature_resource_area_operation(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/area')
+        self.assertEquals(response.status_code, 200)
+
+    def test_options_feature_resource_boundary_operation(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/boundary')
+        self.assertEquals(response.status_code, 200)
+
+    def test_options_feature_resource_buffer_operation(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/buffer/1.2')
+        self.assertEquals(response.status_code, 200)
+
+    def test_options_feature_resource_centroid_operation(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/centroid')
+        self.assertEquals(response.status_code, 200)
+
+    def test_options_feature_resource_contains_operation(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/contains/' + self.bcim_base_uri + 'aldeias-indigenas/623')
+        self.assertEquals(response.status_code, 200)
+
+    def test_options_feature_resource_convex_hull_operation(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/convex_hull')
+        self.assertEquals(response.status_code, 200)
+
+    def test_options_feature_resource_coord_seq_operation(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/coord_seq')
+        self.assertEquals(response.status_code, 200)
+
+    def test_options_feature_resource_coords_operation(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/coords')
+        self.assertEquals(response.status_code, 200)
+
+    def test_options_feature_resource_count_operation(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/count')
+        self.assertEquals(response.status_code, 200)
+
+    def test_options_feature_resource_crosses_operation(self):
+        response = requests.options(self.bcim_base_uri + 'trechos-rodoviarios/crosses/' + self.bcim_base_uri + 'municipios/48623') #itaguai
+        self.assertEquals(response.status_code, 200)
+
+    #todo: tests needed for each spatial operations
+
+#python manage.py test hyper_resource.tests.HeadFeatureResourceTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class HeadFeatureResourceTest(AbstractHeadRequestTest):
+
+    def test_head_feature_resource_simple_path(self):
+        response_get = requests.get(self.bcim_base_uri + 'unidades-federativas/ES')
+        self.assertEquals(response_get.status_code, 200)
+        response_head = requests.head(self.bcim_base_uri + 'unidades-federativas/ES')
+        self.assertEquals(response_head.status_code, 200)
+        response_options = requests.options(self.bcim_base_uri + 'unidades-federativas/ES')
+        self.assertEquals(response_options.status_code, 200)
+
+        head_headers = self.aux_get_headers_list_from_response(response_head)
+        get_headers = self.aux_get_headers_list_from_response(response_get)
+        options_headers = self.aux_get_headers_list_from_response(response_options)
+        self.assertListEqual(head_headers, get_headers)
+        #self.assertListEqual(head_headers, options_headers)
+
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_get.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_get.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_get.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_get.headers["allow"])
+        self.assertEquals(response_head.headers["content-type"],                    response_get.headers["content-type"])
+        self.assertEquals(response_head.headers["link"],                            response_get.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_get.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
+        self.assertIn("Date", head_headers)
+        self.assertIn("Date", get_headers)
+
+        # compare HEAD with OPTIONS headers
+        self.assertEquals(response_head.headers["access-control-allow-headers"],    response_options.headers["access-control-allow-headers"])
+        self.assertEquals(response_head.headers["access-control-allow-methods"],    response_options.headers["access-control-allow-methods"])
+        self.assertEquals(response_head.headers["access-control-allow-origin"],     response_options.headers["access-control-allow-origin"])
+        self.assertEquals(response_head.headers["access-control-expose-headers"],   response_options.headers["access-control-expose-headers"])
+        self.assertEquals(response_head.headers["allow"],                           response_options.headers["allow"])
+        self.assertEquals(response_head.headers["link"],                            response_options.headers["link"])
+        self.assertEquals(response_head.headers["server"],                          response_options.headers["server"])
+        self.assertEquals(response_head.headers["vary"],                            response_options.headers["vary"])
+        self.assertIn("Date", options_headers)
+        self.assertIn("Content-Type", options_headers)# OPTIONS content-type is aways JSON-LD
+
+
+#                               ALLOWED METHODS TEST
+#python manage.py test hyper_resource.tests.AllowedMethodsForEntryPoint --testrunner=hyper_resource.tests.NoDbTestRunner
+class AllowedMethodsForEntryPoint(AbstractHeadRequestTest):
+    def test_head_generic_entry_point(self):
+        response = requests.head(self.controle_base_uri)
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'] )
+
+    def test_head_feature_entry_point(self):
+        response = requests.head(self.bcim_base_uri)
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'] )
+
+    def test_head_raster_entry_point(self):
+        response = requests.head(self.raster_base_uri)
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS', 'POST'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS', 'POST'] )
+        #self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'] )
+        #self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'] )
+
+#python manage.py test hyper_resource.tests.AllowedMethodsForNonSpatialResource --testrunner=hyper_resource.tests.NoDbTestRunner
+class AllowedMethodsForNonSpatialResource(AbstractHeadRequestTest):
+    def test_head_non_spatial_resource_simple_path(self):
+        response = requests.head(self.controle_base_uri + 'usuario-list/1')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'PUT'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'PUT'] )
+
+    def test_head_non_spatial_resource_only_attributes(self):
+        response = requests.head(self.controle_base_uri + 'usuario-list/1/nome,email')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'] )
+
+    def test_head_non_spatial_resource_operation(self):
+        response = requests.head(self.controle_base_uri + 'usuario-list/1/projection/nome')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'] )
+
+#python manage.py test hyper_resource.tests.AllowedMethodsForCollectionResource --testrunner=hyper_resource.tests.NoDbTestRunner
+class AllowedMethodsForCollectionResource(AbstractHeadRequestTest):
+    def test_head_collection_resource_simple_path(self):
+        response = requests.head(self.controle_base_uri + 'usuario-list')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST'] )
+
+    def test_head_collection_resource_only_attributes(self):
+        response = requests.head(self.controle_base_uri + 'usuario-list/nome,email')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'] )
+
+    def test_head_collection_resource_operation(self):
+        response = requests.head(self.controle_base_uri + 'usuario-list/count-resource')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'] )
+
+#python manage.py test hyper_resource.tests.AllowedMethodsForTiffCollectionResource --testrunner=hyper_resource.tests.NoDbTestRunner
+class AllowedMethodsForTiffCollectionResource(AbstractHeadRequestTest):
+    def test_head_tiff_collection_resource_simple_path(self):
+        response = requests.head(self.raster_base_uri + 'imagem-exemplo-tile1-list')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS', 'POST'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS', 'POST'] )
+
+    '''
+    def test_head_tiff_collection_resource_only_attributes(self):
+        response = requests.head(self.raster_base_uri + 'imagem-exemplo-tile1-list/')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'] )
+    '''
+
+    def test_head_tiff_collection_resource_operation(self):
+        response = requests.head(self.raster_base_uri + 'imagem-exemplo-tile1-list/count-resource')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'] )
+
+#python manage.py test hyper_resource.tests.AllowedMethodsForTiffResourceTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class AllowedMethodsForTiffResourceTest(AbstractHeadRequestTest):
+    def test_head_tiff_resource_simple_path(self):
+        response = requests.head(self.raster_base_uri + 'imagem-exemplo-tile1-list/181')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'PUT'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'PUT'] )
+
+    def test_head_tiff_resource_only_attributes(self):
+        response = requests.head(self.raster_base_uri + 'imagem-exemplo-tile1-list/181/rid')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'] )
+
+    def test_head_tiff_resource_operation(self):
+        response = requests.head(self.raster_base_uri + 'imagem-exemplo-tile1-list/181/transform/3086')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'] )
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'] )
+
+#python manage.py test hyper_resource.tests.AllowedMethodsForFeatureResourceTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class AllowedMethodsForFeatureResourceTest(AbstractHeadRequestTest):
+    '''
+    Class to test every possible allowed methods for differents requests for FeatureResource
+    '''
+
+    def test_head_for_feature_resource_simple_path(self):
+        response = requests.head(self.bcim_base_uri + 'unidades-federativas/ES')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'PUT'])
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'PUT'])
+
+    def test_head_for_feature_resource_only_attributes(self):
+        response = requests.head(self.bcim_base_uri + 'unidades-federativas/ES/nome,geom')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'])
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'])
+
+    def test_head_for_feature_resource_operation(self):
+        response = requests.head(self.bcim_base_uri + 'unidades-federativas/ES/buffer/0.8')
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'])
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'])
+
+#python manage.py test hyper_resource.tests.AllowedMethodsForFeatureCollectionResourceTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class AllowedMethodsForFeatureCollectionResourceTest(AbstractHeadRequestTest):
+    '''
+    Class to test every possible allowed methods for differents requests for FeatureCollectionResource
+    '''
+
+    # simple path
+    def test_head_for_feature_collection_simple_path(self):
+        response = requests.head(self.bcim_base_uri + "unidades-federativas")
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST'])
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['DELETE', 'GET', 'HEAD', 'OPTIONS', 'POST'])
+
+    # attributes
+    def test_head_for_feature_collection_only_attributes(self):
+        response = requests.head(self.bcim_base_uri + "unidades-federativas/nome,geom")
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'])
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'])
+
+    # operations
+    def test_head_for_feature_collection_operation(self):
+        response = requests.head(self.bcim_base_uri + "unidades-federativas/union")
+        self.assertEquals(response.status_code, 200)
+        self.assertEquals( self.aux_get_allowed_methods(response, 'allow'), ['GET', 'HEAD', 'OPTIONS'])
+        self.assertEquals( self.aux_get_allowed_methods(response, 'access-control-allow-methods'), ['GET', 'HEAD', 'OPTIONS'])
+
+
+#                               OTHER TEST
+#python manage.py test hyper_resource.tests.LinkHeaderTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class LinkHeaderTest(AbstractHeadRequestTest):
+
+    # --- EntryPoints ---
+    # --- GET ---
+    def test_get_for_generic_entry_point(self):
+        response = requests.get(self.controle_base_uri)
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertNotIn('rel="up"', response.headers['link'])
+        self.assertNotIn('rel="stylesheet', response.headers['link'])
+
+    def test_get_for_feature_entry_point(self):
+        response = requests.get(self.bcim_base_uri)
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertNotIn('rel="up"', response.headers['link'])
+        self.assertNotIn('rel="stylesheet', response.headers['link'])
+
+    def test_get_for_raster_entry_point(self):
+        response = requests.get(self.raster_base_uri)
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertNotIn('rel="up"', response.headers['link'])
+        self.assertNotIn('rel="stylesheet', response.headers['link'])
+
+    # --- HEAD ---
+    def test_head_for_generic_entry_point(self):
+        response = requests.head(self.controle_base_uri)
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertNotIn('rel="up"', response.headers['link'])
+        self.assertNotIn('rel="stylesheet', response.headers['link'])
+
+    def test_head_for_feature_entry_point(self):
+        response = requests.head(self.bcim_base_uri)
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertNotIn('rel="up"', response.headers['link'])
+        self.assertNotIn('rel="stylesheet', response.headers['link'])
+
+    def test_head_for_raster_entry_point(self):
+        response = requests.head(self.raster_base_uri)
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertNotIn('rel="up"', response.headers['link'])
+        self.assertNotIn('rel="stylesheet', response.headers['link'])
+
+    # --- OPTIONS ---
+    def test_options_for_generic_entry_point(self):
+        response = requests.options(self.controle_base_uri)
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertNotIn('rel="up"', response.headers['link'])
+        self.assertNotIn('rel="stylesheet', response.headers['link'])
+
+    def test_options_for_feature_entry_point(self):
+        response = requests.options(self.bcim_base_uri)
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertNotIn('rel="up"', response.headers['link'])
+        self.assertNotIn('rel="stylesheet', response.headers['link'])
+
+    def test_options_for_raster_entry_point(self):
+        response = requests.options(self.raster_base_uri)
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertNotIn('rel="up"', response.headers['link'])
+        self.assertNotIn('rel="stylesheet', response.headers['link'])
+
+    # --- POST ---
+    def test_post_for_raster_entry_point(self):
+        pass
+
+    # --- FeatureResource ---
+    def test_get_for_feature_resource(self):
+        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES')
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
+        self.assertIn('rel="up"', response.headers['link']) # has <Up>
+        self.assertIn('rel="stylesheet', response.headers['link']) # has <Style>
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # <EntryPoint> cannot be on the 'Link' header
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+
+    def test_head_for_feature_resource(self):
+        response = requests.head(self.bcim_base_uri + 'unidades-federativas/ES')
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
+        self.assertIn('rel="up"', response.headers['link']) # has <Up>
+        self.assertIn('rel="stylesheet', response.headers['link']) # has <Style>
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # <EntryPoint> cannot be on the 'Link' header
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+
+    def test_options_for_feature_resource(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES')
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
+        self.assertIn('rel="up"', response.headers['link']) # has <Up>
+        self.assertIn('rel="stylesheet', response.headers['link']) # has <Style>
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # <EntryPoint> cannot be on the 'Link' header
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+
+    # --- TiffResource ---
+    def test_get_for_raster_resource(self):
+        response = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/181')
+        self.assertEquals(response.status_code, 200)
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertIn('rel="describedBy"', response.headers['link']) # has <describedBy>
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+
+    def test_head_for_raster_resource(self):
+        response = requests.head(self.raster_base_uri + 'imagem-exemplo-tile1-list/181')
+        self.assertEquals(response.status_code, 200)
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertIn('rel="describedBy"', response.headers['link']) # has <describedBy>
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+
+    def test_options_for_raster_resource(self):
+        response = requests.options(self.raster_base_uri + 'imagem-exemplo-tile1-list/181')
+        self.assertEquals(response.status_code, 200)
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertIn('rel="describedBy"', response.headers['link']) # has <describedBy>
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+
+    # --- FeatureCollection
+    def test_get_for_feature_collection_resource(self):
+        response = requests.get(self.bcim_base_uri + 'unidades-federativas')
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+
+    def test_head_for_feature_collection_resource(self):
+        response = requests.head(self.bcim_base_uri + 'unidades-federativas')
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+
+    def test_options_for_feature_collection_resource(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas')
+        self.assertEquals(response.status_code, 200)
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+
+    def test_post_for_feature_collection_resource(self):
+        pass
+
+    # --- NonSpatialCollection
+    def test_get_for_non_spatial_resource(self):
+        response = requests.get(self.controle_base_uri + 'usuario-list/1')
+        self.assertEquals(response.status_code, 200)
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+
+    def test_head_for_non_spatial_resource(self):
+        response = requests.head(self.controle_base_uri + 'usuario-list/1')
+        self.assertEquals(response.status_code, 200)
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+
+    def test_options_for_non_spatial_resource(self):
+        response = requests.options(self.controle_base_uri + 'usuario-list/1')
+        self.assertEquals(response.status_code, 200)
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+
+    # --- CollectionResource
+    def test_get_for_collection_resource(self):
+        response = requests.get(self.controle_base_uri + 'usuario-list')
+        self.assertEquals(response.status_code, 200)
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+
+    def test_head_for_collection_resource(self):
+        response = requests.head(self.controle_base_uri + 'usuario-list')
+        self.assertEquals(response.status_code, 200)
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+
+    def test_options_for_collection_resource(self):
+        response = requests.options(self.controle_base_uri + 'usuario-list/1')
+        self.assertEquals(response.status_code, 200)
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+
+#python manage.py test hyper_resource.tests.RequestOptionsTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class RequestOptionsTest(AbstractOptionsRequestTest):
+
+    # --------------- TESTS FOR FEATURE COLLECTION ---------------------------------
+    # tests for feature/geometry collection simple path
+    def test_options_for_feature_collection_simple_path(self):
+        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['codigofunai', 'etnia', 'geometriaaproximada', 'hydra',
+                                             'id_objeto', 'nome', 'nomeabrev', 'rdfs', 'subClassOf', 'terraindigena'])
+
+        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
+        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
+        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
+        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
+        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
+        codigofunai_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "codigofunai")
+        self.assertListEqual(codigofunai_context_keys_list, self.keys_from_attrs_context)
+        terraindigena_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "terraindigena")
+        self.assertListEqual(terraindigena_context_keys_list, self.keys_from_attrs_context)
+        etnia_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "etnia")
+        self.assertListEqual(etnia_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        #rdfs_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, 'rdfs')
+        #self.assertListEqual(rdfs_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    def test_options_for_feature_collection_simple_path_with_accept_header(self):
+        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/", headers={'accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['codigofunai', 'etnia', 'geometriaaproximada', 'hydra',
+                                             'id_objeto', 'nome', 'nomeabrev', 'rdfs', 'subClassOf', 'terraindigena'])
+
+        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
+        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
+        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
+        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
+        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
+        codigofunai_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "codigofunai")
+        self.assertListEqual(codigofunai_context_keys_list, self.keys_from_attrs_context)
+        terraindigena_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "terraindigena")
+        self.assertListEqual(terraindigena_context_keys_list, self.keys_from_attrs_context)
+        etnia_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "etnia")
+        self.assertListEqual(etnia_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        #rdfs_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, 'rdfs')
+        #self.assertListEqual(rdfs_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+
+    # tests for feature/geometry collection attributes
+    def test_options_for_feature_collection_only_attributes(self):
+        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/geom,nome")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_keys, ["hydra", "nome", "rdfs", "subClassOf"])
+
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    def test_options_for_feature_collection_only_attributes_with_accept_header(self):
+        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/geom,nome",
+                                    headers={'accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_keys, ["hydra", "nome", "rdfs", "subClassOf"])
+
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    def test_options_for_feature_collection_only_geometric_attribute(self):
+        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/geom")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ["hydra", "rdfs", "subClassOf"])
+
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Point")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#GeometryCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    def test_options_for_feature_collection_only_geometric_attribute_accept_header(self):
+        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/geom",
+                                    headers={'accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ["hydra", "rdfs", "subClassOf"])
+
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Point")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#GeometryCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    def test_options_for_feature_collection_only_alphanumeric_attributes(self):
+        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/nome,nomeabrev")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        context_dict_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_dict_keys, ["hydra", "nome", "nomeabrev", "rdfs", "subClassOf"])
+
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
+        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_for_feature_collection_only_alphanumeric_attributes_with_accept_header(self):
+        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/nome,nomeabrev",
+                                    headers={'accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        context_dict_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_dict_keys, ["hydra", "nome", "nomeabrev", "rdfs", "subClassOf"])
+
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
+        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+
+    # tests for feature/geometry collection operation
+    def test_options_for_feature_collection_operation_with_geometry_collection_return(self):
+        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + "unidades-federativas/ES")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['codigofunai', 'etnia', 'geometriaaproximada', 'hydra',
+                                             'id_objeto', 'nome', 'nomeabrev', 'rdfs', 'subClassOf', 'terraindigena'])
+
+        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
+        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
+        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
+        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
+        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
+        codigofunai_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "codigofunai")
+        self.assertListEqual(codigofunai_context_keys_list, self.keys_from_attrs_context)
+        terraindigena_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "terraindigena")
+        self.assertListEqual(terraindigena_context_keys_list, self.keys_from_attrs_context)
+        etnia_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "etnia")
+        self.assertListEqual(etnia_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        #rdfs_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, 'rdfs')
+        #self.assertListEqual(rdfs_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    def test_options_for_feature_collection_operation_with_geometry_collection_return_and_accept_header(self):
+        response = requests.options(
+            self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + "unidades-federativas/ES",
+            headers={'accept': 'application/octet-stream'}
+        )
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['codigofunai', 'etnia', 'geometriaaproximada', 'hydra',
+                                             'id_objeto', 'nome', 'nomeabrev', 'rdfs', 'subClassOf', 'terraindigena'])
+
+        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
+        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
+        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
+        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
+        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
+        codigofunai_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "codigofunai")
+        self.assertListEqual(codigofunai_context_keys_list, self.keys_from_attrs_context)
+        terraindigena_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "terraindigena")
+        self.assertListEqual(terraindigena_context_keys_list, self.keys_from_attrs_context)
+        etnia_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "etnia")
+        self.assertListEqual(etnia_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        #rdfs_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, 'rdfs')
+        #self.assertListEqual(rdfs_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    def test_options_for_feature_collection_count_resource(self):
+        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/count-resource")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations_names, [])
+
+        context_dict_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_dict_keys, ["count-resource", "hydra", "rdfs", "subClassOf"])
+
+        count_resource_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "count-resource")
+        self.assertListEqual(count_resource_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_resource_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_resource_context_keys_list, self.keys_from_attrs_context)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@id'], "hydra:totalItems")
+        self.assertEquals(response_dict['@type'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    def test_options_for_feature_collection_count_resource_accept_octet_stream(self):
+        response = requests.options(self.bcim_base_uri + "aldeias-indigenas/count-resource",
+                                    headers={'accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations_names, [])
+
+        context_dict_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_dict_keys, ["count-resource", "hydra", "rdfs", "subClassOf"])
+
+        count_resource_resource_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "count-resource")
+        self.assertListEqual(count_resource_resource_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_resource_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_resource_context_keys_list, self.keys_from_attrs_context)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@id'], "hydra:totalItems")
+        self.assertEquals(response_dict['@type'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+
+    # --------------- TESTS FOR COLLECTION ---------------------------------
+    # tests for collection simple path
+    def test_options_for_collection_simple_path(self):
+        response = requests.options(self.controle_base_uri + 'gasto-list/')
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
+
+        context_dict_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_dict_keys, ['data', "hydra", "id", "rdfs", "subClassOf", "tipo_gasto", "usuario", "valor"])
+
+        id_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id")
+        self.assertListEqual(id_context_keys_list, self.keys_from_attrs_context)
+        data_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data")
+        self.assertListEqual(data_keys_list, self.keys_from_attrs_context)
+        tipo_gasto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "tipo_gasto")
+        self.assertListEqual(tipo_gasto_context_keys_list, self.keys_from_attrs_context)
+        usuario_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "usuario")
+        self.assertListEqual(usuario_context_keys_list, self.keys_from_attrs_context)
+        valor_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "valor")
+        self.assertListEqual(valor_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operation_name = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operation_name, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@type'], "hydra:Collection")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    def test_options_for_collection_simple_path_with_accept_header(self):
+        response = requests.options(self.controle_base_uri + 'gasto-list/', headers={'accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
+
+        context_dict_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_dict_keys,
+                             ['data', "hydra", "id", "rdfs", "subClassOf", "tipo_gasto", "usuario", "valor"])
+
+        id_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id")
+        self.assertListEqual(id_context_keys_list, self.keys_from_attrs_context)
+        data_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data")
+        self.assertListEqual(data_keys_list, self.keys_from_attrs_context)
+        tipo_gasto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "tipo_gasto")
+        self.assertListEqual(tipo_gasto_context_keys_list, self.keys_from_attrs_context)
+        usuario_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "usuario")
+        self.assertListEqual(usuario_context_keys_list, self.keys_from_attrs_context)
+        valor_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "valor")
+        self.assertListEqual(valor_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operation_name = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operation_name, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@type'], "hydra:Collection")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    # tests for collection attributes
+    def test_options_for_collection_only_attributes(self):
+        response = requests.options(self.controle_base_uri + 'gasto-list/data,valor')
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.non_simple_path_dict_keys)
+
+        context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_keys, ['data', 'hydra', 'rdfs', 'subClassOf', 'valor'])
+
+        data_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data")
+        self.assertListEqual(data_context_keys_list, self.keys_from_attrs_context)
+        valor_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "valor")
+        self.assertListEqual(valor_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operation_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operation_names, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_for_collection_only_attributes_with_accept_header(self):
+        response = requests.options(self.controle_base_uri + 'gasto-list/data,valor',
+                                    headers={'Accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.non_simple_path_dict_keys)
+
+        context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_keys, ["data", "hydra", "rdfs", "subClassOf", "valor"])
+
+        data_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data")
+        self.assertListEqual(data_context_keys_list, self.keys_from_attrs_context)
+        valor_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "valor")
+        self.assertListEqual(valor_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operation_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operation_names, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    # tests for collection operation
+    def test_options_for_collection_operation_with_collection_return(self):
+        response = requests.options(self.controle_base_uri + 'usuario-list/group-by-count/nome')
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['count', 'hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        nome_context_keys = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
+        count_context_keys = self.aux_get_keys_from_acontext_attrs(response, "count")
+        self.assertEquals(count_context_keys, self.keys_from_attrs_context)
+        group_by_count_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(group_by_count_context_keys, self.keys_from_oper_context)
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations_names, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_for_collection_operation_with_collection_return_and_accept_header(self):
+        response = requests.options(self.controle_base_uri + 'usuario-list/group-by-count/nome',
+                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['count', 'hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        nome_context_keys = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertEquals(nome_context_keys, self.keys_from_attrs_context)
+        count_context_keys = self.aux_get_keys_from_acontext_attrs(response, "count")
+        self.assertEquals(count_context_keys, self.keys_from_attrs_context)
+        group_by_count_context_keys = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertEquals(group_by_count_context_keys, self.keys_from_oper_context)
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations_names, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "hydra:Collection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_for_collection_operation_with_integer_return(self):
+        response = requests.options(self.controle_base_uri + 'usuario-list/count-resource')
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['count-resource', 'hydra', 'rdfs', 'subClassOf'])
+
+        count_resource_resource_context_keys = self.aux_get_keys_from_acontext_attrs(response, "count-resource")
+        self.assertEquals(count_resource_resource_context_keys, self.keys_from_attrs_context)
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations_names, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@id'], "hydra:totalItems")
+        self.assertEquals(response_dict['@type'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    def test_options_for_collection_operation_with_integer_return_and_accept_header(self):
+        response = requests.options(self.controle_base_uri + 'usuario-list/count-resource',
+                                headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertEquals(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(acontext_keys, ['count-resource', 'hydra', 'rdfs', 'subClassOf'])
+
+        count_resource_resource_context_keys = self.aux_get_keys_from_acontext_attrs(response, "count-resource")
+        self.assertEquals(count_resource_resource_context_keys, self.keys_from_attrs_context)
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations_names, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@id'], "hydra:totalItems")
+        self.assertEquals(response_dict['@type'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+
+    # --------------- TESTS FOR FEATURE RESOURCE ---------------------------------
+    # tests for feature simple path
+    def test_options_for_feature_resource_simple_path(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES')
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['geocodigo', 'geometriaaproximada', 'hydra', 'id_objeto', 'nome', 'nomeabrev', 'rdfs', 'sigla', 'subClassOf'])
+
+        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
+        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
+        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
+        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
+        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
+        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
+        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
+        sigla_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "sigla")
+        self.assertListEqual(sigla_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+        #iri_metadata_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "iri_metadata")
+        #self.assertListEqual(iri_metadata_context_keys_list, self.keys_from_attrs_context)
+        #iri_style_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "iri_style")
+        #self.assertListEqual(iri_style_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/State")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_for_feature_resource_simple_path_with_accept_header(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES',
+                                    headers={'accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys,
+                            ['geocodigo', 'geometriaaproximada', 'hydra', 'id_objeto', 'nome', 'nomeabrev',
+                             'rdfs', 'sigla', 'subClassOf'])
+
+        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
+        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
+        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
+        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
+        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
+        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
+        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
+        sigla_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "sigla")
+        self.assertListEqual(sigla_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+        # iri_metadata_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "iri_metadata")
+        # self.assertListEqual(iri_metadata_context_keys_list, self.keys_from_attrs_context)
+        # iri_style_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "iri_style")
+        # self.assertListEqual(iri_style_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/State")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+
+    # tests for feature attributes
+    def test_options_for_feature_resource_only_attributes(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/geom,nome')
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_keys, ["hydra", "nome", "rdfs", "subClassOf"])
+
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_for_feature_resource_only_attributes_with_accept_header(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/geom,nome',
+                                    headers={'accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_keys, ["hydra", "nome", "rdfs", "subClassOf"])
+
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_for_feature_resource_only_alphanumeric_attributes(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/geocodigo,nome')
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_keys, ["geocodigo", "hydra", "nome", "rdfs", "subClassOf"])
+
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
+        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.basic_operations_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@type'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    def test_options_for_feature_resource_only_alphanumeric_attributes_with_accept_header(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/geocodigo,nome',
+                                    headers={'accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_keys, ["geocodigo", "hydra", "nome", "rdfs", "subClassOf"])
+
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
+        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@type'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    def test_options_for_feature_resource_only_geometric_attribute(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/geom')
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_keys, ["hydra", "rdfs", "subClassOf"])
+
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEquals(response_dict["@type"], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    def test_options_for_feature_resource_only_geometric_attribute_with_accept_header(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/geom',
+                                    headers={'accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_keys, ["hydra", "rdfs", "subClassOf"])
+
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEquals(response_dict["@type"], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    def test_options_for_feature_resource_pointfield_attribute(self):
+        response = requests.options(self.bcim_base_uri + 'aldeias-indigenas/623/geom')
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_keys, ['hydra', 'rdfs', 'subClassOf'])
+
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'http://geojson.org/geojson-ld/vocab.html#Point')
+        self.assertEquals(response_dict["@type"], 'http://geojson.org/geojson-ld/vocab.html#Point')
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    def test_options_for_feature_resource_pointfield_attribute_accept_octet_stream(self):
+        response = requests.options(self.bcim_base_uri + 'aldeias-indigenas/623/geom', headers={"Accept": "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_keys, ['hydra', 'rdfs', 'subClassOf'])
+
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'http://geojson.org/geojson-ld/vocab.html#Point')
+        self.assertEquals(response_dict["@type"], 'http://geojson.org/geojson-ld/vocab.html#Point')
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+
+    # tests for feature operations
+    def test_options_for_feature_resource_operation_with_geometry_return(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/buffer/1.2')
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        a_context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(a_context_keys, ['hydra', 'rdfs', 'subClassOf'])
+
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEquals(response_dict["@type"], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    def test_options_for_feature_resource_operation_with_geometry_return_accept_header(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/buffer/1.2',
+                                    headers={'Accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        a_context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(a_context_keys, ['hydra', 'rdfs', 'subClassOf'])
+
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEquals(response_dict["@type"], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    def test_options_for_feature_resource_area_operation(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/area')
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        a_context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(a_context_keys, ['area', 'hydra', 'rdfs', 'subClassOf'])
+
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+        area_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "area")
+        self.assertListEqual(area_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'https://schema.org/Float')
+        self.assertEquals(response_dict["@type"], 'https://schema.org/Thing')
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    def test_options_for_feature_resource_area_operation_accept_octet_stream(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/area',
+                                    headers={'Accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        a_context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(a_context_keys, ['area', 'hydra', 'rdfs', 'subClassOf'])
+
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+        area_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "area")
+        self.assertListEqual(area_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'https://schema.org/Float')
+        self.assertEquals(response_dict["@type"], 'https://schema.org/Thing')
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    def test_options_for_feature_resource_operation_with_point_return(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/point_on_surface')
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        a_context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(a_context_keys, ['hydra', 'rdfs', 'subClassOf'])
+
+        subClassOf_on_surface_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_on_surface_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'http://geojson.org/geojson-ld/vocab.html#Point')
+        self.assertEquals(response_dict["@type"], 'http://geojson.org/geojson-ld/vocab.html#Point')
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    def test_options_for_feature_resource_operation_with_point_return_accept_header(self):
+        response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES/point_on_surface',
+                                    headers={'Accept': 'application/octet-stream'})
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        a_context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(a_context_keys, ['hydra', 'rdfs', 'subClassOf'])
+
+        subClassOf_on_surface_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_on_surface_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'http://geojson.org/geojson-ld/vocab.html#Point')
+        self.assertEquals(response_dict["@type"], 'http://geojson.org/geojson-ld/vocab.html#Point')
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+
+    # --------------- TESTS FOR NON SPATIAL RESOURCE ---------------------------------
+    # tests for NonSpatialResource simple path
+    def test_options_for_non_spatial_resource_simple_path(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/1/")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['data_nascimento', 'email', 'hydra', 'id', 'nome', 'nome_usuario', 'rdfs', 'senha', 'subClassOf'])
+
+        id_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id")
+        self.assertListEqual(id_context_keys_list, self.keys_from_attrs_context)
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nome_usuario_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome_usuario")
+        self.assertListEqual(nome_usuario_context_keys_list, self.keys_from_attrs_context)
+        senha_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "senha")
+        self.assertListEqual(senha_context_keys_list, self.keys_from_attrs_context)
+        data_nascimento_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data_nascimento")
+        self.assertListEqual(data_nascimento_context_keys_list, self.keys_from_attrs_context)
+        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
+        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+        #avatar_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "avatar")
+        #self.assertListEqual(avatar_context_keys_list, self.keys_from_attrs_context)
+
+        operation_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operation_names, self.basic_operations_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@type'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    def test_options_for_non_spatial_resource_simple_path_with_accept_header(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/1/",
+                                    headers={'Accept': "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys,
+                             ['data_nascimento', 'email', 'hydra', 'id', 'nome', 'nome_usuario', 'rdfs', 'senha',
+                              'subClassOf'])
+
+        id_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id")
+        self.assertListEqual(id_context_keys_list, self.keys_from_attrs_context)
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nome_usuario_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome_usuario")
+        self.assertListEqual(nome_usuario_context_keys_list, self.keys_from_attrs_context)
+        senha_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "senha")
+        self.assertListEqual(senha_context_keys_list, self.keys_from_attrs_context)
+        data_nascimento_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data_nascimento")
+        self.assertListEqual(data_nascimento_context_keys_list, self.keys_from_attrs_context)
+        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
+        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+        # avatar_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "avatar")
+        # self.assertListEqual(avatar_context_keys_list, self.keys_from_attrs_context)
+
+        operation_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operation_names, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@type'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    # tests for NonSpatialResource only attributes
+    def test_options_for_non_spatial_resource_only_attributes(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/1/nome,email")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
+        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(supported_operations_names, self.basic_operations_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@type'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    def test_options_for_non_spatial_resource_only_attributes_with_accept_header(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/1/nome,email",
+                                    headers={'Accept': "application/octet-stream"})
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
+        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(supported_operations_names, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@type'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+
+    # ------------------- TESTS FOR ENTRY POINTS -------------------------------------
+    def test_options_for_feature_entrypoint(self):
+        response = requests.options(self.bcim_base_uri)
+        self.assertEquals(response.status_code, 200)
+
+        #self.assertEqual(response.headers['Link'],
+        #'<http://luc00557196:8000/api/bcim/>; rel="https://schema.org/EntryPoint" , <http://luc00557196:8000/api/bcim.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"')
+
+        a_context_keys = self.aux_get_keys_from_response_context(response)
+        '''
+        self.assertListEqual(a_context_keys, ['aglomerados rurais de extensao urbana', 'aglomerados rurais isolado',
+                                              'aldeias indigenas', 'areas de desenvolvimento de controle', 'areas edificadas',
+                                              'bancos de areia', 'barragens', 'brejos e pantanos', 'capitais', 'cidades',
+                                              'corredeiras', 'curvas batimetricas', 'curvas de nivel', 'dunas', 'eclusas',
+                                              'edificacoes agropecuarias de extracao vegetal e pesca',
+                                              'edificacoes de construcao aeroportuaria', 'edificacoes de construcao portuaria',
+                                              'edificacoes de metro ferroviaria', 'edificacoes industrial', 'edificacoes publica militar',
+                                              'edificacoes religiosa', 'elementos fisiografico natural',
+                                              'estacoes geradoras de energia eletrica', 'extracoes minerais', 'fozes maritima',
+                                              'fundeadouros', 'hidreletricas', 'ilhas', 'mangues', 'marcos de limite', 'massas dagua',
+                                              'municipios', 'outros limites oficiais', 'paises', 'picos', 'pistas de ponto pouso',
+                                              'pontes', 'pontos cotados altimetricos', 'pontos cotados batimetricos', 'postos fiscais',
+                                              'quedas dagua', 'recifes', 'rochas em agua', 'sinalizacoes', 'sumidouros vertedouros',
+                                              'termeletricas', 'terras indigenas', 'terrenos sujeito a inundacao',
+                                              'torres de energia', 'travessias', 'trechos de drenagem', 'trechos de massa dagua',
+                                              'trechos dutos', 'trechos ferroviarios', 'trechos hidroviarios', 'trechos rodoviarios',
+                                              'tuneis', 'unidades de conservacao nao snuc', 'unidades de protecao integral',
+                                              'unidades de uso sustentavel', 'unidades federativas', 'vegetacoes de restinga', 'vilas'])
+        '''
+        self.assertListEqual(a_context_keys, ['aglomerados-rurais-de-extensao-urbana', 'aglomerados-rurais-isolado',
+                                              'aldeias-indigenas', 'areas-de-desenvolvimento-de-controle', 'areas-edificadas',
+                                              'bancos-de-areia', 'barragens', 'brejos-e-pantanos', 'capitais', 'cidades',
+                                              'corredeiras', 'curvas-batimetricas', 'curvas-de-nivel', 'dunas', 'eclusas',
+                                              'edificacoes-agropecuarias-de-extracao-vegetal-e-pesca',
+                                              'edificacoes-de-construcao-aeroportuaria', 'edificacoes-de-construcao-portuaria',
+                                              'edificacoes-de-metro-ferroviaria', 'edificacoes-industrial', 'edificacoes-publica-militar',
+                                              'edificacoes-religiosa', 'elementos-fisiografico-natural',
+                                              'estacoes-geradoras-de-energia-eletrica', 'extracoes-minerais',
+                                              'fozes-maritima', 'fundeadouros', 'hidreletricas', 'hydra', 'ilhas',
+                                              'mangues', 'marcos-de-limite', 'massas-dagua', 'municipios', 'outros-limites-oficiais', 'paises',
+                                              'picos', 'pistas-de-ponto-pouso', 'pontes', 'pontos-cotados-altimetricos',
+                                              'pontos-cotados-batimetricos', 'postos-fiscais', 'quedas-dagua', 'rdfs', 'recifes', 'rochas-em-agua',
+                                              'sinalizacoes', 'subClassOf', 'sumidouros-vertedouros', 'termeletricas',
+                                              'terras-indigenas', 'terrenos-sujeito-a-inundacao', 'torres-de-energia',
+                                              'travessias', 'trechos-de-drenagem', 'trechos-de-massa-dagua',
+                                              'trechos-dutos', 'trechos-ferroviarios', 'trechos-hidroviarios',
+                                              'trechos-rodoviarios', 'tuneis', 'unidades-de-conservacao-nao-snuc',
+                                              'unidades-de-protecao-integral', 'unidades-de-uso-sustentavel',
+                                              'unidades-federativas', 'vegetacoes-de-restinga', 'vilas'])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "hydra:Link")
+        self.assertEquals(response_dict["@type"], "hydra:entrypoint")
+        self.assertEquals(response_dict["@context"]['aglomerados-rurais-de-extensao-urbana']["@id"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["@context"]['aglomerados-rurais-de-extensao-urbana']["@type"], "@id")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_for_raster_entrypoint(self):
+        response = requests.options(self.raster_base_uri)
+        self.assertEquals(response.status_code, 200)
+
+        a_context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(a_context_keys, ['hydra',
+                                           'imagem-exemplo-tile1-list',
+                                           'imagem-exemplo1-list',
+                                           'imagem-exemplo2-list',
+                                           'imagem-exemplo4-tile2-list',
+                                           'rdfs', 'subClassOf'])
+
+        response_dict = self.aux_get_dict_from_response(response)
+
+        self.assertEquals(response_dict["@id"], "hydra:Link")
+        self.assertEquals(response_dict["@type"], "hydra:entrypoint")
+        self.assertEquals(response_dict["@context"]['imagem-exemplo-tile1-list']["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@context"]['imagem-exemplo-tile1-list']["@type"], "@id")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+    def test_options_for_non_spatial_entrypoint(self):
+        response = requests.options(self.controle_base_uri)
+        self.assertEquals(response.status_code, 200)
+
+        a_context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(a_context_keys, ['gasto-list', 'hydra', 'rdfs', 'subClassOf', 'tipo-gasto-list', 'usuario-list'])
+
+        response_dict = self.aux_get_dict_from_response(response)
+
+        self.assertEquals(response_dict["@id"], "hydra:Link")
+        self.assertEquals(response_dict["@type"], "hydra:entrypoint")
+        self.assertEquals(response_dict["@context"]['gasto-list']["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@context"]['gasto-list']["@type"], "@id")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+#python manage.py test hyper_resource.tests.GetRequestContextTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class GetRequestContextTest(AbstractOptionsRequestTest):
+
+    # --------------- TESTS FOR FEATURE RESOURCE ---------------------------------
+    # tests for feature resource simple path
+    def test_suffixed_request_to_feature_resource_simple_path(self):
+        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES.jsonld")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['geocodigo', 'geometriaaproximada', 'hydra', 'id_objeto', 'nome', 'nomeabrev', 'rdfs', 'sigla', 'subClassOf'])
+
+        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
+        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
+        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
+        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
+        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
+        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
+        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
+        sigla_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "sigla")
+        self.assertListEqual(sigla_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'https://schema.org/State')
+        self.assertEquals(response_dict["@type"], 'http://geojson.org/geojson-ld/vocab.html#Feature')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    # tests for feature resource attributes
+    def test_suffixed_request_to_feature_resource_only_attributes(self):
+        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES/geom,geocodigo,sigla.jsonld")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['geocodigo', 'hydra', 'rdfs', 'sigla', 'subClassOf'])
+
+        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
+        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
+        sigla_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "sigla")
+        self.assertListEqual(sigla_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    def test_suffixed_request_to_feature_resource_only_alphanumeric_attributes(self):
+        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES/geocodigo,sigla.jsonld")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['geocodigo', 'hydra', 'rdfs', 'sigla', 'subClassOf'])
+
+        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
+        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
+        sigla_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "sigla")
+        self.assertListEqual(sigla_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.basic_operations_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'https://schema.org/Thing')
+        self.assertEquals(response_dict["@type"], 'https://schema.org/Thing')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    def test_suffixed_request_to_feature_resource_only_geometric_attribute(self):
+        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES/geom.jsonld")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['hydra', 'rdfs', 'subClassOf'])
+
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEquals(response_dict["@type"], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    # tests for feature resource operations
+    def test_suffixed_request_to_feature_resource_operation_with_float_return(self):
+        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES/area.jsonld')
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        a_context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(a_context_keys, ['area', 'hydra', 'rdfs', 'subClassOf'])
+
+        area_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "area")
+        self.assertListEqual(area_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'https://schema.org/Float')
+        self.assertEquals(response_dict["@type"], 'https://schema.org/Thing')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    def test_suffixed_request_to_feature_resource_operation_with_geometry_return(self):
+        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES/buffer/1.2.jsonld')
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        a_context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(a_context_keys, ['hydra', 'rdfs', 'subClassOf'])
+
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEquals(response_dict["@type"], 'http://geojson.org/geojson-ld/vocab.html#MultiPolygon')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    def test_suffixed_request_to_feature_resource_point_on_surface_operation(self):
+        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES/point_on_surface.jsonld')
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        a_context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(a_context_keys, ['hydra', 'rdfs', 'subClassOf'])
+
+        subClassOf_on_surface_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_on_surface_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'http://geojson.org/geojson-ld/vocab.html#Point')
+        self.assertEquals(response_dict["@type"], 'http://geojson.org/geojson-ld/vocab.html#Point')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+
+    # --------------- TESTS FOR FEATURE COLLECTION ---------------------------------
+    # tests for feature collection simple path
+    def test_suffixed_request_to_feature_collection_resource_simple_path(self):
+        response = requests.get(self.bcim_base_uri + "unidades-federativas.jsonld")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['geocodigo', 'geometriaaproximada', 'hydra', 'id_objeto', 'nome', 'nomeabrev', 'rdfs', 'sigla', 'subClassOf'])
+
+        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
+        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
+        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
+        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
+        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
+        geocodigo_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
+        self.assertListEqual(geocodigo_context_keys_list, self.keys_from_attrs_context)
+        sigla_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "sigla")
+        self.assertListEqual(sigla_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/State")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Collection')
+
+    # tests for feature collection attributes
+    def test_suffixed_request_to_feature_collection_resource_only_attributes(self):
+        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/nome,geom.jsonld")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Collection')
+
+    def test_suffixed_request_feature_collection_only_geometric_attribute(self):
+        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/geom.jsonld")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['hydra', 'rdfs', 'subClassOf'])
+
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Point")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#GeometryCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    def test_suffixed_request_feature_collection_only_alphanumeric_attributes(self):
+        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/nome,nomeabrev.jsonld")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        context_dict_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_dict_keys, ['hydra', 'nome', 'nomeabrev', 'rdfs', 'subClassOf'])
+
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
+        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], 'https://schema.org/Thing')
+        self.assertEquals(response_dict["@type"], 'hydra:Collection')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    # tests for feature collection operations
+    def test_suffixed_request_feature_collection_operation_with_geometry_collection_return(self):
+        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + "unidades-federativas/ES.jsonld")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        context_dict_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_dict_keys, ['codigofunai', 'etnia', 'geometriaaproximada', 'hydra',
+                                             'id_objeto', 'nome', 'nomeabrev', 'rdfs', 'subClassOf', 'terraindigena'])
+
+        id_objeto_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id_objeto")
+        self.assertListEqual(id_objeto_context_keys_list, self.keys_from_attrs_context)
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nomeabrev_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nomeabrev")
+        self.assertListEqual(nomeabrev_context_keys_list, self.keys_from_attrs_context)
+        geometriaaproximada_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geometriaaproximada")
+        self.assertListEqual(geometriaaproximada_context_keys_list, self.keys_from_attrs_context)
+        codigofunai_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "codigofunai")
+        self.assertListEqual(codigofunai_context_keys_list, self.keys_from_attrs_context)
+        terraindigena_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "terraindigena")
+        self.assertListEqual(terraindigena_context_keys_list, self.keys_from_attrs_context)
+        etnia_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "etnia")
+        self.assertListEqual(etnia_context_keys_list, self.keys_from_attrs_context)
+        #geom_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "geom")
+        #self.assertListEqual(geom_context_keys_list, self.keys_from_attrs_context)
+        # rdfs_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, 'rdfs')
+        # self.assertListEqual(rdfs_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.spatial_collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "http://geojson.org/geojson-ld/vocab.html#Feature")
+        self.assertEquals(response_dict["@type"], "http://geojson.org/geojson-ld/vocab.html#FeatureCollection")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Collection")
+
+    def test_suffixed_request_feature_collection_operation_with_integer_return(self):
+        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/count-resource.jsonld")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.non_simple_path_dict_keys)
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations_names, [])
+
+        context_dict_keys = self.aux_get_keys_from_response_context(response)
+        self.assertEquals(context_dict_keys, ["count-resource", 'hydra', 'rdfs', 'subClassOf'])
+
+        count_resource_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'count-resource')
+        self.assertEquals(count_resource_acontext_keys, self.keys_from_oper_context)
+        subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
+        self.assertEquals(subClassOf_acontext_keys, self.keys_from_oper_context)
+
+        supported_operations = self.aux_get_supported_operations_names(response)
+        self.assertEquals(supported_operations, [])
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "hydra:totalItems")
+        self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+
+    # --------------- TESTS FOR NON SPATIAL RESOURCE ---------------------------------
+    # tests for nonspatialresource simple path
+    def test_suffixed_request_to_non_spatial_resource_simple_path(self):
+        response = requests.get(self.controle_base_uri + "usuario-list/1.jsonld")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['data_nascimento', 'email', 'hydra', 'id', 'nome', 'nome_usuario', 'rdfs', 'senha', 'subClassOf'])
+
+        #avatar_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "avatar")
+        #self.assertListEqual(avatar_context_keys_list, self.keys_from_attrs_context)
+        data_nascimento_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data_nascimento")
+        self.assertListEqual(data_nascimento_context_keys_list, self.keys_from_attrs_context)
+        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
+        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
+        id_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id")
+        self.assertListEqual(id_context_keys_list, self.keys_from_attrs_context)
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nome_usuario_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome_usuario")
+        self.assertListEqual(nome_usuario_context_keys_list, self.keys_from_attrs_context)
+        senha_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "senha")
+        self.assertListEqual(senha_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.basic_operations_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@type'], "https://schema.org/Thing")
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    # tests for nonspatialresource attributes
+    def test_suffixed_request_to_non_spatial_resource_only_attributes(self):
+        response = requests.get(self.controle_base_uri + "usuario-list/1/nome,email.jsonld")
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.non_simple_path_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
+
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
+        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        supported_operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(supported_operations_names, self.basic_operations_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+
+
+    # --------------- TESTS FOR COLLECTION ---------------------------------
+    # tests for collection simple path
+    def test_suffixed_request_to_collection_resource_simple_path(self):
+        response = requests.get(self.controle_base_uri + "usuario-list.jsonld")
+        self.assertEquals(response.status_code, 200)
+
+        response_dict_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_dict_keys, self.simple_path_options_dict_keys)
+
+        acontext_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(acontext_keys, ['data_nascimento', 'email', 'hydra', 'id', 'nome', 'nome_usuario', 'rdfs', 'senha', 'subClassOf'])
+
+        #avatar_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "avatar")
+        #self.assertListEqual(avatar_context_keys_list, self.keys_from_attrs_context)
+        data_nascimento_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data_nascimento")
+        self.assertListEqual(data_nascimento_context_keys_list, self.keys_from_attrs_context)
+        email_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "email")
+        self.assertListEqual(email_context_keys_list, self.keys_from_attrs_context)
+        id_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "id")
+        self.assertListEqual(id_context_keys_list, self.keys_from_attrs_context)
+        nome_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome")
+        self.assertListEqual(nome_context_keys_list, self.keys_from_attrs_context)
+        nome_usuario_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "nome_usuario")
+        self.assertListEqual(nome_usuario_context_keys_list, self.keys_from_attrs_context)
+        senha_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "senha")
+        self.assertListEqual(senha_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operations_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operations_names, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict['@type'], "hydra:Collection")
+        self.assertEquals(response_dict['subClassOf'], "hydra:Resource")
+
+    # tests for collection attributes
+    def test_suffixed_request_to_collection_resource_only_attributes(self):
+        response = requests.get(self.controle_base_uri + 'gasto-list/data,valor.jsonld')
+        self.assertEquals(response.status_code, 200)
+
+        response_keys = self.aux_get_keys_from_response(response)
+        self.assertListEqual(response_keys, self.non_simple_path_dict_keys)
+
+        context_keys = self.aux_get_keys_from_response_context(response)
+        self.assertListEqual(context_keys, ['data', 'hydra', 'rdfs', 'subClassOf', 'valor'])
+
+        data_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "data")
+        self.assertListEqual(data_context_keys_list, self.keys_from_attrs_context)
+        valor_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "valor")
+        self.assertListEqual(valor_context_keys_list, self.keys_from_attrs_context)
+        subClassOf_context_keys_list = self.aux_get_keys_from_acontext_attrs(response, "subClassOf")
+        self.assertListEqual(subClassOf_context_keys_list, self.keys_from_attrs_context)
+
+        operation_names = self.aux_get_supported_operations_names(response)
+        self.assertListEqual(operation_names, self.collection_operation_names)
+
+        response_dict = self.aux_get_dict_from_response(response)
+        self.assertEquals(response_dict['@id'], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], 'hydra:Collection')
+        self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
+
+    # tests for collection operation
+
+    # tests for collection collect operation
+
+
+    # ------------------- TESTS FOR ENTRY POINTS -------------------------------------
+
 #python manage.py test hyper_resource.tests.PaginationTest --testrunner=hyper_resource.tests.NoDbTestRunner
-class PaginationTest(AbstractRequestTest):
+class PaginationTest(AbstractHeadRequestTest):
     '''
     def test_collection_simple_path_pagination(self):
         response = requests.get(self.controle_base_uri + "gasto-list/")
         self.assertEquals(response.status_code, 200)
         # the string must be hardcoded, if not, the test fails
-        expected_link = '<http://luc00557196:8000/controle-list/>; rel="up" , <http://luc00557196:8000/controle-list/gasto-list.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" , <http://luc00557196:8000/controle-list/gasto-list/offset_limit/101&100>; rel="next" '
-        #expected_link = '<' + HOST + 'api/bcim/>; rel="up" , <' + HOST + 'api/bcim/aldeias-indigenas.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" , <' + HOST + 'api/bcim/aldeias-indigenas/offset_limit/101&100>; rel="next" '
+        expected_link = '<http://luc00557196:8000/controle-list/>; rel="up" , <http://luc00557196:8000/controle-list/gasto-list.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" , <http://luc00557196:8000/controle-list/gasto-list/offset-limit/101&100>; rel="next" '
+        #expected_link = '<' + HOST + 'api/bcim/>; rel="up" , <' + HOST + 'api/bcim/aldeias-indigenas.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" , <' + HOST + 'api/bcim/aldeias-indigenas/offset-limit/101&100>; rel="next" '
         self.assertEquals(response.headers["link"], expected_link)
     '''
 
@@ -3828,38 +7242,57 @@ class PaginationTest(AbstractRequestTest):
 
         response_dict = self.aux_get_dict_from_response(response)
         features_names_ordered_by_longitude = [ uf['properties']['nome'] for uf in response_dict['features'] ]
-        expected_names_ordered_by_longitude = ['Acre', 'Amazonas', 'Rondônia', 'Roraima', 'Mato Grosso', 'Pará',
-                                               'Mato Grosso do Sul', 'Rio Grande do Sul', 'Amapá', 'Paraná',
-                                               'Santa Catarina', 'Goiás', 'São Paulo', 'Minas Gerais', 'Tocantins',
-                                               'Maranhão', 'Distrito Federal', 'Bahia', 'Piauí', 'Rio de Janeiro',
-                                               'Espírito Santo', 'Ceará', 'Pernambuco', 'Paraíba', 'Rio Grande do Norte',
+        expected_names_ordered_by_longitude = ['Acre', 'Amazonas', 'Rondรดnia', 'Roraima', 'Mato Grosso', 'Parรก',
+                                               'Mato Grosso do Sul', 'Rio Grande do Sul', 'Amapรก', 'Paranรก',
+                                               'Santa Catarina', 'Goiรกs', 'Sรฃo Paulo', 'Minas Gerais', 'Tocantins',
+                                               'Maranhรฃo', 'Distrito Federal', 'Bahia', 'Piauรญ', 'Rio de Janeiro',
+                                               'Espรญrito Santo', 'Cearรก', 'Pernambuco', 'Paraรญba', 'Rio Grande do Norte',
                                                'Sergipe', 'Alagoas']
         self.assertListEqual(features_names_ordered_by_longitude, expected_names_ordered_by_longitude)
     '''
 
-    def test_options_for_collection_simple_path_pagination(self):
-        response = requests.options(self.controle_base_uri + "gasto-list/")
+    def test_head_collection_simple_path_pagination(self):
+        response = requests.head(self.controle_base_uri + "gasto-list/")
         self.assertEquals(response.status_code, 200)
-        expected_link = '<http://luc00557196:8000/controle-list/>; rel="up" , <http://luc00557196:8000/controle-list/gasto-list.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" , <http://luc00557196:8000/controle-list/gasto-list/offset_limit/1001&1000>; rel="next" '
-        self.assertEquals(response.headers["link"], expected_link)
 
-    def test_collection_pagination_with_offset_limit_operation(self):
-        response = requests.get(self.controle_base_uri + "gasto-list/offset_limit/1001&1000")
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
+
+        up_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'up')
+        self.assertEquals(up_hypermidia_control, "<" + self.controle_base_uri + ">")
+        context_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'http://www.w3.org/ns/json-ld#context')
+        self.assertEquals(context_hypermidia_control, "<" + self.controle_base_uri + "gasto-list.jsonld>; type=\"application/ld+json\"")
+        next_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'next')
+        self.assertEquals(next_hypermidia_control, "<" + self.controle_base_uri + "gasto-list/offset-limit/1001/1000>")
+
+    def test_head_collection_pagination_with_offset_limit_operation(self):
+        response = requests.head(self.controle_base_uri + "gasto-list/offset-limit/1001&1000")
         self.assertEquals(response.status_code, 200)
-        expected_link = '<http://luc00557196:8000/controle-list/>; rel="up" , <http://luc00557196:8000/controle-list/gasto-list/offset_limit/1001&1000.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" , <http://luc00557196:8000/controle-list/gasto-list/offset_limit/2001&1000>; rel="next" '
-        self.assertEquals(response.headers["link"], expected_link)
 
-    def test_options_for_collection_pagination_with_offset_limit_operation(self):
-        response = requests.options(self.controle_base_uri + "gasto-list/offset_limit/1001&1000")
-        self.assertEquals(response.status_code, 200)
-        expected_link = '<http://luc00557196:8000/controle-list/>; rel="up" , <http://luc00557196:8000/controle-list/gasto-list/offset_limit/1001&1000.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" , <http://luc00557196:8000/controle-list/gasto-list/offset_limit/2001&1000>; rel="next" '
-        self.assertEquals(response.headers["link"], expected_link)
+        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="metadata"', response.headers['link'])
+        self.assertIn('rel="stylesheet', response.headers['link'])
+        self.assertIn('rel="up"', response.headers['link'])
+        self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
+        self.assertNotIn('rel="describedBy"', response.headers['link'])
 
+        up_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'up')
+        self.assertEquals(up_hypermidia_control, "<" + self.controle_base_uri + ">")
+        context_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'http://www.w3.org/ns/json-ld#context')
+        self.assertEquals(context_hypermidia_control, "<" + self.controle_base_uri + "gasto-list/offset-limit/1001&1000.jsonld>; type=\"application/ld+json\"")
+        next_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'next')
+        self.assertEquals(next_hypermidia_control, "<" + self.controle_base_uri + "gasto-list/offset-limit/2001&1000>")
+
+    """
     # Pagination for feature collection must be specific for each case
     # In this specific "aldeias-indigenas" case we are dealing with Poits and don't make sense paginate about 200 Points
     def test_feature_collection_simple_path_pagination(self):
-        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/")
+        response = requests.head(self.bcim_base_uri + "aldeias-indigenas/")
         self.assertEquals(response.status_code, 200)
-        expected_link = '<http://luc00557196:8000/api/bcim/aldeias-indigenas/offset_limit/1001&100>; rel="next" '
+        expected_link = '<http://luc00557196:8000/api/bcim/aldeias-indigenas/offset-limit/1001/100>; rel="next" '
         self.assertNotIn(expected_link, response.headers["link"])
-
+    """

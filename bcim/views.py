@@ -8,13 +8,15 @@ from rest_framework import status
 
 from bcim.contexts import *
 from .serializers import *
-from hyper_resource.contexts import BaseContext, FeatureAPIRoot
+from hyper_resource.contexts import EntryPointResourceContext
+from hyper_resource.resources.EntryPointResource import FeatureEntryPointResource
 from hyper_resource.resources.FeatureCollectionResource import FeatureCollectionResource
 from hyper_resource.resources.FeatureResource import FeatureResource
 
-class APIRoot(FeatureAPIRoot):
+class APIRoot(FeatureEntryPointResource):
+    serializer_class = EntryPointSerializer
     
-    def get_root_response(self, request, format=None):
+    def get_root_response(self, request, format=None, *args, **kwargs):
         root_links = {
             'unidades federativas': reverse('bcim_v1:uf_list', request=request, format=format),
             'municipios': reverse('bcim_v1:municipio_list', request=request, format=format),
@@ -89,64 +91,6 @@ class APIRoot(FeatureAPIRoot):
         ordered_dict_of_link = OrderedDict(sorted(root_links.items(), key=lambda t: t[0]))
         return ordered_dict_of_link
 
-    '''
-    def __init__(self):
-        super(APIRoot, self).__init__()
-        self.base_context = BaseContext('api-root')
-
-    def add_url_in_header(self, url, response, rel):
-        link = ' <'+url+'>; rel=\"'+rel+'\" '
-        if "Link" not in response:
-            response['Link'] = link
-        else:
-            response['Link'] += "," + link
-        return response
-
-    def add_cors_headers_in_header(self, response):
-        response["access-control-allow-origin"] = "*"
-        access_control_allow_headers_str = ''
-        for value in CORS_ALLOW_HEADERS:
-            access_control_allow_headers_str += ', ' + value
-
-        access_control_expose_headers_str = ''
-        for value in CORS_EXPOSE_HEADERS:
-            access_control_expose_headers_str += ', ' + value
-
-        access_control_allow_methods_str = ''
-        for value in ACCESS_CONTROL_ALLOW_METHODS:
-            access_control_allow_methods_str += ', ' + value
-        response['access-control-allow-headers'] = access_control_allow_headers_str
-        response['access-control-expose-headers'] = access_control_expose_headers_str
-        response['access-control-allow-methods'] = access_control_allow_methods_str
-
-    def create_context_as_dict(self, dict_of_name_link):
-        a_context = {}
-        dicti = {"@context": a_context}
-        for key in dict_of_name_link.keys():
-            a_context[key] = {"@id": "http://geojson.org/geojson-ld/vocab.html#FeatureCollection", "@type": "@id" }
-
-        return dicti
-
-    def options(self, request, *args, **kwargs):
-        context = self.base_context.getContextData(request)
-        root_links = get_root_response(request)
-        #self.base_context.addRootLinks(context, root_links)
-        context.update( self.create_context_as_dict(root_links) )
-        response = Response(context, status=status.HTTP_200_OK, content_type="application/ld+json")
-        entry_pointURL = reverse('bcim_v1:api_root', request=request)
-        response = self.add_url_in_header(entry_pointURL, response, 'http://schema.org/EntryPoint')
-        response = self.base_context.addContext(request, response)
-        return response
-
-    def get(self, request, format=None, *args, **kwargs):
-        root_links = get_root_response(request)
-        response = Response(root_links)
-        self.add_cors_headers_in_header(response)
-        entry_pointURL = reverse('bcim_v1:api_root', request=request)
-        response = self.add_url_in_header(entry_pointURL, response, 'http://schema.org/EntryPoint')
-        return self.base_context.addContext(request, response)
-    '''
-
 class UnidadeFederacaoDetail(FeatureResource):
 
     serializer_class = UnidadeFederacaoSerializer
@@ -174,8 +118,11 @@ class UnidadeFederacaoList(FeatureCollectionResource):
     #queryset = UnidadeFederacao.objects.all()
     serializer_class = UnidadeFederacaoSerializer
     contextclassname = UnidadeFederacao.contextclassname
-    iri_metadata = 'http://www.metadados.geo.ibge.gov.br/geonetwork_ibge/srv/por/csw?request=GetRecordById&service=CSW&version=2.0.2&elementSetName=full&id=ff2d4215-9843-4137-bad9-c15f2a8caa9e'
-    iri_style = 'http://styles.idehco4.tk/styles/unidade_federacao.sld'
+
+    def __init__(self):
+        super(UnidadeFederacaoList, self).__init__()
+        self.iri_metadata = 'http://www.metadados.geo.ibge.gov.br/geonetwork_ibge/srv/por/csw?request=GetRecordById&service=CSW&version=2.0.2&elementSetName=full&id=ff2d4215-9843-4137-bad9-c15f2a8caa9e'
+        self.iri_style = 'http://styles.idehco4.tk/styles/unidade_federacao.sld'
 
     def get_queryset_old(self):
 
@@ -800,6 +747,10 @@ class TrechoDutoDetail(FeatureResource):
         self.context_resource.resource = self
 
 class TrechoFerroviarioList(FeatureCollectionResource):
+
+    def __init__(self):
+        super(TrechoFerroviarioList, self).__init__()
+        self.iri_metadata = "http://www.metadados.inde.gov.br/geonetwork/srv/por/csw?service=CSW&version=2.0.2&request=GetRecordById&id=556709aa-69bf-4b18-b8ce-515190e59d22&elementsetname=full"
 
     queryset = TrechoFerroviario.objects.all()
     serializer_class = TrechoFerroviarioSerializer
