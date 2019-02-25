@@ -237,6 +237,7 @@ class ConverterType():
         d[models.CharField] = self.convert_to_string
         d[models.TextField] = self.convert_to_string
         d[models.IntegerField] = self.convert_to_int
+        d[models.BigIntegerField] = self.convert_to_int
         d[models.AutoField] = self.convert_to_int
         d[models.FloatField] = self.convert_to_float
 

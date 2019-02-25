@@ -50,6 +50,7 @@ def vocabularyDict():
     dict[float] = 'https://schema.org/Float'
     dict[ForeignKey] = 'http://schema.org/URL'
     dict[IntegerField] = 'https://schema.org/Integer'
+    dict[BigIntegerField] = "https://schema.org/Integer"
     dict[DecimalField] = 'https://schema.org/Float'
     dict[AutoField]= 'https://schema.org/identifier'
     dict[int] = 'https://schema.org/Integer'
