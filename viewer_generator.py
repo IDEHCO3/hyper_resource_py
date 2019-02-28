@@ -119,6 +119,22 @@ def generate_file(package_name, default_name='views.py'):
         else:
             sr.write('class APIRoot(NonSpatialEntryPointResource):\n\n')
         sr.write((' ' * 4) + 'serializer_class = EntryPointSerializer\n\n')
+
+        '''
+        # only applicable in non root EntryPoints
+        sr.write((' ' * 4) + 'def head(self, request, *args, **kwargs):\n')
+        sr.write((' ' * 8) + 'response = super(APIRoot, self).head(request, *args, **kwargs)\n')
+        sr.write((' ' * 8) + 'parent_url = reverse("' + package_name + ':api_root", request=request, format=None)\n')
+        sr.write((' ' * 8) + 'response = self.add_url_in_header(parent_url, response, "up")\n')
+        sr.write((' ' * 8) + 'return response\n\n')
+
+        sr.write((' ' * 4) + 'def get(self, request, format=None, *args, **kwargs):\n')
+        sr.write((' ' * 8) + 'response = super(APIRoot, self).get(request, format=format, *args, **kwargs)\n')
+        sr.write((' ' * 8) + 'parent_url = reverse("' + package_name + ':api_root", request=request, format=format)\n')
+        sr.write((' ' * 8) + 'response = self.add_url_in_header(parent_url, response, "up")\n')
+        sr.write((' ' * 8) + 'return response\n\n')
+        '''
+
         sr.write((' ' * 4) + 'def get_root_response(self, request, format=None, *args, **kwargs):\n')
         sr.write((' ' * 8) + 'root_links = {\n\n')
         for tuple_name_and_class in arr_tuple_name_and_class:

@@ -56,6 +56,9 @@ def generate_file(package_name, default_name='models.py'):
                 elif 'models.IntegerField(primary_key=True)' in line:
                     line = line.replace('models.IntegerField(primary_key=True)', 'models.AutoField(primary_key=True)')
 
+                if "class Meta:" in line:
+                    line = line + (8 * " ") + "app_label = '" + package_name + "'\n"
+
                 if class_name_in_line == ENTRY_POINT_CLASS_NAME:
                     has_to_generate_entry_point_model = False
                 else:

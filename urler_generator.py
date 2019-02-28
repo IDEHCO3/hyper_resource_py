@@ -24,12 +24,12 @@ def generate_snippets_to_url(model_class_name, model_class):
     primary_key_name = 'pk'
     unique_field_name = get_unique_field_name_or_none(model_class)
     arr = []
-    arr.append((' ' * 4) + 'url(r"^(?P<attributes_functions>count-resource.*$|projection.*$|filter.*$|collect.*$|offset-limit.*$)/?$", views.APIRoot.as_view(), name="api_root_af"), # HARCODED')
-    arr.append((' ' * 4) + 'url(r' +"'^"+  context_name +'/(?P<'+ primary_key_name +'>[0-9]+)/?$' +"'"+ ', views.' +
-               model_class_name + 'Detail.as_view(), name=' + "'" + model_class_name +'_detail' +"'" + '),\n')
+    #arr.append((' ' * 4) + 'url(r"^(?P<attributes_functions>count-resource.*$|projection.*$|filter.*$|collect.*$|offset-limit.*$)/?$", views.APIRoot.as_view(), name="api_root_af"), # HARCODED')
     arr.append((' ' * 4) + 'url(r' + "'^" + context_name + '/(?P<' + primary_key_name +
                '>[0-9]+)/(?P<attributes_functions>.*)/?$' + "'" + ', views.' +
                model_class_name + 'Detail.as_view(), name=' + "'" + model_class_name + '_detail_af' + "'" + '),\n')
+    arr.append((' ' * 4) + 'url(r' +"'^"+  context_name +'/(?P<'+ primary_key_name +'>[0-9]+)/?$' +"'"+ ', views.' +
+               model_class_name + 'Detail.as_view(), name=' + "'" + model_class_name +'_detail' +"'" + '),\n')
 
     if unique_field_name:
         arr.append( (' ' * 4) + 'url(r' + "'^" + context_name + '/(?P<' + unique_field_name + '>[A-Za-z0-9]+)/?$' + "'" + ', views.' +
@@ -37,11 +37,12 @@ def generate_snippets_to_url(model_class_name, model_class):
         arr.append( (' ' * 4) + 'url(r' + "'^" + context_name + '/(?P<' + unique_field_name + '>[A-Za-z0-9]+)/(?P<attributes_functions>.*)/?$' + "'" + ', views.' +
                     model_class_name + 'Detail.as_view(), name=' + "'" + model_class_name + '_detail_unique_af' + "'" + '),\n' )
 
-    arr.append((' ' * 4) + 'url(r' + "'^" + context_name + '/?$' + "'" + ', views.' +
-               model_class_name + 'List.as_view(), name=' + "'" + model_class_name + '_list' + "'" + '),\n')
     arr.append((' ' * 4) + 'url(r' + "'^" + context_name + '/(?P<attributes_functions>.*)/?$' +
                "'" + ', views.' + model_class_name + 'List.as_view(), name=' + "'" + model_class_name + '_list_af' +
                "'" + '),\n')
+    arr.append((' ' * 4) + 'url(r' + "'^" + context_name + '/?$' + "'" + ', views.' +
+               model_class_name + 'List.as_view(), name=' + "'" + model_class_name + '_list' + "'" + '),\n')
+
     return arr
 
 def imports_str_as_array(a_name):
@@ -59,6 +60,7 @@ def generate_file(package_name, default_name='urls.py'):
         sr.write('\napp_name="' + package_name + '"\n\n')
         sr.write( 'urlpatterns = format_suffix_patterns((\n')
         sr.write((' ' * 4) + 'url(r' +"'"+'^$'+"'"+', views.APIRoot.as_view(), name='+"'"+'api_root'+"'"+'),\n\n')
+        sr.write((' ' * 4) + 'url(r"^(?P<attributes_functions>count-resource.*$|projection.*$|filter.*$|collect.*$|offset-limit.*$)/?$", views.APIRoot.as_view(), name="api_root_af"), # HARCODED\n\n')
         for model_class_arr in classes_from:
 
             if model_class_arr[0] == ENTRY_POINT_CLASS_NAME:

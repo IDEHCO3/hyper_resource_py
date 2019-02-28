@@ -39,7 +39,7 @@ def setup_method_str_as_array(app_name, entry_point_url):
     arr.append((8 * " ") + "self.entry_point_url =  '" + entry_point_url + "'\n")
         #self.app_name = "cartografia_bases_cartograficas_1000k_2014" # <APP_NAME>
     arr.append((8 * " ") + "self.app_name = '" + app_name + "'\n")
-    arr.append((8 * " ") + "self.max_elements_per_link = 500\n")
+    arr.append((8 * " ") + "self.max_elements_per_link = 1000\n")
     arr.append((8 * " ") + "self.count_resource_operation_name = 'count-resource'\n")
     arr.append((8 * " ") + "self.all_entrypoint_liks = {\n")
     arr.append((12 * " ") + "'too_many_elements_links': [],\n")
