@@ -112,7 +112,7 @@ WSGI_APPLICATION = 'hyper_resource_py.wsgi.application'
 
 if not 'IP_SGBD' in os.environ:
     #os.environ['IP_SGBD'] = '127.0.0.1'
-    os.environ['IP_SGBD'] = '172.30.10.86'
+    os.environ['IP_SGBD'] = '172.30.137.117'
 
 if not 'PORT_SGBD' in os.environ:
     #os.environ['PORT_SGBD'] = '2345'

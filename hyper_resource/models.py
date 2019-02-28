@@ -70,10 +70,11 @@ class Type_Called:
     Type_called is a definition type that contains a name,
     a list of parameters and a return type
     """
-    def __init__(self, a_name='', params=list(), answer=None):
+    def __init__(self, a_name='', params=list(), answer=None, description=''):
         self.name = a_name
         self.parameters = params
         self.return_type = answer
+        self.description = description
 
     def get_parameters(self):
         return self.parameters
@@ -83,6 +84,9 @@ class Type_Called:
 
     def has_parameters(self):
         return self.get_parameters() or False
+
+    def get_operation_description(self):
+        return self.description
 
 REPRESENTATION = {
     GEOSGeometry: ['wkt', 'wkb', 'ewkt', 'ewkb', 'hex', 'hexewkb', 'geojson', 'Link'],
@@ -576,7 +580,7 @@ class BaseOperationController(object):
             self.overlaps_operation_name:           Type_Called('overlaps', [GEOSGeometry], bool),
             self.point_on_surface_operation_name:   Type_Called('point_on_surface', [], Point),
             self.relate_operation_name:             Type_Called('relate', [GEOSGeometry], str),
-            self.relate_pattern_operation_name:     Type_Called('relate_pattern', [GEOSGeometry, str], str),
+            self.relate_pattern_operation_name:     Type_Called('relate_pattern', [GEOSGeometry, str], bool),
             self.ring_operation_name:               Type_Called('ring', [], bool),
             self.simple_operation_name:             Type_Called('simple', [], bool),
             self.simplify_operation_name:           Type_Called('simplify', [float, bool], GEOSGeometry),

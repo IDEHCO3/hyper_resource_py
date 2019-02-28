@@ -36,7 +36,7 @@ from django.test.runner import DiscoverRunner
 #python manage.py test hyper_resource.tests --testrunner=hyper_resource.tests.NoDbTestRunner
 from django.contrib.gis.db.models import Q
 
-HOST = 'luc00557196:8000/'
+HOST = 'chi00557196:8000/'
 
 class NoDbTestRunner(DiscoverRunner):
    """ A test runner to test without database creation/deletion """
@@ -437,6 +437,7 @@ class AbstractOptionsRequestTest(AbstractRequestTest):
 
         self.expected_supported_property_keys = ["@type", "hydra:property", "hydra:readable", "hydra:required",
                                                  self.supported_operation_key, "hydra:writeable", "isExternal", "isIdentifier", "isUnique"]
+        self.supported_operations_expected_keys = ["@id", "hydra:description", "hydra:expects", "hydra:method", "hydra:operation", "hydra:returns", "hydra:statusCode"]
 
         self.spatial_operation_names = ['area', 'boundary', 'buffer', 'centroid', 'contains', 'convex_hull', 'coord_seq', 'coords', 'count', 'crosses',
                                         'crs', 'difference', 'dims', 'disjoint', 'distance', 'empty', 'envelope', 'equals', 'equals_exact', 'ewkb',
@@ -473,6 +474,11 @@ class AbstractOptionsRequestTest(AbstractRequestTest):
         expected_keys = deepcopy(expected_context_keys)
         expected_keys.extend(self.term_definition_default_keys)
         return sorted(expected_keys)
+
+    def aux_get_supported_operation_keys_from_response(self, response):
+        response_dict = self.aux_get_dict_from_response(response)
+        supported_operation_keys = response_dict[self.supported_operation_key][0].keys()
+        return sorted(supported_operation_keys)
 
     def aux_get_supported_property_keys(self, response):
         response_dict = self.aux_get_dict_from_response(response)
@@ -1569,6 +1575,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         implicit_projection_resp_keys = self.aux_get_keys_from_response(implicit_projection_resp)
         self.assertEquals(implicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
+        f_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(implicit_projection_resp)
+        self.assertListEqual(f_supported_operations_keys, self.supported_operations_expected_keys)
         f_supported_operations_names = self.aux_get_supported_operations_names(implicit_projection_resp)
         self.assertEquals(f_supported_operations_names, self.basic_operations_names)
 
@@ -1594,6 +1602,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         explicit_projection_resp_keys = self.aux_get_keys_from_response(explicit_projection_resp)
         self.assertEquals(explicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
+        s_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(explicit_projection_resp)
+        self.assertListEqual(s_supported_operations_keys, self.supported_operations_expected_keys)
         s_supported_operations_names = self.aux_get_supported_operations_names(explicit_projection_resp)
         self.assertEquals(s_supported_operations_names, self.basic_operations_names)
 
@@ -1621,6 +1631,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         implicit_projection_resp_keys = self.aux_get_keys_from_response(implicit_projection_resp)
         self.assertEquals(implicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
+        f_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(implicit_projection_resp)
+        self.assertListEqual(f_supported_operations_keys, self.supported_operations_expected_keys)
         f_supported_operations_names = self.aux_get_supported_operations_names(implicit_projection_resp)
         self.assertEquals(f_supported_operations_names, [])
 
@@ -1647,6 +1659,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         explicit_projection_resp_keys = self.aux_get_keys_from_response(explicit_projection_resp)
         self.assertEquals(explicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
+        s_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(explicit_projection_resp)
+        self.assertListEqual(s_supported_operations_keys, self.supported_operations_expected_keys)
         s_supported_operations_names = self.aux_get_supported_operations_names(explicit_projection_resp)
         self.assertEquals(s_supported_operations_names, [])
 
@@ -1674,6 +1688,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         implicit_projection_resp_keys = self.aux_get_keys_from_response(implicit_projection_resp)
         self.assertEquals(implicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
+        f_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(implicit_projection_resp)
+        self.assertListEqual(f_supported_operations_keys, self.supported_operations_expected_keys)
         f_supported_operations_names = self.aux_get_supported_operations_names(implicit_projection_resp)
         self.assertEquals(f_supported_operations_names, self.spatial_operation_names)
 
@@ -1699,6 +1715,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         explicit_projection_resp_keys = self.aux_get_keys_from_response(explicit_projection_resp)
         self.assertEquals(explicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
+        s_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(explicit_projection_resp)
+        self.assertListEqual(s_supported_operations_keys, self.supported_operations_expected_keys)
         s_supported_operations_names = self.aux_get_supported_operations_names(explicit_projection_resp)
         self.assertEquals(s_supported_operations_names, self.spatial_operation_names)
 
@@ -1725,6 +1743,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         implicit_projection_resp_keys = self.aux_get_keys_from_response(implicit_projection_resp)
         self.assertEquals(implicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
+        f_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(implicit_projection_resp)
+        self.assertListEqual(f_supported_operations_keys, self.supported_operations_expected_keys)
         f_supported_operations_names = self.aux_get_supported_operations_names(implicit_projection_resp)
         self.assertEquals(f_supported_operations_names, self.spatial_operation_names)
 
@@ -1748,6 +1768,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         explicit_projection_resp_keys = self.aux_get_keys_from_response(explicit_projection_resp)
         self.assertEquals(explicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
+        s_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(explicit_projection_resp)
+        self.assertListEqual(s_supported_operations_keys, self.supported_operations_expected_keys)
         s_supported_operations_names = self.aux_get_supported_operations_names(explicit_projection_resp)
         self.assertEquals(s_supported_operations_names, self.spatial_operation_names)
 
@@ -1772,6 +1794,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         implicit_projection_resp_keys = self.aux_get_keys_from_response(implicit_projection_resp)
         self.assertEquals(implicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
+        f_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(implicit_projection_resp)
+        self.assertListEqual(f_supported_operations_keys, self.supported_operations_expected_keys)
         f_supported_operations_names = self.aux_get_supported_operations_names(implicit_projection_resp)
         self.assertEquals(f_supported_operations_names, self.string_operations_names)
 
@@ -1795,6 +1819,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         explicit_projection_resp_keys = self.aux_get_keys_from_response(explicit_projection_resp)
         self.assertEquals(explicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
+        s_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(explicit_projection_resp)
+        self.assertListEqual(s_supported_operations_keys, self.supported_operations_expected_keys)
         s_supported_operations_names = self.aux_get_supported_operations_names(explicit_projection_resp)
         self.assertEquals(s_supported_operations_names, self.string_operations_names)
 
@@ -1819,6 +1845,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         implicit_projection_resp_keys = self.aux_get_keys_from_response(implicit_projection_resp)
         self.assertEquals(implicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
+        f_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(implicit_projection_resp)
+        self.assertListEqual(f_supported_operations_keys, self.supported_operations_expected_keys)
         f_supported_operations_names = self.aux_get_supported_operations_names(implicit_projection_resp)
         self.assertEquals(f_supported_operations_names, self.collection_operation_names)
 
@@ -1844,6 +1872,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         explicit_projection_resp_keys = self.aux_get_keys_from_response(explicit_projection_resp)
         self.assertEquals(explicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
+        s_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(explicit_projection_resp)
+        self.assertListEqual(s_supported_operations_keys, self.supported_operations_expected_keys)
         s_supported_operations_names = self.aux_get_supported_operations_names(explicit_projection_resp)
         self.assertEquals(s_supported_operations_names, self.collection_operation_names)
 
@@ -1869,6 +1899,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         response_keys = self.aux_get_keys_from_response(response)
         self.assertEquals(response_keys, self.non_simple_path_dict_keys)
 
+        supported_operations_keys = self.aux_get_supported_operation_keys_from_response(response)
+        self.assertListEqual(supported_operations_keys, self.supported_operations_expected_keys)
         supported_operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(supported_operations_names, self.collection_operation_names)
 
@@ -2659,11 +2691,14 @@ class OptionsForJoinOperationTest(AbstractOptionsRequestTest):
         response_keys = self.aux_get_keys_from_response(response)
         self.assertEquals(response_keys, self.simple_path_options_dict_keys)
 
+        supported_operations_keys = self.aux_get_supported_operation_keys_from_response(response)
+        self.assertListEqual(supported_operations_keys, self.supported_operations_expected_keys)
         supported_operations_names = self.aux_get_supported_operations_names(response)
         self.assertEquals(supported_operations_names, self.spatial_operation_names)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertEquals(acontext_keys, ['anodereferencia', 'geocodigo', 'geom', 'geometriaaproximada', 'hydra', 'id_objeto', 'nome', 'nomeabrev'])
+        expected_acontext_keys = self.aux_get_context_keys_merged_with_default_keys(['anodereferencia', 'geocodigo', 'geometriaaproximada', 'id_objeto', 'nome', 'nomeabrev'])
+        self.assertEquals(acontext_keys, expected_acontext_keys)
 
         geocodigo_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, "geocodigo")
         self.assertEquals(geocodigo_acontext_keys, self.keys_from_attrs_context)
@@ -5083,23 +5118,24 @@ class OptionsCollectionResource(AbstractOptionsRequestTest):
 class OptionsNonSpatialResource(AbstractOptionsRequestTest):
 
     # simple path
-    def options_non_spatial_resource_simple_path(self):
-        response = requests.options(self.controle_base_uri + "controle-list/usuario-list/1")
+    def test_options_non_spatial_resource_simple_path(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/1")
         self.assertEquals(response.status_code, 200)
 
         response_keys = self.aux_get_keys_from_response(response)
         self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['data_nascimento', 'email', 'gastos', 'hydra', 'id', 'nome',
-                                          'nome_usuario', 'rdfs', 'senha', 'subClassOf'])
+        expected_keys = self.aux_get_context_keys_merged_with_default_keys(['data_nascimento', 'email', 'id', 'nome',
+                                          'nome_usuario', 'senha'])
+        self.assertListEqual(acontext_keys, expected_keys)
 
         data_nascimento_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'data_nascimento')
         self.assertListEqual(data_nascimento_acontext_keys, self.keys_from_attrs_context)
         email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
         self.assertListEqual(email_acontext_keys, self.keys_from_attrs_context)
-        gastos_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'gastos')
-        self.assertListEqual(gastos_acontext_keys, self.keys_from_attrs_context)
+        #gastos_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'gastos')
+        #self.assertListEqual(gastos_acontext_keys, self.keys_from_attrs_context)
         id_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id')
         self.assertListEqual(id_acontext_keys, self.keys_from_attrs_context)
         nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
@@ -5114,10 +5150,14 @@ class OptionsNonSpatialResource(AbstractOptionsRequestTest):
         supported_property_keys = self.aux_get_supported_property_keys(response)
         self.assertListEqual(supported_property_keys, self.expected_supported_property_keys)
 
+        supported_operations_keys = self.aux_get_supported_operation_keys_from_response(response)
+        self.assertListEqual(supported_operations_keys, self.supported_operations_expected_keys)
         suppoerted_properties_names = self.aux_get_supported_properties_names(response)
-        self.assertListEqual(suppoerted_properties_names, ['data_nascimento', 'email', 'gastos', 'id', 'nome',
+        self.assertListEqual(suppoerted_properties_names, ['data_nascimento', 'email', 'id', 'nome',
                                                            'nome_usuario', 'senha'])
 
+        supported_operations_keys = self.aux_get_supported_operation_keys_from_response(response)
+        self.assertListEqual(supported_operations_keys, self.supported_operations_expected_keys)
         supported_operations_names = self.aux_get_supported_operations_names(response)
         self.assertListEqual(supported_operations_names, self.basic_operations_names)
 
@@ -5127,8 +5167,8 @@ class OptionsNonSpatialResource(AbstractOptionsRequestTest):
         self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
     # only attributes
-    def options_non_spatial_resource_only_attributes(self):
-        response = requests.options(self.controle_base_uri + "controle-list/usuario-list/1/nome,email")
+    def test_options_non_spatial_resource_only_attributes(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/1/nome,email")
         self.assertEquals(response.status_code, 200)
 
         response_keys = self.aux_get_keys_from_response(response)
@@ -5144,6 +5184,8 @@ class OptionsNonSpatialResource(AbstractOptionsRequestTest):
         subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
+        supported_operations_keys = self.aux_get_supported_operation_keys_from_response(response)
+        self.assertListEqual(supported_operations_keys, self.supported_operations_expected_keys)
         supported_operations_names = self.aux_get_supported_operations_names(response)
         self.assertListEqual(supported_operations_names, self.basic_operations_names)
 
@@ -5152,8 +5194,8 @@ class OptionsNonSpatialResource(AbstractOptionsRequestTest):
         self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
         self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
-    def options_non_spatial_resource_only_one_attribute(self):
-        response = requests.options(self.controle_base_uri + "controle-list/usuario-list/1/nome")
+    def test_options_non_spatial_resource_only_one_attribute(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/1/nome")
         self.assertEquals(response.status_code, 200)
 
         response_keys = self.aux_get_keys_from_response(response)
@@ -5167,17 +5209,19 @@ class OptionsNonSpatialResource(AbstractOptionsRequestTest):
         subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
+        supported_operations_keys = self.aux_get_supported_operation_keys_from_response(response)
+        self.assertListEqual(supported_operations_keys, self.supported_operations_expected_keys)
         supported_operations_names = self.aux_get_supported_operations_names(response)
         self.assertListEqual(supported_operations_names, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], "https://schema.org/name")
-        self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "https://schema.org/Text")
         self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
     # operations
-    def options_non_spatial_resource_projection_operation(self):
-        response = requests.options(self.controle_base_uri + "controle-list/usuario-list/1/projection/nome,email")
+    def test_options_non_spatial_resource_projection_operation(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/1/projection/nome,email")
         self.assertEquals(response.status_code, 200)
 
         response_keys = self.aux_get_keys_from_response(response)
@@ -5193,6 +5237,8 @@ class OptionsNonSpatialResource(AbstractOptionsRequestTest):
         subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
+        supported_operations_keys = self.aux_get_supported_operation_keys_from_response(response)
+        self.assertListEqual(supported_operations_keys, self.supported_operations_expected_keys)
         supported_operations_names = self.aux_get_supported_operations_names(response)
         self.assertListEqual(supported_operations_names, self.basic_operations_names)
 
@@ -5203,23 +5249,24 @@ class OptionsNonSpatialResource(AbstractOptionsRequestTest):
 
 
     # simple path (binary)
-    def options_non_spatial_resource_simple_path_accept_octet_stream(self):
-        response = requests.options(self.controle_base_uri + "controle-list/usuario-list/1", headers={"Accept": "application/octet-stream"})
+    def test_options_non_spatial_resource_simple_path_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/1", headers={"Accept": "application/octet-stream"})
         self.assertEquals(response.status_code, 200)
 
         response_keys = self.aux_get_keys_from_response(response)
         self.assertListEqual(response_keys, self.simple_path_options_dict_keys)
 
         acontext_keys = self.aux_get_keys_from_response_context(response)
-        self.assertListEqual(acontext_keys, ['data_nascimento', 'email', 'gastos', 'hydra', 'id', 'nome',
-                                             'nome_usuario', 'rdfs', 'senha', 'subClassOf'])
+        expected_keys = self.aux_get_context_keys_merged_with_default_keys(['data_nascimento', 'email', 'id', 'nome',
+                                          'nome_usuario', 'senha'])
+        self.assertListEqual(acontext_keys, expected_keys)
 
         data_nascimento_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'data_nascimento')
         self.assertListEqual(data_nascimento_acontext_keys, self.keys_from_attrs_context)
         email_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'email')
         self.assertListEqual(email_acontext_keys, self.keys_from_attrs_context)
-        gastos_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'gastos')
-        self.assertListEqual(gastos_acontext_keys, self.keys_from_attrs_context)
+        #gastos_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'gastos')
+        #self.assertListEqual(gastos_acontext_keys, self.keys_from_attrs_context)
         id_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'id')
         self.assertListEqual(id_acontext_keys, self.keys_from_attrs_context)
         nome_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'nome')
@@ -5235,7 +5282,7 @@ class OptionsNonSpatialResource(AbstractOptionsRequestTest):
         self.assertListEqual(supported_property_keys, self.expected_supported_property_keys)
 
         suppoerted_properties_names = self.aux_get_supported_properties_names(response)
-        self.assertListEqual(suppoerted_properties_names, ['data_nascimento', 'email', 'gastos', 'id', 'nome',
+        self.assertListEqual(suppoerted_properties_names, ['data_nascimento', 'email', 'id', 'nome',
                                                            'nome_usuario', 'senha'])
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
@@ -5247,8 +5294,8 @@ class OptionsNonSpatialResource(AbstractOptionsRequestTest):
         self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
     # only attributes (binary)
-    def options_non_spatial_resource_only_attributes_accept_octet_stream(self):
-        response = requests.options(self.controle_base_uri + "controle-list/usuario-list/1/nome,email",
+    def test_options_non_spatial_resource_only_attributes_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/1/nome,email",
                                     headers={"Accept": "application/octet-stream"})
         self.assertEquals(response.status_code, 200)
 
@@ -5273,8 +5320,8 @@ class OptionsNonSpatialResource(AbstractOptionsRequestTest):
         self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
         self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
-    def options_non_spatial_resource_only_one_attribute_accept_octet_stream(self):
-        response = requests.options(self.controle_base_uri + "controle-list/usuario-list/1/nome",
+    def test_options_non_spatial_resource_only_one_attribute_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/1/nome",
                                     headers={"Accept": "application/octet-stream"})
         self.assertEquals(response.status_code, 200)
 
@@ -5294,12 +5341,12 @@ class OptionsNonSpatialResource(AbstractOptionsRequestTest):
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], "https://schema.org/name")
-        self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
+        self.assertEquals(response_dict["@type"], "https://schema.org/Text")
         self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
     # operations (binary)
-    def options_non_spatial_resource_projection_operation_accept_octet_stream(self):
-        response = requests.options(self.controle_base_uri + "controle-list/usuario-list/1/projection/nome,email")
+    def test_options_non_spatial_resource_projection_operation_accept_octet_stream(self):
+        response = requests.options(self.controle_base_uri + "usuario-list/1/projection/nome,email")
         self.assertEquals(response.status_code, 200)
 
         response_keys = self.aux_get_keys_from_response(response)
@@ -5315,8 +5362,10 @@ class OptionsNonSpatialResource(AbstractOptionsRequestTest):
         subClassOf_acontext_keys = self.aux_get_keys_from_acontext_attrs(response, 'subClassOf')
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
+        supported_operations_keys = self.aux_get_supported_operation_keys_from_response(response)
+        self.assertListEqual(supported_operations_keys, self.supported_operations_expected_keys)
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, [])
+        self.assertListEqual(supported_operations_names, self.basic_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], "https://schema.org/Thing")
@@ -5325,18 +5374,18 @@ class OptionsNonSpatialResource(AbstractOptionsRequestTest):
 
 
     # simple path (image)
-    def options_non_spatial_resource_simple_path_accept_image_png(self):
+    def test_options_non_spatial_resource_simple_path_accept_image_png(self):
         pass
 
     # only attributes (image)
-    def options_non_spatial_resource_only_attributes_accept_image_png(self):
+    def test_options_non_spatial_resource_only_attributes_accept_image_png(self):
         pass
 
-    def options_non_spatial_resource_only_one_attribute_accept_image_png(self):
+    def test_options_non_spatial_resource_only_one_attribute_accept_image_png(self):
         pass
 
     # operations (image)
-    def options_non_spatial_resource_projection_operation_accept_image_png(self):
+    def test_options_non_spatial_resource_projection_operation_accept_image_png(self):
         pass
 
 # FeatureResource

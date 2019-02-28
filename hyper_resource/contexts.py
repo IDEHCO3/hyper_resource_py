@@ -317,7 +317,7 @@ class SupportedProperty():
         }
 
 class SupportedOperation():
-    def __init__(self, operation='', title='', method='', expects='', returns='', type='', link=''):
+    def __init__(self, operation='', title='', method='', expects=[] , returns='', type='', link='', description=''):
         self.method = method
         self.operation = operation
         self.title = title
@@ -325,6 +325,7 @@ class SupportedOperation():
         self.returns = returns
         self.type = type
         self.link = link # the link to the explanation of what this operation is
+        self.description = description
 
     def context(self):
         return {
@@ -333,7 +334,8 @@ class SupportedOperation():
                 "hydra:expects": self.expects,
                 "hydra:returns": self.returns,
                 "hydra:statusCode": '',
-                "@id": self.link
+                "@id": self.link,
+                "hydra:description": self.description
         }
 
 class SupportedOperator():
@@ -546,26 +548,17 @@ class ContextResource:
 
             rets = vocabulary(v_typed_called.return_type) if v_typed_called.return_type in vocabularyDict() else "NOT FOUND"
             link_id = vocabulary(v_typed_called.name)
-            arr.append(SupportedOperation(operation=k, title=v_typed_called.name, method='GET', expects=exps, returns=rets, type='', link=link_id))
+            arr.append(SupportedOperation(operation=k,
+                                          title=v_typed_called.name,
+                                          method='GET',
+                                          expects=exps,
+                                          returns=rets,
+                                          type='',
+                                          link=link_id,
+                                          description=v_typed_called.get_operation_description())
+                       )
 
         return [supportedOperation.context() for supportedOperation in arr]
-
-    '''
-    def supportedOperations(self):
-        arr = []
-        if self.resource is None:
-            return []
-        for k, v_typed_called in self.resource.operations_with_parameters_type().items():
-            exps = [] if v_typed_called.parameters is None else [vocabulary(param) for param in v_typed_called.parameters]
-            if v_typed_called.return_type in vocabularyDict():
-                rets = vocabulary(v_typed_called.return_type)
-            else:
-                rets = "NOT FOUND"
-            link_id = vocabulary(v_typed_called.name)
-            arr.append( SupportedOperation(operation=k, title=v_typed_called.name, method='GET', expects=exps, returns=rets, type='', link=link_id))
-
-        return [supportedOperation.context() for supportedOperation in arr]
-    '''
 
     def iriTemplates(self):
         iri_templates = []
