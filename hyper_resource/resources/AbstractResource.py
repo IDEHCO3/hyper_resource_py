@@ -582,10 +582,7 @@ class AbstractResource(APIView):
     # todo: verify image responses processment
     # Should be overridden
     def response_base_get_with_image(self, request, required_object):
-        # 'queryset' is the requested resource without serialization
-        queryset = required_object.origin_object
-
-        image = self.get_png(queryset, request)
+        image = self.get_png(required_object, request)
         required_object.representation_object = image
         key = self.get_key_cache(request, CONTENT_TYPE_IMAGE_PNG)
         e_tag = self.generate_e_tag(image)
@@ -1198,13 +1195,24 @@ class AbstractResource(APIView):
 
         return None
 
-    def get_png(self, queryset, request):
-        style = self.get_style_file(request)
+    def get_png(self, required_object, request):
+        from rest_framework.utils.serializer_helpers import ReturnDict
 
-        if isinstance(queryset, GEOSGeometry):
-            config = {'wkt': queryset.wkt, 'type': queryset.geom_type}
+        representation = required_object.representation_object
+
+        if isinstance(representation, ReturnDict):
+            dic = dict(representation['geometry'])
+
         else:
-            config = {'wkt': queryset.geom.wkt, 'type': queryset.geom.geom_type}
+            dic = representation
+
+        geom = GEOSGeometry(json.dumps({"type": dic['type'], "coordinates": dic['coordinates']}))
+
+        style = self.get_style_file(request)
+        config = {
+            'wkt': geom.wkt,
+            'type': geom.geom_type
+        }
 
         if style is not None:
             config.update({
