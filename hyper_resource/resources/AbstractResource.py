@@ -577,14 +577,6 @@ class AbstractResource(APIView):
         else:
             result = str(required_object.representation_object).encode()
 
-        '''
-        if isinstance(result, dict):
-            value_to_e_tag = json.dumps(result)
-
-        else:
-            value_to_e_tag = result
-        '''
-
         #e_tag = self.generate_e_tag(value_to_e_tag)
         self.set_key_with_data_in_cache(key, self.e_tag, result)
 
@@ -593,13 +585,12 @@ class AbstractResource(APIView):
 
         return resp
 
-    # todo: verify image responses processment
     # Should be overridden
     def response_base_get_with_image(self, request, required_object):
-        # 'queryset' is the requested resource without serialization
-        queryset = required_object.origin_object
+        g = GEOSGeometry(json.dumps({"type": required_object.representation_object['type'],
+                                     "coordinates": required_object.representation_object['coordinates']}))
 
-        image = self.get_png(queryset, request)
+        image = self.get_png(g, request)
         required_object.representation_object = image
         key = self.get_key_cache(request, CONTENT_TYPE_IMAGE_PNG)
         e_tag = self.generate_e_tag(image)
