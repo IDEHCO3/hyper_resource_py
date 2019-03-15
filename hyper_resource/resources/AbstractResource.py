@@ -156,12 +156,13 @@ class AbstractResource(APIView):
 
         return response
 
+    '''
     def hashed_value(self, object_):
         dt = datetime.now()
         return self.__class__.__name__ + str(dt.microsecond)
 
     # Should be overridden
-    def inject_e_tag(self, etag=None):
+    def inject_e_tag(self, serialized_data, etag=None):
 
         # ATTENTION: if self.object_model is None we can have a e_tag without a object_model
         if self.e_tag is None and self.object_model is not None:
@@ -171,6 +172,17 @@ class AbstractResource(APIView):
         if etag:
             self.e_tag += str(etag)
             return
+    '''
+
+    def hashed_value(self, request, serialized_data):
+        #resource_hash = hashlib.sha1(json.dumps(serialized_data).encode()).hexdigest()
+        resource_hash = hashlib.sha1(str(serialized_data).encode()).hexdigest()
+        resource_hash = resource_hash + "." + self.content_type_or_default_content_type(request)
+        return resource_hash
+
+    # todo: remove etag default parameter, Etag must be a has of the serialized data
+    def inject_e_tag(self, request, serialized_data):
+        self.e_tag = self.hashed_value(request, serialized_data)
 
     def jwt_algorithm(self):
         return 'HS256'
@@ -272,7 +284,7 @@ class AbstractResource(APIView):
             response['allow'] = self.access_control_allow_methods_str()
             return response
 
-        http_auth = request.META.get(['HTTP_AUTHORIZATION']) or ''
+        http_auth = request.META.get('HTTP_AUTHORIZATION') or ''
 
         if http_auth.startswith('Bearer'):
             a_token = request.META['HTTP_AUTHORIZATION'][7:].strip()
@@ -565,24 +577,29 @@ class AbstractResource(APIView):
         else:
             result = str(required_object.representation_object).encode()
 
+        '''
         if isinstance(result, dict):
             value_to_e_tag = json.dumps(result)
 
         else:
             value_to_e_tag = result
+        '''
 
-        e_tag = self.generate_e_tag(value_to_e_tag)
-        self.set_key_with_data_in_cache(key, e_tag, result)
+        #e_tag = self.generate_e_tag(value_to_e_tag)
+        self.set_key_with_data_in_cache(key, self.e_tag, result)
 
         resp = HttpResponse(result, content_type=CONTENT_TYPE_OCTET_STREAM)
-        self.set_etag_in_header(resp, e_tag)
+        self.set_etag_in_header(resp, self.e_tag)
 
         return resp
 
     # todo: verify image responses processment
     # Should be overridden
     def response_base_get_with_image(self, request, required_object):
-        image = self.get_png(required_object, request)
+        # 'queryset' is the requested resource without serialization
+        queryset = required_object.origin_object
+
+        image = self.get_png(queryset, request)
         required_object.representation_object = image
         key = self.get_key_cache(request, CONTENT_TYPE_IMAGE_PNG)
         e_tag = self.generate_e_tag(image)
@@ -617,6 +634,7 @@ class AbstractResource(APIView):
             return self.response_base_object_in_cache(request)
 
         required_object = self.basic_get(request, *args, **kwargs)
+        self.inject_e_tag(request, required_object.representation_object)
         status = required_object.status_code
 
         if status in [400, 401, 404]:
@@ -626,10 +644,14 @@ class AbstractResource(APIView):
             return Response({'Error ': 'The server can not process this request. Status:' + str(status)}, status=status)
 
         if self.is_image_content_type(request, **kwargs):
-            return self.response_base_get_with_image(request, required_object)
+            response = self.response_base_get_with_image(request, required_object)
+            self.set_etag_in_header(response, self.e_tag)
+            return response
 
         if self.is_binary_content_type(required_object):
-            return self.response_base_get_binary(request, required_object)
+            response = self.response_base_get_binary(request, required_object)
+            self.set_etag_in_header(response, self.e_tag)
+            return response
 
         #if self.cache_enabled():
         key = self.get_key_cache(request, a_content_type=required_object.content_type)
@@ -688,16 +710,32 @@ class AbstractResource(APIView):
     def head(self, request, *args, **kwargs):
         attributes_functions_str = self.kwargs.get("attributes_functions", None)
         content_type = self.define_head_content_type(request, attributes_functions_str)
-        self.inject_e_tag()
+        #self.inject_e_tag()
         resp = Response(data={}, status=status.HTTP_200_OK, content_type=content_type)
         self.add_base_headers(request, resp)
         self.set_etag_in_header(resp, self.e_tag)
         return resp
 
+    def resource_etag_equals_request_if_none_match(self, request, object_from_db):
+        serialized_data_from_db = self.serializer_class(object_from_db, context={"request": request}).data
+        #hash_object_from_db = hashlib.sha1(json.dumps(serialized_data_from_db).encode()).hexdigest()
+        hash_object_from_db = hashlib.sha1(str(serialized_data_from_db).encode()).hexdigest()
+        resource_hash_from_request = request.META[HTTP_IF_MATCH].split(".")[0]
+        return resource_hash_from_request == hash_object_from_db
+
     # Could be overridden
     def put(self, request, *args, **kwargs):
         obj = self.get_object(kwargs)
+
+        if HTTP_IF_MATCH not in request.META:
+            data = {"Precondition required":"If-Match required"}
+            return Response(data=data, status=status.HTTP_428_PRECONDITION_REQUIRED)
+
         serializer = self.serializer_class(obj, data=request.data, context={'request': request})
+
+        if not self.resource_etag_equals_request_if_none_match(request, obj):
+            data = {"Precondition failed": "Data is already modified. You have to keep your current data, do another GET request for this resource and merge the modifications"}
+            return Response(data=data, status=status.HTTP_412_PRECONDITION_FAILED)
 
         if serializer.is_valid():
             serializer.save()
@@ -1195,24 +1233,13 @@ class AbstractResource(APIView):
 
         return None
 
-    def get_png(self, required_object, request):
-        from rest_framework.utils.serializer_helpers import ReturnDict
-
-        representation = required_object.representation_object
-
-        if isinstance(representation, ReturnDict):
-            dic = dict(representation['geometry'])
-
-        else:
-            dic = representation
-
-        geom = GEOSGeometry(json.dumps({"type": dic['type'], "coordinates": dic['coordinates']}))
-
+    def get_png(self, queryset, request):
         style = self.get_style_file(request)
-        config = {
-            'wkt': geom.wkt,
-            'type': geom.geom_type
-        }
+
+        if isinstance(queryset, GEOSGeometry):
+            config = {'wkt': queryset.wkt, 'type': queryset.geom_type}
+        else:
+            config = {'wkt': queryset.geom.wkt, 'type': queryset.geom.geom_type}
 
         if style is not None:
             config.update({

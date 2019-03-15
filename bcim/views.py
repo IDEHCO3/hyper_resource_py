@@ -7,7 +7,8 @@ from rest_framework import generics
 from rest_framework import status
 
 from bcim.contexts import *
-from .serializers import *
+from bcim.serializers import *
+from bcim.serializers import EntryPointSerializer
 from hyper_resource.contexts import EntryPointResourceContext
 from hyper_resource.resources.EntryPointResource import FeatureEntryPointResource
 from hyper_resource.resources.FeatureCollectionResource import FeatureCollectionResource

@@ -793,7 +793,7 @@ class AbstractCollectionResource(AbstractResource):
         self.object_model = self.model_class()()
         self.current_object_state = self.object_model
         self.set_basic_context_resource(request)
-        self.inject_e_tag()
+        #self.inject_e_tag()
         attributes_functions_str = self.kwargs.get('attributes_functions')
 
         if self.is_simple_path(attributes_functions_str):

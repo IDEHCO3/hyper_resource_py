@@ -1,5 +1,5 @@
 from __future__ import unicode_literals
-from hyper_resource.models import FeatureModel, FeatureModel, BusinessModel
+from hyper_resource.models import FeatureModel, BusinessModel
 # This is an auto-generated Django model module.
 # You'll have to do the following manually to clean this up:
 #   * Rearrange models' order
@@ -12,7 +12,6 @@ import datetime
 from django.contrib.gis.db import models
 from django.utils.translation import ugettext_lazy as _
 
-from hyper_resource.models import FeatureModel, FeatureModel
 
 class EntryPoint(BusinessModel):
     unidades_federativas = models.CharField(max_length=200)

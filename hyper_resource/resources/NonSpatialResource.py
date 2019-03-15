@@ -1,3 +1,5 @@
+import hashlib
+import json
 from copy import deepcopy
 
 from hyper_resource.resources.AbstractResource import AbstractResource, RequiredObject
@@ -83,7 +85,6 @@ class NonSpatialResource(AbstractResource):
         self.object_model = self.get_object(kwargs)
         self.current_object_state = self.object_model
         self.set_basic_context_resource(request)
-        self.inject_e_tag()
         attributes_functions_str = kwargs.get(self.attributes_functions_name_template())
 
         if self.is_simple_path(attributes_functions_str):

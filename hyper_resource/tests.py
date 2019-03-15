@@ -26,7 +26,8 @@ import json
 import requests
 from django.http import HttpResponse
 from django.shortcuts import get_object_or_404
-
+import datetime
+import random
 
 from django.test.runner import DiscoverRunner
 #import os
@@ -176,7 +177,7 @@ class FactoryComplexQueryTest(SimpleTestCase):
 
     def test_q_object_by_filter_operation(self):
         attribute_operation_str ='filter/sigla/in/rj,es,go/and/data/between/2017-02-01,2017-06-30/'
-        import datetime
+
         start_date = datetime.date(2017, 2, 1)
         end_date = datetime.date(2017, 6, 30)
         q = Q(sigla__in=['rj','es','go']) & Q(data__range=(start_date, end_date))
@@ -465,7 +466,7 @@ class AbstractOptionsRequestTest(AbstractRequestTest):
                                        'srid', 'srs', 'transform', 'vsi_buffer', 'warp', 'width']
 
         self.entrypoint_operation_names = ["collect", "count-resource", "filter", "offset-limit", "projection"]
-        
+
         self.collection_vocab = "http://www.w3.org/ns/hydra/core#Collection"
         self.link_vocab = "http://www.w3.org/ns/hydra/core#Link"
         self.entrypoint_vocab = "http://www.w3.org/ns/hydra/core#entrypoint"
@@ -477,6 +478,8 @@ class AbstractOptionsRequestTest(AbstractRequestTest):
 
     def aux_get_supported_operation_keys_from_response(self, response):
         response_dict = self.aux_get_dict_from_response(response)
+        if len(response_dict[self.supported_operation_key]) == 0:
+            return []
         supported_operation_keys = response_dict[self.supported_operation_key][0].keys()
         return sorted(supported_operation_keys)
 
@@ -1286,6 +1289,7 @@ class ProjectionOperationTest(AbstractGetRequestTest):
         self.assertEquals(explicit_projection_resp.headers['content-type'], 'application/octet-stream')
 
     # --------------- TESTS FOR TIFF RESOURCE ---------------------------------
+    # todo: flag
     def test_projection_for_tiff_resource_all_attributes(self):
         implicit_projection_resp = requests.get(self.raster_base_uri + 'imagem-exemplo-tile1-list/61/rid,rast')
         self.assertEquals(implicit_projection_resp.status_code, 200)
@@ -1631,10 +1635,10 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         implicit_projection_resp_keys = self.aux_get_keys_from_response(implicit_projection_resp)
         self.assertEquals(implicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
-        f_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(implicit_projection_resp)
-        self.assertListEqual(f_supported_operations_keys, self.supported_operations_expected_keys)
         f_supported_operations_names = self.aux_get_supported_operations_names(implicit_projection_resp)
         self.assertEquals(f_supported_operations_names, [])
+        #f_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(implicit_projection_resp)
+        #self.assertListEqual(f_supported_operations_keys, self.supported_operations_expected_keys)
 
         f_acontext_keys = self.aux_get_keys_from_response_context(implicit_projection_resp)
         self.assertEquals(f_acontext_keys, ['email', 'hydra', 'nome', 'rdfs', 'subClassOf'])
@@ -1659,8 +1663,8 @@ class OptionsForProjectionOperation(AbstractOptionsRequestTest):
         explicit_projection_resp_keys = self.aux_get_keys_from_response(explicit_projection_resp)
         self.assertEquals(explicit_projection_resp_keys, self.non_simple_path_dict_keys)
 
-        s_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(explicit_projection_resp)
-        self.assertListEqual(s_supported_operations_keys, self.supported_operations_expected_keys)
+        #s_supported_operations_keys = self.aux_get_supported_operation_keys_from_response(explicit_projection_resp)
+        #self.assertListEqual(s_supported_operations_keys, self.supported_operations_expected_keys)
         s_supported_operations_names = self.aux_get_supported_operations_names(explicit_projection_resp)
         self.assertEquals(s_supported_operations_names, [])
 
@@ -10661,3 +10665,73 @@ class PaginationTest(AbstractHeadRequestTest):
         expected_link = '<http://luc00557196:8000/api/bcim/aldeias-indigenas/offset-limit/1001/100>; rel="next" '
         self.assertNotIn(expected_link, response.headers["link"])
     """
+
+# WARNING: test only with database test
+#python manage.py test hyper_resource.tests.PutTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class PutTest(SimpleTestCase):
+    def setUp(self):
+        self.controle_base_uri = "http://" + HOST + "controle-list/"
+
+    def aux_change_usuario_data_nascimento(self, response):
+        usuario_obj = json.loads(response.content)
+        now = datetime.datetime.now()
+        usuario_obj["data_nascimento"] = str(now.year) + "-" + str(now.month) + "-" + str(now.day)
+        return json.dumps(usuario_obj).encode()
+
+    def aux_change_usuario_nome(self, response):
+        usuario_obj = json.loads(response.content)
+        names_list = ['name1', 'name2', 'name3', 'name4', 'name5', 'name6', 'name7', 'name8', 'name9', 'name10']
+        if usuario_obj["nome"] in names_list:
+            names_list.remove(usuario_obj["nome"])
+        usuario_obj["nome"] = names_list[random.randint(0, 9)]
+        return json.dumps(usuario_obj).encode()
+
+    def test_different_alteration_in_same_resource(self):
+        response_get_first_client = requests.get(self.controle_base_uri + "usuario-list/1")
+        self.assertEquals(response_get_first_client.status_code, 200)
+
+        response_get_second_client = requests.get(self.controle_base_uri + "usuario-list/1")
+        self.assertEquals(response_get_second_client.status_code, 200)
+
+        first_usuario_json_object = self.aux_change_usuario_nome(response_get_first_client)
+        # simulating PUT of the first client
+        response_put1 = requests.put(
+            url=self.controle_base_uri + "usuario-list/1",
+            data=first_usuario_json_object,
+            headers={"If-Match": response_get_first_client.headers["Etag"], "Content-type": "application/json"}
+        )
+        self.assertEquals(response_put1.status_code, 204)
+
+        second_usuario_json_object = self.aux_change_usuario_nome(response_get_second_client)
+        # simulating PUT of the second client
+        response_put1 = requests.put(
+            url=self.controle_base_uri + "usuario-list/1",
+            data=second_usuario_json_object,
+            headers={"If-Match": response_get_second_client.headers["Etag"], "Content-type": "application/json"}
+        )
+        self.assertEquals(response_put1.status_code, 412)
+
+    def test_same_alteration_in_same_resource(self):
+        response_get_first_client = requests.get(self.controle_base_uri + "usuario-list/1")
+        self.assertEquals(response_get_first_client.status_code, 200)
+
+        response_get_second_client = requests.get(self.controle_base_uri + "usuario-list/1")
+        self.assertEquals(response_get_second_client.status_code, 200)
+
+        first_usuario_json_object = self.aux_change_usuario_data_nascimento(response_get_first_client)
+        # simulating PUT of the first client
+        response_put1 = requests.put(
+            url=self.controle_base_uri + "usuario-list/1",
+            data=first_usuario_json_object,
+            headers={"If-Match": response_get_first_client.headers["Etag"], "Content-type": "application/json"}
+        )
+        self.assertEquals(response_put1.status_code, 204)
+
+        second_usuario_json_object = self.aux_change_usuario_data_nascimento(response_get_second_client)
+        # simulating PUT of the second client
+        response_put1 = requests.put(
+            url=self.controle_base_uri + "usuario-list/1",
+            data=second_usuario_json_object,
+            headers={"If-Match": response_get_second_client.headers["Etag"], "Content-type": "application/json"}
+        )
+        self.assertEquals(response_put1.status_code, 204)

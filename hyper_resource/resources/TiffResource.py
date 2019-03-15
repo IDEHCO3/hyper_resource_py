@@ -63,11 +63,9 @@ class TiffResource(RasterResource):
         operation_return_type = self.execute_method_to_get_return_type_from_operation(attributes_functions_str)
         res_type_by_accept = self.resource_representation_or_default_resource_representation(request)
 
-        # 1°: Trying to define resource type by accept header ...
         if res_type_by_accept != self.default_resource_representation():
             return res_type_by_accept
 
-        # 2°: Defining resource type by operation return type ...
         return operation_return_type
 
     def required_object_for_simple_path(self, request):
@@ -367,11 +365,53 @@ class TiffResource(RasterResource):
             return self.required_object_for_invalid_sintax(attributes_functions_str)
         return res
 
+    def cut_raster_final_bytes(self, raster_bytes):
+        '''
+        Is necessary to cut the final part of the raster bytes to generate the hash code because, for some reason,
+        the raster final bytes is always different every time that the same raster is requested
+        '''
+        raster_bytes_len = len(raster_bytes)
+        final_idx = int(raster_bytes_len * 0.95)
+        return raster_bytes[:final_idx]
+
+    def resource_etag_equals_request_if_none_match(self, request, object_from_db):
+        serialized_data_from_db = self.serializer_class(object_from_db, context={"request": request}).data
+
+        if type(serialized_data_from_db) is bytes:
+            serialized_data_from_db = self.cut_raster_final_bytes(serialized_data_from_db)
+        elif self.spatial_field_name() in serialized_data_from_db:
+            serialized_data_from_db[self.spatial_field_name()] = self.cut_raster_final_bytes(serialized_data_from_db[self.spatial_field_name()])
+
+        hash_object_from_db = hashlib.sha1(str(serialized_data_from_db).encode()).hexdigest()
+        resource_hash_from_request = request.META[HTTP_IF_MATCH].split(".")[0]
+        return resource_hash_from_request == hash_object_from_db
+
+    def get_raster_bytes(self, serialized_data):
+        if type(serialized_data) is bytes:
+            return self.cut_raster_final_bytes(serialized_data)
+
+        raster_bytes = serialized_data[self.spatial_field_name()].vsi_buffer
+        return self.cut_raster_final_bytes(raster_bytes)
+
+    def hashed_value(self, request, serialized_data):
+        if type(serialized_data) is not bytes and self.spatial_field_name() not in serialized_data:
+            return super(TiffResource, self).hashed_value(request, serialized_data)
+
+        raster_bytes = self.get_raster_bytes(serialized_data)
+
+        #raster_hash = str(raster_bytes).encode()
+        #serialized_data = str(serialized_data).encode()
+
+        resource_hash = hashlib.sha1(raster_bytes).hexdigest()
+        resource_hash = resource_hash + "." + self.content_type_or_default_content_type(request)
+        return resource_hash
+
     def response_base_get(self, request, *args, **kwargs):
         if self.resource_in_cache(request):
             return self.response_base_object_in_cache(request)
 
         req_obj = self.basic_get(request, *args, **kwargs)
+        self.inject_e_tag(request, req_obj.representation_object)
 
         if req_obj.status_code in [400, 401, 404]:
             return Response(req_obj.representation_object, status=req_obj.status_code)
@@ -380,11 +420,14 @@ class TiffResource(RasterResource):
 
         if req_obj.content_type == CONTENT_TYPE_IMAGE_TIFF:
             response = HttpResponse(req_obj.representation_object, req_obj.content_type)
+            self.set_etag_in_header(response, self.e_tag)
             response['Content-Disposition'] = 'attachment; filename=' + self.default_file_name()
             return response
 
         if self.is_binary_content_type(req_obj):
-            return self.response_base_get_binary(request, req_obj)
+            response = self.response_base_get_binary(request, req_obj)
+            self.set_etag_in_header(response, self.e_tag)
+            return response
 
         key = self.get_key_cache(request, a_content_type=req_obj.content_type)
         self.set_key_with_data_in_cache(key, self.e_tag, req_obj.representation_object)

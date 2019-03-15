@@ -529,7 +529,7 @@ class FeatureResource(SpatialResource):
         self.object_model = self.get_object(kwargs)
         self.current_object_state = self.object_model
         self.set_basic_context_resource(request)
-        self.inject_e_tag()
+        #self.inject_e_tag()
         #self.e_tag = str(hash(self.object_model))
 
         attributes_functions_str = kwargs.get(self.attributes_functions_name_template())

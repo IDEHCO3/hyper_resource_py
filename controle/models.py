@@ -4,7 +4,6 @@ import jwt
 
 from hyper_resource.models import FeatureModel, BusinessModel
 
-from hyper_resource.models import  BusinessModel
 # -*- coding: utf-8 -*-
 
 from django.db import models

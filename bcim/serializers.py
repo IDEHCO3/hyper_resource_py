@@ -3,7 +3,7 @@ from rest_framework.serializers import ModelSerializer, HyperlinkedModelSerializ
 
 from rest_framework.reverse import reverse
 from hyper_resource.serializers import BusinessSerializer, GeoBusinessSerializer
-from hyper_resource_py.urls import basic_path, protocol, host_name
+#from hyper_resource_py.urls import basic_path, protocol, host_name
 from .models import *
 
 class EntryPointSerializer(BusinessSerializer):
