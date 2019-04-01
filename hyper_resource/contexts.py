@@ -25,6 +25,7 @@ from hyper_resource.models import *
 from hyper_resource.resources import FeatureResource
 from hyper_resource.resources.AbstractResource import *
 from hyper_resource.resources.AbstractCollectionResource import GROUP_BY_SUM_PROPERTY_NAME
+from django.db.models.fields import NOT_PROVIDED
 
 
 class Reflection:
@@ -286,7 +287,15 @@ def operation_vocabulary(a_key):
 class SupportedProperty():
     def __init__(self, field):
         self.property_name = field.name
-        self.required = field.null
+
+        if field.primary_key:
+            self.required = False
+        else:
+            if field.default == NOT_PROVIDED:
+                self.required = not field.null # if is null, is not required
+            else:
+                self.required = False # if has default value, is not required
+
         self.readable = True
         self.writeable = True
         self.is_unique = field.unique

@@ -3,12 +3,20 @@ from collections import OrderedDict
 
 from rest_framework.serializers import ModelSerializer
 from rest_framework_gis.serializers import GeoFeatureModelSerializer
+from django.contrib.gis.db import models
 
 class BusinessSerializer(ModelSerializer):
     def get_id_relationship_from_request(self, field_name_relationship):
         if field_name_relationship not in self.initial_data:
             return None
+
         field_iri = self.initial_data[field_name_relationship]
+        if isinstance(field_iri, models.Model):
+            return field_iri
+
+        if type(field_iri) == int:
+            return field_iri
+
         if field_iri != None and field_iri != '':
             arr = field_iri.split('/')
             return  arr[-1] if arr[-1] != '' else arr[-2]
