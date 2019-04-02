@@ -4140,6 +4140,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
 
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
+
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4153,8 +4155,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
         self.assertIn("Date", head_headers)
         self.assertIn("Date", get_headers)
-        self.assertIn("Etag", head_headers)
-        self.assertIn("Etag", get_headers)
+        #self.assertIn("Etag", head_headers)
+        #self.assertIn("Etag", get_headers)
 
     # simple path (binary)
     def test_head_feature_collection_simple_path_accept_octet_stream(self):
@@ -4167,6 +4169,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
 
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
+
+        get_headers.remove("Etag")
         self.assertEquals(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4180,8 +4184,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
         self.assertIn("Date", head_headers)
         self.assertIn("Date", get_headers)
-        self.assertIn("Etag", head_headers)
-        self.assertIn("Etag", get_headers)
+        #self.assertIn("Etag", head_headers)
+        #self.assertIn("Etag", get_headers)
 
     # simple path (image)
     def test_head_feature_collection_simple_path_accept_image_png(self):
@@ -4197,6 +4201,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
 
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
+
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4210,8 +4216,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
         self.assertIn("Date", head_headers)
         self.assertIn("Date", get_headers)
-        self.assertIn("Etag", head_headers)
-        self.assertIn("Etag", get_headers)
+        #self.assertIn("Etag", head_headers)
+        #self.assertIn("Etag", get_headers)
 
     def test_head_feature_collection_only_geometry_attribute(self):
         response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/geom")
@@ -4221,6 +4227,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
 
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
+
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4234,8 +4242,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
         self.assertIn("Date", head_headers)
         self.assertIn("Date", get_headers)
-        self.assertIn("Etag", head_headers)
-        self.assertIn("Etag", get_headers)
+        #self.assertIn("Etag", head_headers)
+        #self.assertIn("Etag", get_headers)
 
     def test_head_feature_collection_without_geometry_attribute(self):
         response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/nome")
@@ -4245,6 +4253,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
 
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
+
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4258,8 +4268,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
         self.assertIn("Date", head_headers)
         self.assertIn("Date", get_headers)
-        self.assertIn("Etag", head_headers)
-        self.assertIn("Etag", get_headers)
+        #self.assertIn("Etag", head_headers)
+        #self.assertIn("Etag", get_headers)
 
     # only attributes (binary)
     def test_head_feature_collection_with_geometry_attribute_accept_octet_stream(self):
@@ -4272,6 +4282,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
 
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
+
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4285,8 +4297,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
         self.assertIn("Date", head_headers)
         self.assertIn("Date", get_headers)
-        self.assertIn("Etag", head_headers)
-        self.assertIn("Etag", get_headers)
+        #self.assertIn("Etag", head_headers)
+        #self.assertIn("Etag", get_headers)
 
     def test_head_feature_collection_only_geometry_attribute_accept_octet_stream(self):
         response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/geom",
@@ -4298,6 +4310,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
 
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
+
+        get_headers.remove("Etag")
         self.assertEquals(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4311,8 +4325,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
         self.assertIn("Date", head_headers)
         self.assertIn("Date", get_headers)
-        self.assertIn("Etag", head_headers)
-        self.assertIn("Etag", get_headers)
+        #self.assertIn("Etag", head_headers)
+        #self.assertIn("Etag", get_headers)
 
     def test_head_feature_collection_without_geometry_attribute_accept_octet_stream(self):
         response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/nome",
@@ -4324,6 +4338,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
 
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
+
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4337,8 +4353,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
         self.assertIn("Date", head_headers)
         self.assertIn("Date", get_headers)
-        self.assertIn("Etag", head_headers)
-        self.assertIn("Etag", get_headers)
+        #self.assertIn("Etag", head_headers)
+        #self.assertIn("Etag", get_headers)
 
     # only attributes (image)
     def test_head_feature_collection_with_geometry_attribute_accept_image_png(self):
@@ -4360,6 +4376,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
 
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
+
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4373,8 +4391,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
         self.assertIn("Date", head_headers)
         self.assertIn("Date", get_headers)
-        self.assertIn("Etag", head_headers)
-        self.assertIn("Etag", get_headers)
+        #self.assertIn("Etag", head_headers)
+        #self.assertIn("Etag", get_headers)
 
     def test_head_feature_collection_count_resource_operations(self):
         response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/count-resource")
@@ -4384,6 +4402,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
 
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
+
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4397,8 +4417,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
         self.assertIn("Date", head_headers)
         self.assertIn("Date", get_headers)
-        self.assertIn("Etag", head_headers)
-        self.assertIn("Etag", get_headers)
+        #self.assertIn("Etag", head_headers)
+        #self.assertIn("Etag", get_headers)
 
     # operations (binary)
     def test_head_feature_collection_within_operation_accept_octet_stream(self):
@@ -4411,6 +4431,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
 
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
+
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4424,8 +4446,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
         self.assertIn("Date", head_headers)
         self.assertIn("Date", get_headers)
-        self.assertIn("Etag", head_headers)
-        self.assertIn("Etag", get_headers)
+        #self.assertIn("Etag", head_headers)
+        #self.assertIn("Etag", get_headers)
 
     def test_head_feature_collection_count_resource_operations_accept_octet_stream(self):
         response_head = requests.head(self.bcim_base_uri + "aldeias-indigenas/count-resource",
@@ -4437,6 +4459,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
 
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
+
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4450,8 +4474,8 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         self.assertEquals(response_head.headers["vary"],                            response_get.headers["vary"])
         self.assertIn("Date", head_headers)
         self.assertIn("Date", get_headers)
-        self.assertIn("Etag", head_headers)
-        self.assertIn("Etag", get_headers)
+        #self.assertIn("Etag", head_headers)
+        #self.assertIn("Etag", get_headers)
 
     # operations (image)
     def test_head_feature_collection_within_operation_accept_image_png(self):
@@ -8423,6 +8447,8 @@ class HeadFeatureResourceTest(AbstractHeadRequestTest):
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
         options_headers = self.aux_get_headers_list_from_response(response_options)
+
+        get_headers.remove("Etag") # GET withoyt Etag head and HEAD has the same set of headers
         self.assertListEqual(head_headers, get_headers)
         #self.assertListEqual(head_headers, options_headers)
 

@@ -32,8 +32,10 @@ from django.core.cache import cache
 import hashlib
 from hyper_resource.models import FactoryComplexQuery, BusinessModel, ConverterType
 from image_generator.img_generator import BuilderPNG
+from user_management.models import HyperUser
 
-SECRET_KEY = '-&t&pd%%((qdof5m#=cp-=-3q+_+pjmu(ru_b%e+6u#ft!yb$$'
+#SECRET_KEY = '-&t&pd%%((qdof5m#=cp-=-3q+_+pjmu(ru_b%e+6u#ft!yb$$'
+SECRET_KEY = '!ijb)p^wxprqdccf7*kxzu6l^&sf%_+w@!$6e#yl^^47i3j0f6asdfg' # SECRET_KEY from user_management.models
 
 HTTP_IF_NONE_MATCH = 'HTTP_IF_NONE_MATCH'
 HTTP_IF_MATCH = 'HTTP_IF_MATCH'
@@ -156,24 +158,6 @@ class AbstractResource(APIView):
 
         return response
 
-    '''
-    def hashed_value(self, object_):
-        dt = datetime.now()
-        return self.__class__.__name__ + str(dt.microsecond)
-
-    # Should be overridden
-    def inject_e_tag(self, serialized_data, etag=None):
-
-        # ATTENTION: if self.object_model is None we can have a e_tag without a object_model
-        if self.e_tag is None and self.object_model is not None:
-            self.e_tag = self.hashed_value(self.object_model)
-            return
-
-        if etag:
-            self.e_tag += str(etag)
-            return
-    '''
-
     def hashed_value(self, request, serialized_data):
         #resource_hash = hashlib.sha1(json.dumps(serialized_data).encode()).hexdigest()
         resource_hash = hashlib.sha1(str(serialized_data).encode()).hexdigest()
@@ -278,22 +262,72 @@ class AbstractResource(APIView):
             if method not in self.http_allowed_methods:
                 self.http_allowed_methods.append(method)
 
+    def remove_allowed_methods(self, methods):
+        for method in methods:
+            if method in self.http_allowed_methods:
+                self.http_allowed_methods.remove(method)
+
+    def clear_allowed_methods(self):
+        self.http_allowed_methods.clear()
+
+    def token_has_permission(self, request, a_token):
+        payload = jwt.decode(a_token, SECRET_KEY, algorithm=self.jwt_algorithm())
+        user_group = HyperUser.objects.filter(**payload).first().group
+
+        if request.method in ['GET', 'HEAD', 'OPTIONS']:
+            return user_group.read
+
+        if request.method in ['POST']:
+            return user_group.create
+
+        if request.method in ['PUT']:
+            return user_group.update
+
+        if request.method in ['DELETE']:
+            return user_group.delete
+
+        return False
+
+    def request_forward(self, request):
+        if not self.token_is_need():
+            return True
+
+        a_token_or_none = self.get_token_or_none(request)
+        if a_token_or_none is None:
+            return False
+
+        return self.token_has_permission(request, a_token_or_none)
+
+    def get_token_or_none(self, request):
+        http_auth = request.META.get('HTTP_AUTHORIZATION') or ''
+        if http_auth.startswith('Bearer'):
+            a_token = request.META['HTTP_AUTHORIZATION'][7:].strip()
+
+            if self.token_is_ok(a_token):
+                return a_token
+        return None
+
     def dispatch(self, request, *args, **kwargs):
+        if not self.request_forward(request):
+            return HttpResponse(
+                json.dumps({'token is not ok or inexistent': 'not enough permission for this operation'}),
+                status=status.HTTP_401_UNAUTHORIZED,
+                content_type=CONTENT_TYPE_JSON
+            )
+
         if not self.token_is_need():
             response = super(AbstractResource, self).dispatch(request, *args, **kwargs)
             response['allow'] = self.access_control_allow_methods_str()
             return response
 
-        http_auth = request.META.get('HTTP_AUTHORIZATION') or ''
+        if self.get_token_or_none(request):
+            return super(AbstractResource, self).dispatch(request, *args, **kwargs)
 
-        if http_auth.startswith('Bearer'):
-            a_token = request.META['HTTP_AUTHORIZATION'][7:].strip()
-
-            if self.token_is_ok(a_token):
-                return super(AbstractResource, self).dispatch(request, *args, **kwargs)
-
-        resp = HttpResponse(json.dumps({'token': 'token is needed or it is not ok'}), status=401,
-                            content_type=CONTENT_TYPE_JSON)
+        resp = HttpResponse(
+            json.dumps({'token': 'token is needed or it is not ok'}),
+            status=status.HTTP_401_UNAUTHORIZED,
+            content_type=CONTENT_TYPE_JSON
+        )
 
         resp['WWW-Authenticate'] = 'Bearer realm="Access to the staging site"'
         return resp
@@ -587,8 +621,20 @@ class AbstractResource(APIView):
 
     # Should be overridden
     def response_base_get_with_image(self, request, required_object):
-        g = GEOSGeometry(json.dumps({"type": required_object.representation_object['type'],
-                                     "coordinates": required_object.representation_object['coordinates']}))
+        if required_object.representation_object["type"] in ["GeometryCollection", "FeatureCollection"]:
+            g = required_object.representation_object
+
+        elif required_object.representation_object["type"] in ["Feature"]:
+            g = GEOSGeometry(json.dumps({
+                "type": required_object.representation_object["geometry"]['type'],
+                "coordinates": required_object.representation_object["geometry"]['coordinates']
+            }))
+
+        else:  # Geometry
+            g = GEOSGeometry(json.dumps({
+                "type": required_object.representation_object['type'],
+                "coordinates": required_object.representation_object['coordinates']
+            }))
 
         image = self.get_png(g, request)
         required_object.representation_object = image
@@ -704,7 +750,7 @@ class AbstractResource(APIView):
         #self.inject_e_tag()
         resp = Response(data={}, status=status.HTTP_200_OK, content_type=content_type)
         self.add_base_headers(request, resp)
-        self.set_etag_in_header(resp, self.e_tag)
+        #self.set_etag_in_header(resp, self.e_tag)
         return resp
 
     def resource_etag_equals_request_if_none_match(self, request, object_from_db):

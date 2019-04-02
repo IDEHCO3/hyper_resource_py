@@ -10,7 +10,7 @@ from hyper_resource.models import BusinessModel
 SECRET_KEY = '!ijb)p^wxprqdccf7*kxzu6l^&sf%_+w@!$6e#yl^^47i3j0f6asdfg'
 
 class HyperUser(BusinessModel):
-    contextclassname = 'user-list'
+    #contextclassname = 'user-list'
     name = models.CharField(max_length=100, blank=True, default='')
     user_name = models.CharField(max_length=100, unique=True )
     email = models.CharField(max_length=100, unique=True, null=True)
@@ -18,7 +18,12 @@ class HyperUser(BusinessModel):
     description = models.TextField(blank=True, null=True, default='')
     avatar = models.CharField(max_length=200, blank=True, default='', null=True)
     active   = models.NullBooleanField()
-    boss = models.ForeignKey('self', db_column='id_boss',on_delete=models.SET_NULL, related_name='subordinates', blank=True, null=True)
+    boss = models.ForeignKey('self', db_column="boss", on_delete=models.SET_NULL, related_name='subordinates', blank=True, null=True)
+    group = models.ForeignKey('HyperUserGroup', db_column="group", on_delete=models.CASCADE, related_name='users')
+
+    class Meta:
+        app_label = "user_management"
+        db_table = "hyper_user"
 
     @classmethod
     def jwt_algorithm(cls):
@@ -26,7 +31,7 @@ class HyperUser(BusinessModel):
 
     @classmethod
     def getOneOrNone(cls, a_user_name, password):
-        return HyperUser.objects.filter(user_name=a_user_name, password=password).first()
+        return HyperUser.objects.filter(**{"user_name": a_user_name, "password":password}).first()
 
     def getToken(self):
         encoded = jwt.encode({'id': self.id, 'user_name': self.user_name, 'avatar': self.avatar}, SECRET_KEY,
@@ -46,6 +51,7 @@ class HyperUser(BusinessModel):
         a_dict['token'] = user_name.getToken()
         return a_dict
 
+    '''
     @classmethod
     def token_is_ok(cls, a_token):
         try:
@@ -53,18 +59,32 @@ class HyperUser(BusinessModel):
             return True
         except jwt.InvalidTokenError:
             return False
+    '''
 
+    '''
     def encodeField(self, a_field):
         return base64.b64encode(a_field.encode())
+    '''
 
+    '''
     def decodeField(self, a_field):
         return base64.b64decode(a_field.encode())
+    '''
 
 class HyperUserGroup(BusinessModel):
-    contextclassname = 'user-group-list'
+    #contextclassname = 'user-group-list'
+    type = models.IntegerField(primary_key=True)
     name = models.CharField(max_length=100, blank=True, default='')
-    type = models.IntegerField(null=False)
+    read = models.BooleanField(default=True)
+    create = models.BooleanField(default=False)
+    update = models.BooleanField(default=False)
+    delete = models.BooleanField(default=False)
 
+    class Meta:
+        app_label = "user_management"
+        db_table = "hyper_user_group"
+
+    '''
     TYPE_ADMINISTRATOR = 1
     TYPE_DEVELOPER = 2
     TYPE_MANAGER = 3
@@ -76,12 +96,13 @@ class HyperUserGroup(BusinessModel):
         (TYPE_ADMINISTRATOR, ('Adminstrador')),
         (TYPE_DEVELOPER, ('Desenvolvedor')),
         (TYPE_MANAGER, ('Gerente')),
-        (TYPE_STAFF, ('Funcionário')),
-        (TYPE_USER_REGISTERED, ('Usuário')),
-        (TYPE_READONLY, ('Usuário de leitura')),
+        (TYPE_STAFF, ('Funcionario')),
+        (TYPE_USER_REGISTERED, ('Usuario')),
+        (TYPE_READONLY, ('Usuario de leitura')),
     )
+    '''
 
-
+'''
 class APIResource(BusinessModel):
     package_name = models.CharField(max_length=100)
     class_name = models.CharField(max_length=100)
@@ -92,3 +113,4 @@ class HyperUserGroupAPIResource(BusinessModel):
     active   = models.NullBooleanField()
     user_group = models.ForeignKey(HyperUserGroup, db_column='id_user_group', on_delete=models.SET_NULL, related_name='col_of_user_group_api', blank=True, null=True)
     api_resource = models.ForeignKey(HyperUserGroup, db_column='id_api_resource', on_delete=models.SET_NULL, blank=True, null=True)
+'''

@@ -794,13 +794,22 @@ class FeatureCollectionResource(SpatialCollectionResource):
         geom_type = None
         wkt = 'GEOMETRYCOLLECTION('
 
+        if isinstance(queryset, dict):
+            if queryset["type"] == "GeometryCollection":
+                queryset = queryset["geometries"]
+            elif queryset["type"] == "FeatureCollection":
+                queryset = queryset["features"]
+
         for i, e in enumerate(queryset):
             if isinstance(e, FeatureModel):
                 wkt += e.get_spatial_object().wkt  # it is need to fix the case that the attribute is not called by geom
 
             else:
-                geome = GEOSGeometry(json.dumps(e['geometry']))
-                wkt +=  geome.wkt
+                try:
+                    geome = GEOSGeometry(json.dumps(e['geometry']))
+                except KeyError:
+                    geome = GEOSGeometry(json.dumps(e))
+                wkt += geome.wkt
                 geom_type = geome.geom_type
 
             wkt += ',' if i != len(queryset) - 1 else ')'

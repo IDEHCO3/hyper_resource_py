@@ -136,7 +136,7 @@ db_name = os.environ['DB_NAME']
 user = os.environ['DB_USERNAME']
 password = os.environ['DB_PASSWORD']
 
-
+DATABASE_ROUTERS = ['db_router.HyperRouter']
 DATABASES = {
     'default': {
         'ENGINE': 'django.contrib.gis.db.backends.postgis',
@@ -150,6 +150,11 @@ DATABASES = {
         'NAME': db_name,
         'USER': user,
         'PASSWORD': password
+    },
+
+    'user_management': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': 'user_management_db',
     }
 }
 
