@@ -1,7 +1,8 @@
 #Test
-import os
-import sys, inspect, importlib
 import ast
+import os
+import sys
+
 ALLOWED_DATABASES = ['postgres', 'postgresql', 'sqlite', '']
 
 
@@ -30,8 +31,7 @@ def main(argv):
     if size_of_arguments > 3:
        has_to_generate_settings = ast.literal_eval(argv[3])
 
-    from settings_generator import generate_file as gf_settings
-
+    from generate_files.settings_generator import generate_file as gf_settings
     if has_to_generate_settings:
         generate_db = rawInput('What database do i have to generate? (Leave blank to keep the original settings database): ')
         if generate_db.lower() not in ALLOWED_DATABASES:
@@ -42,9 +42,6 @@ def main(argv):
 
     import django
     django.setup()
-    from urler_project_generator import generate_file as gf_prj_urler
-    from modeler_generator import generate_file as gf_modeler
-    from django.conf import settings
 
     file_model_app = app_name + '/models.py'
     os.system("python manage.py inspectdb > "+file_model_app)

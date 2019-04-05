@@ -1,9 +1,10 @@
 #Test
-import os
-import sys, inspect, importlib
 import ast
-ALLOWED_DATABASES = ['postgres', 'postgresql', 'sqlite', '']
+import os
+import sys
 
+ALLOWED_DATABASES = ['postgres', 'postgresql', 'sqlite', '']
+USER_CURRENT_PATH = os.getcwd().replace('\\', '/')
 
 def rawInput(str):
     inputOperation = None
@@ -19,7 +20,7 @@ def main(argv):
 
     size_of_arguments = len(argv)
     if size_of_arguments < 3:
-        print('Usage: python generator_files.py django_project_name django_app_name')
+        print('Usage: python generate_files.py django_project_name django_app_name')
         exit()
     else:
         print('-------------------------------------------------------------------------------------------------------')
@@ -38,17 +39,17 @@ def main(argv):
     if size_of_arguments > 6:
         has_to_generate_contexters = ast.literal_eval(argv[6])
 
+    sys.path.append(USER_CURRENT_PATH)
     os.environ.setdefault("DJANGO_SETTINGS_MODULE", prj_name + ".settings")
 
     import django
     django.setup()
-    from urler_project_generator import generate_file as gf_prj_urler
-    from viewer_generator import generate_file as gf_viewer
-    from urler_generator import generate_file as gf_urler
-    from serializer_generator import generate_file as gf_serializer
-    from contexter_generator import generate_file as gf_contexter
-    from modeler_generator import generate_file as gf_modeler
-    from django.conf import settings
+    from generate_files.urler_project_generator import generate_file as gf_prj_urler
+    from generate_files.viewer_generator import generate_file as gf_viewer
+    from generate_files.urler_generator import generate_file as gf_urler
+    from generate_files.serializer_generator import generate_file as gf_serializer
+    from generate_files.contexter_generator import generate_file as gf_contexter
+    from generate_files.modeler_generator import generate_file as gf_modeler
 
     file_model_app = app_name + '/models.py'
     gf_modeler(app_name, file_model_app)
