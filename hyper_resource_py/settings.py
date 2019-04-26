@@ -112,11 +112,11 @@ WSGI_APPLICATION = 'hyper_resource_py.wsgi.application'
 
 if not 'IP_SGBD' in os.environ:
     #os.environ['IP_SGBD'] = '127.0.0.1'
-    os.environ['IP_SGBD'] = '172.30.137.117'
+    os.environ['IP_SGBD'] = 'gabriel'
 
 if not 'PORT_SGBD' in os.environ:
     #os.environ['PORT_SGBD'] = '2345'
-    os.environ['PORT_SGBD'] = '54322'
+    os.environ['PORT_SGBD'] = '54329'
 
 if not 'DB_NAME' in os.environ:
     #os.environ['DB_NAME'] = 'postgres'
@@ -246,10 +246,22 @@ LOGGING = {
 # https://docs.djangoproject.com/en/1.11/howto/static-files/
 
 STATIC_URL = '/static/'
+'''
 CACHES = {
     'default': {
         'BACKEND': 'django.core.cache.backends.locmem.LocMemCache',
         'LOCATION': 'unique-snowflake',
+    }
+}
+'''
+CACHES = {
+    'default': {
+        'BACKEND': 'redis_cache.RedisCache',
+        'LOCATION': 'cache:6379',
+        'OPTIONS': {
+            'SOCKET_TIMEOUT': 300,
+            'SOCKET_CONNECT_TIMEOUT': 300,
+        }
     }
 }
 REST_FRAMEWORK = {

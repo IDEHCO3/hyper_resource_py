@@ -656,6 +656,13 @@ class BaseOperationController(object):
         # the index GEOSGeometry of 'dicti' contains another dict of geospetial operations
         return {
             GEOSGeometry: self.geometry_operations_dict(),
+            GeometryField: self.geometry_operations_dict(),
+            PointField: self.geometry_operations_dict(),
+            LineStringField: self.geometry_operations_dict(),
+            PolygonField: self.geometry_operations_dict(),
+            MultiPointField: self.geometry_operations_dict(),
+            MultiLineStringField: self.geometry_operations_dict(),
+            MultiPolygonField: self.geometry_operations_dict(),
             Point: self.point_operations_dict(),
             Polygon: self.polygon_operations_dict(),
             LineString: self.line_operations_dict(),

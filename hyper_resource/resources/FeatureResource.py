@@ -358,16 +358,19 @@ class FeatureResource(SpatialResource):
         return dicti
 
     def required_object_for_simple_path(self, request):
+        if self.is_image_content_type(request):
+            return self.required_object_for_image(self.object_model, request)
         serializer = self.serializer_class(self.object_model, context={'request': request})
         return RequiredObject(serializer.data, self.content_type_or_default_content_type(request), self.object_model, 200)
 
     def required_object_for_only_attributes(self, request, attributes_functions_str):
+        if self.is_image_content_type(request):
+            object = self.get_object_by_only_attributes(attributes_functions_str)
+            return self.required_object_for_image(object, request)
+
         required_object = super(FeatureResource, self).required_object_for_only_attributes(request, attributes_functions_str)
         required_object.content_type = self.define_content_type_by_only_attributes(request, attributes_functions_str)
         return required_object
-        #object = self.get_object_by_only_attributes(attributes_functions_str)
-        #serialized_data = self.get_object_serialized_by_only_attributes(attributes_functions_str, object)
-        #return RequiredObject(serialized_data, content_type, object,  200)
 
     def required_object_for_spatial_operation(self, request, attributes_functions_str):
         content_type = self.content_type_or_default_content_type(request)
@@ -375,6 +378,10 @@ class FeatureResource(SpatialResource):
             result = self.get_object_from_operation_attributes_functions_str_with_url(attributes_functions_str, request)
         else:
             result = self.get_object_from_operation(self.remove_last_slash(attributes_functions_str))
+
+        if self.is_image_content_type(request):
+            g = GEOSGeometry(json.dumps(result))
+            return self.required_object_for_image(g, request)
 
         if isinstance(result, memoryview) or isinstance(result, buffer) or isinstance(result, bytes):
             content_type = CONTENT_TYPE_OCTET_STREAM

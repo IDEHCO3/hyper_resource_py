@@ -37,7 +37,7 @@ from django.test.runner import DiscoverRunner
 #python manage.py test hyper_resource.tests --testrunner=hyper_resource.tests.NoDbTestRunner
 from django.contrib.gis.db.models import Q
 
-HOST = 'chi00557196:8000/'
+HOST = 'gabriel:8000/'
 
 class NoDbTestRunner(DiscoverRunner):
    """ A test runner to test without database creation/deletion """
@@ -10761,3 +10761,49 @@ class PutTest(SimpleTestCase):
             headers={"If-Match": response_get_second_client.headers["Etag"], "Content-type": "application/json"}
         )
         self.assertEquals(response_put1.status_code, 204)
+
+#python manage.py test hyper_resource.tests.ImageTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class ImageTest(AbstractRequestTest):
+    def setUp(self):
+        super(ImageTest, self).setUp()
+        self.container_bcim_base_uri = "http://ggt-des.ibge.gov.br:30000/api/bcim/"
+
+    def test_feature_collection_simple_path_accept_image_png(self):
+        response = requests.get(self.container_bcim_base_uri + "unidades-federativas", headers={"Accept": "image/png"})
+        self.assertEquals(response.status_code, 200)
+        self.assertGreater(len(response.text), 20000)
+
+    def test_geometry_collection_accept_image_png(self):
+        response = requests.get(self.container_bcim_base_uri + "unidades-federativas/geom", headers={"Accept": "image/png"})
+        self.assertEquals(response.status_code, 200)
+        self.assertGreater(len(response.text), 20000)
+
+    def test_feature_collection_union_operation(self):
+        response = requests.get(self.container_bcim_base_uri + "unidades-federativas/union", headers={"Accept": "image/png"})
+        self.assertEquals(response.status_code, 200)
+        self.assertGreater(len(response.text), 20000)
+
+    def test_geometry_collection_offset_limit_operation_accept_image_png(self):
+        response = requests.get(self.container_bcim_base_uri + "unidades-federativas/offset-limit/0&10", headers={"Accept": "image/png"})
+        self.assertEquals(response.status_code, 200)
+        self.assertGreater(len(response.text), 20000)
+
+    def test_feature_resource_simple_path_accept_image_png(self):
+        response = requests.get(self.container_bcim_base_uri + "unidades-federativas/RJ", headers={"Accept": "image/png"})
+        self.assertEquals(response.status_code, 200)
+        self.assertGreater(len(response.text), 20000)
+
+    def test_geometry_resource_accept_image_png(self):
+        response = requests.get(self.container_bcim_base_uri + "unidades-federativas/RJ/geom", headers={"Accept": "image/png"})
+        self.assertEquals(response.status_code, 200)
+        self.assertGreater(len(response.text), 20000)
+
+    def test_feature_resource_buffer_operation_accept_image_png(self):
+        response = requests.get(self.container_bcim_base_uri + "unidades-federativas/RJ/buffer/2", headers={"Accept": "image/png"})
+        self.assertEquals(response.status_code, 200)
+        self.assertGreater(len(response.text), 10000)
+
+    def test_feature_resource_collect_operation_accept_image_png(self):
+        response = requests.get(self.container_bcim_base_uri + "unidades-federativas/collect/geom/buffer/2", headers={"Accept": "image/png"})
+        self.assertEquals(response.status_code, 200)
+        self.assertGreater(len(response.text), 10000)

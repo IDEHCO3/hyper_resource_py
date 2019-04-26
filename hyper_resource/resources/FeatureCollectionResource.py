@@ -493,6 +493,29 @@ class FeatureCollectionResource(SpatialCollectionResource):
     def return_type_for_extent_operation(self, attributes_functions_str):
         return list
 
+    def required_object_for_simple_path(self, request):
+        if self.is_image_content_type(request):
+            objects = self.get_objects_from_simple_path()
+            return self.required_object_for_image(objects, request)
+        return super(FeatureCollectionResource, self).required_object_for_simple_path(request)
+
+    def required_object_for_only_attributes(self, request, attributes_functions_str):
+        if self.is_image_content_type(request):
+            objects = self.get_object_by_only_attributes(attributes_functions_str)
+            return self.required_object_for_image(objects, request)
+
+        return super(FeatureCollectionResource, self).required_object_for_only_attributes(request, attributes_functions_str)
+
+    def required_object_for_offset_limit_operation(self, request, attributes_functions_str):
+        if not self.offset_limit_operation_sintax_is_ok(attributes_functions_str):
+            return self.required_object_for_invalid_sintax(attributes_functions_str)
+
+        if not self.is_image_content_type(request):
+            return super(FeatureCollectionResource, self).required_object_for_offset_limit_operation(request, attributes_functions_str)
+
+        queryset_or_objects = self.get_objects_from_offset_limit_operation(attributes_functions_str)
+        return self.required_object_for_image(queryset_or_objects, request)
+
     def required_object_for_specialized_operation(self, request, attributes_functions_str):
         first_oper_snippet, second_oper_snippet = self.split_combined_operation(attributes_functions_str)
 
@@ -542,6 +565,10 @@ class FeatureCollectionResource(SpatialCollectionResource):
 
     def required_object_for_union_operation(self,request, attributes_functions_str):
         object_ = self.get_object_from_union_spatial_operation(attributes_functions_str)
+
+        if self.is_image_content_type(request):
+            return self.required_object_for_image(object_, request)
+
         a_dictionary = json.loads(object_[self.geometry_field_name() + '__union'].geojson)
 
         return self.required_object_for_aggregation_operation(request, a_dictionary)
@@ -566,6 +593,10 @@ class FeatureCollectionResource(SpatialCollectionResource):
                 return self.required_object_for_invalid_sintax(attributes_functions_str, message)
 
         business_objects = self.get_objects_from_collect_operation(collect_operation_snippet)
+
+        if self.is_image_content_type(request):
+            return self.required_object_for_image(business_objects, request)
+
         serialized_data = self.get_objects_serialized_by_collect_operation(collect_operation_snippet, business_objects)
         return RequiredObject(serialized_data, self.content_type_or_default_content_type(request), business_objects, 200)
 
@@ -649,38 +680,37 @@ class FeatureCollectionResource(SpatialCollectionResource):
         return queryset_or_model_class.aggregate(MakeLine(self.geometry_field_name()))
 
     def get_objects_from_collect_operation(self, attributes_functions_str, queryset=None):
-        attrs_funcs_arr = self.remove_last_slash(attributes_functions_str).split("/")
-        objects = self.model_class().objects.all() if queryset is None else queryset
-        obj_model_list_or_queryset = self.transform_queryset_in_object_model_list(objects)
+        collected_attrs = self.extract_collect_operation_attributes(attributes_functions_str)
+        queryset = self.model_class().objects.values(*collected_attrs) if queryset is None else queryset
 
+        attrs_funcs_arr = self.remove_last_slash(attributes_functions_str).split("/")
+        #obj_model_list_or_queryset = self.transform_queryset_in_object_model_list(objects)
         collected_objects_list = []
 
-        collected_attrs = self.extract_collect_operation_attributes(attributes_functions_str)
         attrs_out_of_operation = collected_attrs[:-1] # only the last one will be operated
         operated_attr = collected_attrs[-1]
         operation_name = attrs_funcs_arr[2]
         operation_params = attrs_funcs_arr[3:]
 
-        for obj in obj_model_list_or_queryset:
-            collected_object = {}
-            for attr in attrs_out_of_operation:
-                collected_object[attr] = getattr(obj, attr)
+        oper_type_called_from_collect = BaseOperationController().dict_all_operation_dict()[operation_name]
 
+        for dict_obj in queryset:
             # executing operation in selected attribute
-            if operated_attr == self.geometry_field_name():
-                operated_value = self._execute_attribute_or_method(obj, operation_name, operation_params)
-            else:
-                operated_attr_val = getattr(obj, operated_attr)
-                if operated_attr_val is not None:
-                    operated_value = self._execute_attribute_or_method(operated_attr_val, operation_name, operation_params)
-                else:
-                    operated_value = None
+            operation_result = None
+            dict_obj = dict_obj if type(dict_obj) == dict else dict_obj.__dict__
+            if dict_obj[operated_attr] is not None:
+                if oper_type_called_from_collect.has_parameters():
+                    operation_params = ConverterType().convert_parameters(type(self.field_for(operated_attr)), operation_name, operation_params)
+                try:
+                    operation_result = getattr( dict_obj[operated_attr], operation_name )(*operation_params)
+                except TypeError:
+                    operation_result = getattr(dict_obj[operated_attr], operation_name)
 
-            if isinstance(operated_value, GEOSGeometry):
-                collected_object[operated_attr] = operated_value
-            else:
-                collected_object[operation_name] = operated_value
-            collected_objects_list.append(collected_object)
+            if not isinstance(operation_result, GEOSGeometry):
+                dict_obj.pop(operated_attr)
+                dict_obj[operation_name] = operation_result
+
+            collected_objects_list.append(dict_obj)
 
         return collected_objects_list
 
@@ -795,10 +825,13 @@ class FeatureCollectionResource(SpatialCollectionResource):
         wkt = 'GEOMETRYCOLLECTION('
 
         if isinstance(queryset, dict):
-            if queryset["type"] == "GeometryCollection":
-                queryset = queryset["geometries"]
-            elif queryset["type"] == "FeatureCollection":
-                queryset = queryset["features"]
+            try:
+                if queryset["type"] == "GeometryCollection":
+                    queryset = queryset["geometries"]
+                elif queryset["type"] == "FeatureCollection":
+                    queryset = queryset["features"]
+            except KeyError:
+                queryset = [value for key, value in queryset.items()]
 
         for i, e in enumerate(queryset):
             if isinstance(e, FeatureModel):
@@ -808,7 +841,13 @@ class FeatureCollectionResource(SpatialCollectionResource):
                 try:
                     geome = GEOSGeometry(json.dumps(e['geometry']))
                 except KeyError:
-                    geome = GEOSGeometry(json.dumps(e))
+                    try:
+                        geome = GEOSGeometry(json.dumps(e))
+                    except TypeError:
+                        geome = e[self.geometry_field_name()]
+                except TypeError:
+                    geome = e
+
                 wkt += geome.wkt
                 geom_type = geome.geom_type
 

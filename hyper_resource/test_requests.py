@@ -1,7 +1,7 @@
 import requests, os, sys
 #se'rvidor = ''
 #servidor = 'http://LUC00557347.ibge.gov.br/'
-SERVER = 'http://chi00557196:8000/'
+SERVER = 'http://gabriel:8000/'
 #SERVER = "http://172.30.11.72:8000/"
 
 class RequestTest():
@@ -379,10 +379,10 @@ def test_requests(request_test_list, test_label=''):
 test_requests(arr_get_for_non_spatial_resource, test_label = "Tests for NonSpatialResource")
 test_requests(arr_get_for_collection, test_label="Generic tests to collection operations")
 test_requests(arr_get_for_spatial_operations, test_label="Tests for spatial operations")
-#test_requests(arr_get_for_complex_requests, test_label="Tests for complex requests")
+test_requests(arr_get_for_complex_requests, test_label="Tests for complex requests")
 test_requests(arr_get_for_projection, test_label="Tests for FeatureCollection with and without projection")
 test_requests(arr_get_for_geometry_collection_operation, test_label="Tests for spatial collection operations")
-#test_requests(arr_get_for_join_operation, test_label="Tests for join operation")
+test_requests(arr_get_for_join_operation, test_label="Tests for join operation")
 test_requests(arr_options_for_collection_operation, test_label = "Tests OPTIONS for Collection operations")
 test_requests(arr_get_for_collect_operation_context, test_label = "Tests GET for Collect operation context")
 test_requests(arr_get_for_tiff_resource, test_label = "Tests GET for TiffResource")

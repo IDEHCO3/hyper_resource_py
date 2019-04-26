@@ -108,13 +108,17 @@ class AbstractCollectionResource(AbstractResource):
 
         return projection_attrs == collected_attributes
 
+    def generate_projection_from_collect_sintax(self, collect_snippet):
+        collect_attrs = self.extract_collect_operation_attributes(collect_snippet, as_string=True)
+        return self.operation_controller.projection_operation_name + '/' + collect_attrs
+
     def split_offset_limit_and_collect_operation(self, attributes_functions_str, add_collect_attrs_in_offset_limit=True):
-        offset_limit_snippet = '/'.join( self.remove_last_slash(attributes_functions_str).split('/')[:3] )
-        collect_operation_snippet = '/'.join( self.remove_last_slash(attributes_functions_str).split('/')[3:] )
+        offset_limit_snippet = '/'.join( self.remove_last_slash(attributes_functions_str).split('/')[:2] )
+        collect_operation_snippet = '/'.join( self.remove_last_slash(attributes_functions_str).split('/')[2:] )
 
         if add_collect_attrs_in_offset_limit:
-            collect_attrs = self.extract_collect_operation_attributes(attributes_functions_str, as_string=True)
-            offset_limit_snippet = self.operation_controller.projection_operation_name + '/' + collect_attrs + '/' + offset_limit_snippet
+            #collect_attrs = self.extract_collect_operation_attributes(attributes_functions_str, as_string=True)
+            offset_limit_snippet = self.generate_projection_from_collect_sintax(collect_operation_snippet) + '/' + offset_limit_snippet
 
         return offset_limit_snippet, collect_operation_snippet
 
@@ -151,6 +155,7 @@ class AbstractCollectionResource(AbstractResource):
         if self.path_has_projection(attributes_functions_str):
             path_without_projection = self.remove_projection_from_path(attributes_functions_str)
             first_part_name = self.operation_controller.projection_operation_name if path_without_projection == '' else arr_att_funcs[2]
+            arr_att_funcs = path_without_projection.split("/")
         else:
             first_part_name = arr_att_funcs[0]
 
@@ -163,7 +168,7 @@ class AbstractCollectionResource(AbstractResource):
             return first_part_name + '-and-collect'
 
         if  first_part_name == self.operation_controller.offset_limit_collection_operation_name\
-            and len(arr_att_funcs) > 3 and arr_att_funcs[3] == self.operation_controller.collect_collection_operation_name:
+            and len(arr_att_funcs) > 2 and arr_att_funcs[2] == self.operation_controller.collect_collection_operation_name:
             return first_part_name + '-and-collect'
 
         if first_part_name == self.operation_controller.collect_collection_operation_name and '/*filter' in attributes_functions_str:
@@ -221,6 +226,9 @@ class AbstractCollectionResource(AbstractResource):
 
         business_objects = self.get_objects_from_filter_operation(attributes_functions_str)
 
+        if self.is_image_content_type(request):
+            return self.required_object_for_image(business_objects, request)
+
         if self.path_has_projection(attributes_functions_str):
             attrs_funcs_str = self.extract_projection_attributes(attributes_functions_str, as_string=True)
             serialized_data = self.get_object_serialized_by_only_attributes(attrs_funcs_str, business_objects)
@@ -254,6 +262,10 @@ class AbstractCollectionResource(AbstractResource):
             return self.required_object_for_invalid_sintax(attributes_functions_str, message)
 
         business_objects = self.get_objects_from_filter_and_collect_operation(filter_and_collect_operation_snippet)
+
+        if self.is_image_content_type(request):
+            return self.required_object_for_image(business_objects, request)
+
         collect_operation_snippet = self.extract_collect_operation_snippet(filter_and_collect_operation_snippet)
         serialized_data = self.get_objects_serialized_by_collect_operation(collect_operation_snippet, business_objects)
         return RequiredObject(serialized_data, self.content_type_or_default_content_type(request), business_objects, 200)
@@ -264,11 +276,17 @@ class AbstractCollectionResource(AbstractResource):
 
         offset_limit_and_collect_snippet = self.remove_last_slash(attributes_functions_str)
 
-        if self.path_has_projection(attributes_functions_str) and not self.projection_attrs_equals_collect_attrs(attributes_functions_str):
-            message = 'Projection attributes list and offset_limit attributes list must be the same as collect operation attributes list'
-            return self.required_object_for_invalid_sintax(attributes_functions_str, message)
+        if self.path_has_projection(attributes_functions_str):
+            if not self.projection_attrs_equals_collect_attrs(attributes_functions_str):
+                message = 'Projection attributes list and offset_limit attributes list must be the same as collect operation attributes list'
+                return self.required_object_for_invalid_sintax(attributes_functions_str, message)
+            offset_limit_and_collect_snippet = self.remove_projection_from_path(offset_limit_and_collect_snippet)
 
         business_objects = self.get_objects_from_offset_limit_and_collect_operation(offset_limit_and_collect_snippet)
+
+        if self.is_image_content_type(request):
+            return self.required_object_for_image(business_objects, request)
+
         collect_operation_snippet = self.extract_collect_operation_snippet(offset_limit_and_collect_snippet)
         serialized_data = self.get_objects_serialized_by_collect_operation(collect_operation_snippet, business_objects)
         return RequiredObject(serialized_data, self.content_type_or_default_content_type(request), business_objects, 200)
@@ -303,11 +321,6 @@ class AbstractCollectionResource(AbstractResource):
     def required_object_for_only_attributes(self, request, attributes_functions_str):
         attrs_funcs_str = self.remove_projection_from_path(attributes_functions_str, remove_only_name=True)
         return super(AbstractCollectionResource, self).required_object_for_only_attributes(request, attrs_funcs_str)
-        #objects = self.get_object_by_only_attributes(attrs_funcs_str)
-        #serialized_data = self.get_object_serialized_by_only_attributes(attrs_funcs_str, objects)
-        #content_type = self.content_type_or_default_content_type(request)
-
-        #return RequiredObject(serialized_data, content_type, objects, 200)
 
     # ---------------------------------------- REQUIRED CONTEXT FOR OPERATIONS ----------------------------------------
     def required_context_for_filter_operation(self, request, attributes_functions_str):

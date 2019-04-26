@@ -1,0 +1,77 @@
+Test log for: http://gabriel:8000/api/bcim/
+
+---------Links with too many elements---------
+<hyper:many>
+http://gabriel:8000/api/bcim/aglomerados-rurais-isolado <|> has 13702 elements
+http://gabriel:8000/api/bcim/cidades <|> has 5812 elements
+http://gabriel:8000/api/bcim/curvas-de-nivel <|> has 104319 elements
+http://gabriel:8000/api/bcim/extracoes-minerais <|> has 10964 elements
+http://gabriel:8000/api/bcim/ilhas <|> has 7561 elements
+http://gabriel:8000/api/bcim/massas-dagua <|> has 5117 elements
+http://gabriel:8000/api/bcim/municipios <|> has 5570 elements
+http://gabriel:8000/api/bcim/pontos-cotados-altimetricos <|> has 6997 elements
+http://gabriel:8000/api/bcim/trechos-de-drenagem <|> has 229438 elements
+http://gabriel:8000/api/bcim/trechos-de-massa-dagua <|> has 6589 elements
+http://gabriel:8000/api/bcim/trechos-hidroviarios <|> has 5728 elements
+http://gabriel:8000/api/bcim/trechos-rodoviarios <|> has 52939 elements
+http://gabriel:8000/api/bcim/vilas <|> has 5105 elements
+
+NUMBER OF LINKS: 13
+</hyper:many>
+
+-----------Links with fell elements-----------
+<hyper:less>
+http://gabriel:8000/api/bcim/aglomerados-rurais-de-extensao-urbana <|> has 1 elements
+http://gabriel:8000/api/bcim/aldeias-indigenas <|> has 253 elements
+http://gabriel:8000/api/bcim/areas-de-desenvolvimento-de-controle <|> has 39 elements
+http://gabriel:8000/api/bcim/areas-edificadas <|> has 303 elements
+http://gabriel:8000/api/bcim/bancos-de-areia <|> has 164 elements
+http://gabriel:8000/api/bcim/barragens <|> has 413 elements
+http://gabriel:8000/api/bcim/brejos-e-pantanos <|> has 605 elements
+http://gabriel:8000/api/bcim/capitais <|> has 39 elements
+http://gabriel:8000/api/bcim/corredeiras <|> has 148 elements
+http://gabriel:8000/api/bcim/curvas-batimetricas <|> has 1317 elements
+http://gabriel:8000/api/bcim/dunas <|> has 236 elements
+http://gabriel:8000/api/bcim/eclusas <|> has 15 elements
+http://gabriel:8000/api/bcim/edificacoes-agropecuarias-de-extracao-vegetal-e-pesca <|> has 24 elements
+http://gabriel:8000/api/bcim/edificacoes-de-construcao-aeroportuaria <|> has 34 elements
+http://gabriel:8000/api/bcim/edificacoes-de-construcao-portuaria <|> has 120 elements
+http://gabriel:8000/api/bcim/edificacoes-metro-ferroviaria <|> has 131 elements
+http://gabriel:8000/api/bcim/edificacoes-industrial <|> has 2 elements
+http://gabriel:8000/api/bcim/edificacoes-publica-militar <|> has 1 elements
+http://gabriel:8000/api/bcim/edificacoes-religiosa <|> has 2 elements
+http://gabriel:8000/api/bcim/elementos-fisiografico-natural <|> has 1241 elements
+http://gabriel:8000/api/bcim/estacoes-geradoras-de-energia-eletrica <|> has 558 elements
+http://gabriel:8000/api/bcim/fozes-maritima <|> has 1 elements
+http://gabriel:8000/api/bcim/fundeadouros <|> has 1 elements
+http://gabriel:8000/api/bcim/hidreletricas <|> has 100 elements
+http://gabriel:8000/api/bcim/mangues <|> has 256 elements
+http://gabriel:8000/api/bcim/marcos-de-limite <|> has 1109 elements
+http://gabriel:8000/api/bcim/outros-limites-oficiais <|> has 6 elements
+http://gabriel:8000/api/bcim/paises <|> has 16 elements
+http://gabriel:8000/api/bcim/picos <|> has 13 elements
+http://gabriel:8000/api/bcim/pistas-de-ponto-pouso <|> has 2608 elements
+http://gabriel:8000/api/bcim/pontes <|> has 665 elements
+http://gabriel:8000/api/bcim/pontos-cotados-batimetricos <|> has 1019 elements
+http://gabriel:8000/api/bcim/postos-fiscais <|> has 14 elements
+http://gabriel:8000/api/bcim/quedas-dagua <|> has 394 elements
+http://gabriel:8000/api/bcim/recifes <|> has 72 elements
+http://gabriel:8000/api/bcim/rochas-em-agua <|> has 34 elements
+http://gabriel:8000/api/bcim/sinalizacaoes <|> has 236 elements
+http://gabriel:8000/api/bcim/sumidouros-vertedouros <|> has 20 elements
+http://gabriel:8000/api/bcim/termeletricas <|> has 187 elements
+http://gabriel:8000/api/bcim/terras-indigenas <|> has 443 elements
+http://gabriel:8000/api/bcim/terrenos-sujeito-a-inundacao <|> has 4294 elements
+http://gabriel:8000/api/bcim/torres-de-energia <|> has 1 elements
+http://gabriel:8000/api/bcim/travessias <|> has 132 elements
+http://gabriel:8000/api/bcim/trechos-dutos <|> has 42 elements
+http://gabriel:8000/api/bcim/trechos-ferroviarios <|> has 631 elements
+http://gabriel:8000/api/bcim/tuneis <|> has 10 elements
+http://gabriel:8000/api/bcim/unidades-de-conservacao-nao-snuc <|> has 12 elements
+http://gabriel:8000/api/bcim/unidades-de-protecao-integral <|> has 340 elements
+http://gabriel:8000/api/bcim/unidades-de-uso-sustentavel <|> has 386 elements
+http://gabriel:8000/api/bcim/unidades-federativas <|> has 27 elements
+http://gabriel:8000/api/bcim/vegetacoes-de-restinga <|> has 119 elements
+
+NUMBER OF LINKS: 51
+</hyper:less>

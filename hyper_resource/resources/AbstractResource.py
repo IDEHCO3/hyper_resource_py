@@ -394,11 +394,16 @@ class AbstractResource(APIView):
     def required_object_for_simple_path(self, request):
         raise NotImplementedError("'required_object_for_simple_path' must be implemented in subclasses")
 
+    def required_object_for_image(self, object, request):
+        image = self.get_png(object, request)
+        etag = self.hashed_value(request, image)
+        response = RequiredObject(image, CONTENT_TYPE_IMAGE_PNG, 200, etag)
+        return response
+
     def required_object_for_only_attributes(self, request, attributes_functions_str):
         object = self.get_object_by_only_attributes(attributes_functions_str)
         serialized_data = self.get_object_serialized_by_only_attributes(attributes_functions_str, object)
         return RequiredObject(serialized_data, self.content_type_or_default_content_type(request), object, 200)
-        #raise NotImplementedError("'required_object_for_only_attributes' must be implemented in subclasses")
 
     # todo
     def path_request_is_ok(self, a_path):
@@ -589,7 +594,7 @@ class AbstractResource(APIView):
 
     def is_image_content_type(self, request, **kwargs):
         return self.content_type_or_default_content_type(request) == CONTENT_TYPE_IMAGE_PNG or kwargs.get(
-            'format') == 'png'
+            'format') == 'png' or request.build_absolute_uri().endswith(".png")
 
     def accept_is_binary(self, request):
         return request.META.get(HTTP_ACCEPT, '') == CONTENT_TYPE_OCTET_STREAM
@@ -663,6 +668,9 @@ class AbstractResource(APIView):
 
             return resp
 
+    def required_object_is_image(self, required_object):
+        return required_object.content_type == CONTENT_TYPE_IMAGE_PNG
+
     # Should be overridden
     def response_base_get(self, request, *args, **kwargs):
         resource = self.resource_in_cache(request)
@@ -680,10 +688,15 @@ class AbstractResource(APIView):
         if status in [500]:
             return Response({'Error ': 'The server can not process this request. Status:' + str(status)}, status=status)
 
+        '''
         if self.is_image_content_type(request, **kwargs):
             response = self.response_base_get_with_image(request, required_object)
             self.set_etag_in_header(response, self.e_tag)
             return response
+        '''
+
+        if self.required_object_is_image(required_object):
+            return HttpResponse(required_object.representation_object, status=200, content_type=CONTENT_TYPE_IMAGE_PNG)
 
         if self.is_binary_content_type(required_object):
             response = self.response_base_get_binary(request, required_object)
@@ -1275,6 +1288,11 @@ class AbstractResource(APIView):
 
         if isinstance(queryset, GEOSGeometry):
             config = {'wkt': queryset.wkt, 'type': queryset.geom_type}
+        elif isinstance(queryset, dict):
+            try:
+                config = {"wkt": queryset[self.geometry_field_name()].wkt, "type": queryset[self.geometry_field_name()].geom_type }
+            except KeyError:
+                config = {"wkt": queryset["coordinates"], "type": queryset["type"]}
         else:
             config = {'wkt': queryset.geom.wkt, 'type': queryset.geom.geom_type}
 
