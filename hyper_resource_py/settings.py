@@ -112,11 +112,11 @@ WSGI_APPLICATION = 'hyper_resource_py.wsgi.application'
 
 if not 'IP_SGBD' in os.environ:
     #os.environ['IP_SGBD'] = '127.0.0.1'
-    os.environ['IP_SGBD'] = 'gabriel'
+    os.environ['IP_SGBD'] = '172.30.137.117'
 
 if not 'PORT_SGBD' in os.environ:
     #os.environ['PORT_SGBD'] = '2345'
-    os.environ['PORT_SGBD'] = '54329'
+    os.environ['PORT_SGBD'] = '54322'
 
 if not 'DB_NAME' in os.environ:
     #os.environ['DB_NAME'] = 'postgres'
@@ -256,8 +256,8 @@ CACHES = {
 '''
 CACHES = {
     'default': {
-        'BACKEND': 'redis_cache.RedisCache',
-        'LOCATION': 'cache:6379',
+        'BACKEND': 'django_redis.cache.RedisCache',
+        'LOCATION': 'redis://172.30.137.117:9001',
         'OPTIONS': {
             'SOCKET_TIMEOUT': 300,
             'SOCKET_CONNECT_TIMEOUT': 300,

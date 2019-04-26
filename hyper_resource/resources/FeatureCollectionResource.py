@@ -709,6 +709,8 @@ class FeatureCollectionResource(SpatialCollectionResource):
             if not isinstance(operation_result, GEOSGeometry):
                 dict_obj.pop(operated_attr)
                 dict_obj[operation_name] = operation_result
+            else:
+                dict_obj[operated_attr] = operation_result
 
             collected_objects_list.append(dict_obj)
 

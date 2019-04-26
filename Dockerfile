@@ -31,9 +31,10 @@ RUN pip install \
 	urllib3==1.22 \
 	webencodings==0.5.1 \
 	mapnik \
-        geobuf \
+    geobuf \
 	uwsgi \
-	python-memcached==1.59
+	python-memcached==1.59 \
+	#django-redis
 
 # VERSION 1.0.0
 # docker run -d -p 2008:2000 -v /home/ggt/docker-data-volume/python/munic:/code --name munic hyper_resource_py:1.0.0 uwsgi --ini /code/uwsgi.ini

@@ -10766,7 +10766,7 @@ class PutTest(SimpleTestCase):
 class ImageTest(AbstractRequestTest):
     def setUp(self):
         super(ImageTest, self).setUp()
-        self.container_bcim_base_uri = "http://ggt-des.ibge.gov.br:30000/api/bcim/"
+        self.container_bcim_base_uri = "http://ggt-des.ibge.gov.br/api/bcim/"
 
     def test_feature_collection_simple_path_accept_image_png(self):
         response = requests.get(self.container_bcim_base_uri + "unidades-federativas", headers={"Accept": "image/png"})
