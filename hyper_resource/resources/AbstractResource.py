@@ -671,6 +671,9 @@ class AbstractResource(APIView):
     def required_object_is_image(self, required_object):
         return required_object.content_type == CONTENT_TYPE_IMAGE_PNG
 
+    def required_object_is_binary(self, required_object):
+        return required_object.content_type == CONTENT_TYPE_OCTET_STREAM
+
     # Should be overridden
     def response_base_get(self, request, *args, **kwargs):
         resource = self.resource_in_cache(request)
@@ -698,10 +701,10 @@ class AbstractResource(APIView):
         if self.required_object_is_image(required_object):
             return HttpResponse(required_object.representation_object, status=200, content_type=CONTENT_TYPE_IMAGE_PNG)
 
-        if self.is_binary_content_type(required_object):
-            response = self.response_base_get_binary(request, required_object)
-            self.set_etag_in_header(response, self.e_tag)
-            return response
+        if self.required_object_is_binary(required_object):
+            if type(required_object.representation_object) == bytes:
+                return HttpResponse(required_object.representation_object, status=200, content_type=CONTENT_TYPE_OCTET_STREAM)
+            return self.response_base_get_binary(request, required_object)
 
         #if self.cache_enabled():
         key = self.get_key_cache(request, a_content_type=required_object.content_type)

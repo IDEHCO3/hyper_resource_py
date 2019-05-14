@@ -360,8 +360,12 @@ class FeatureResource(SpatialResource):
     def required_object_for_simple_path(self, request):
         if self.is_image_content_type(request):
             return self.required_object_for_image(self.object_model, request)
-        serializer = self.serializer_class(self.object_model, context={'request': request})
-        return RequiredObject(serializer.data, self.content_type_or_default_content_type(request), self.object_model, 200)
+        serialized_data = self.serializer_class(self.object_model, context={'request': request}).data
+
+        if self.accept_is_binary(request):
+            serialized_data = geobuf.encode(serialized_data)
+
+        return RequiredObject(serialized_data, self.content_type_or_default_content_type(request), self.object_model, 200)
 
     def required_object_for_only_attributes(self, request, attributes_functions_str):
         if self.is_image_content_type(request):

@@ -31,6 +31,7 @@ from django.contrib.gis.db.models import PolygonField
 from django.contrib.gis.db.models import ForeignKey
 from requests import ConnectionError
 from requests import HTTPError
+from django.db import connections
 
 GEOSGEOMETRY_SUBCLASSES = ['POINT', 'MULTIPOINT', 'LINESTRING', 'MULTILINESTRING', 'POLYGON', 'MULTIPOLYGON', 'GEOMETRYCOLLECTION']
 
@@ -1416,6 +1417,12 @@ class FeatureModel(SpatialModel):
 
     def transform(self, srid, clone=True):
         return self.get_spatial_object().transform(srid, clone=True)
+
+    def get_model_objects_geobuf(self, view_resource):
+        with connections['osm'].cursor() as cursor:
+            cursor.execute( "SELECT ST_AsGeobuf(q, %s) FROM " + view_resource.table_name() + " as q", [view_resource.geometry_field_name()] )
+            rows = cursor.fetchall()
+            return rows[0][0]
 
 class RasterModel(SpatialModel):
     class Meta:

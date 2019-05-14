@@ -4,7 +4,7 @@ import sys
 
 import django
 
-from generator_files import ALLOWED_DATABASES
+from .generatefiles import ALLOWED_DATABASES
 from generate_files.settings_template import *
 
 PACKAGE_PATH = os.path.dirname(os.path.abspath(__file__)).replace('\\', '/')
@@ -70,8 +70,10 @@ def sqlite_database():
 
 def search_line_in_settings(list_of_lines, keyword):
     # if endswith('\') searc in next line
-    line = [line for line in list_of_lines if keyword in line and not line.startswith('#')][0]
-    return "\n" + line
+    matched_lines = [line for line in list_of_lines if keyword in line and not line.startswith('#')]
+    if len(matched_lines) > 0:
+        return "\n" + matched_lines[0]
+    return ""
 
 def get_struct_as_string(list_of_lines, keyword):
     #Inicia a lista na linha onde tiver a 'keyword' e finaliza na linha que tiver ^\]\\n$

@@ -49,6 +49,7 @@ def main(argv):
     from generate_files.urler_generator import generate_file as gf_urler
     from generate_files.serializer_generator import generate_file as gf_serializer
     from generate_files.contexter_generator import generate_file as gf_contexter
+    from generate_files.uwsgi_generator import generate_file as gf_uwsgi
     from generate_files.modeler_generator import generate_file as gf_modeler
 
     file_model_app = app_name + '/models.py'
@@ -71,6 +72,8 @@ def main(argv):
     if has_to_generate_contexters:
         file_contexter_app = app_name + '/contexts.py'
         gf_contexter(app_name, default_name=file_contexter_app)
+
+    gf_uwsgi(prj_name)
 
     print('All files have been generated')
 

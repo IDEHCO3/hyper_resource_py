@@ -1,7 +1,7 @@
 import requests, os, sys
 #se'rvidor = ''
 #servidor = 'http://LUC00557347.ibge.gov.br/'
-SERVER = 'http://gabriel:8000/'
+SERVER = 'http://chi00560289:8001/'
 #SERVER = "http://172.30.11.72:8000/"
 
 class RequestTest():

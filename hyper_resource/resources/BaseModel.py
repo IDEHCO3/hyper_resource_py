@@ -11,11 +11,11 @@ class BaseModel(object):
         return cls._instance
 
     def create_model_object_raster(self, view_resource, row):
-        obj_model = view_resource.model_class()()
-        setattr(obj_model,view_resource.pk_name(), row[0])
-        rst = GDALRaster(row[1].tobytes())
-        setattr(obj_model,view_resource.spatial_field_name(), rst)
-        return obj_model
+        setattr(view_resource.object_model , view_resource.pk_name(), row[0])
+        #self.write_raster_file(view_resource, row[1])
+        gdal_raster = GDALRaster(row[1].tobytes())
+        setattr(view_resource.object_model, view_resource.spatial_field_name(), gdal_raster)
+        return view_resource.object_model
 
     '''
     def get_raster_bands(self, queryset):
@@ -58,6 +58,7 @@ class BaseModel(object):
             row = cursor.fetchone()
             return self.create_model_object_raster(view_resource, row)
 
+    '''
     def get_model_objects_raster(self, view_resource, kwargs):
        pk_name = view_resource.pk_name()
        sql_string = "SELECT " + pk_name +  ", ST_AsGDALRaster(" + view_resource.spatial_field_name() +  ", 'GTiff') FROM " + view_resource.table_name()
@@ -68,6 +69,7 @@ class BaseModel(object):
             for row in rows:
                 model_raster_collection.append(self.create_model_object_raster(view_resource, row))
             return model_raster_collection
+    '''
 
     def get_iris_raster(self, view_resource, kwargs):
         pk_name = view_resource.pk_name()

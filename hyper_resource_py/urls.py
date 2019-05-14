@@ -12,4 +12,5 @@ urlpatterns = (
     url(r'^user-management-list/',include('user_management.urls',namespace='user_management')),
     url(r'^expression/',include('expression_interface.urls',namespace='expression_interface')),
     url(r'^raster/',include('raster_base.urls',namespace='raster')),
+    url(r'^osm/',include('osm.urls',namespace='osm')),
 )

@@ -345,10 +345,9 @@ class TiffResource(RasterResource):
         return self.get_object_from_operation(request, attributes_functions_str)
 
     def basic_get(self, request, *args, **kwargs):
-        self.object_model = BaseModel().get_model_object_raster(self, kwargs)
-        #self.object_model = self.get_object(kwargs)
-        #self.object_model = BaseModel().create_model_object_raster(self, self.get_object(kwargs))
-        self.current_object_state = self.object_model
+        self.object_model = self.model_class()()
+        baseModel = BaseModel()
+        self.object_model = baseModel.get_model_object_raster(self, kwargs)
         self.set_basic_context_resource(request)
         self.e_tag = str(hash(self.object_model))
 

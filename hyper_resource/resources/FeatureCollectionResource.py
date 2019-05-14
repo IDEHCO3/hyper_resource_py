@@ -7,6 +7,7 @@ import requests
 from django.core import cache
 from django.contrib.gis.db.models import Extent, Union, MakeLine
 from django.contrib.gis.geos import GeometryCollection, GEOSGeometry
+from django.db import ProgrammingError
 
 from rest_framework.response import Response
 
@@ -497,6 +498,18 @@ class FeatureCollectionResource(SpatialCollectionResource):
         if self.is_image_content_type(request):
             objects = self.get_objects_from_simple_path()
             return self.required_object_for_image(objects, request)
+
+        if self.accept_is_binary(request):
+            # Keeping the compatibility with postgis < 2.4
+            try:
+                result = self.object_model.get_model_objects_geobuf(self)
+                binary_content = result.tobytes()
+            except ProgrammingError:
+                objects = self.get_objects_from_simple_path()
+                serializer = self.serializer_class(objects, many=True, context={'request': request})
+                binary_content = geobuf.encode(serializer.data)
+            return RequiredObject(binary_content, CONTENT_TYPE_OCTET_STREAM, self.object_model, 200)
+
         return super(FeatureCollectionResource, self).required_object_for_simple_path(request)
 
     def required_object_for_only_attributes(self, request, attributes_functions_str):

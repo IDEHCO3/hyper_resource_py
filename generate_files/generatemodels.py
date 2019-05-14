@@ -18,7 +18,7 @@ def main(argv):
 
     size_of_arguments = len(argv)
     if size_of_arguments < 3:
-        print('Usage: python generator_models_settings_files.py django_project_name django_app_name [True|False]')
+        print('Usage: python generatemodels.py django_project_name django_app_name [True|False]')
         exit()
     else:
         print('-------------------------------------------------------------------------------------------------------')

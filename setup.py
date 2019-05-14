@@ -1,22 +1,21 @@
 from distutils.core import setup
+#from setuptools import setup
 
 setup(
     name='hyper_resource_py',
     version='1.0.0',
-    packages=['bcim', 'build.lib.bcim', 'build.lib.controle', 'build.lib.controle.migrations', 'build.lib.hyper_test',
-              'build.lib.hyper_test.migrations', 'build.lib.raster_base', 'build.lib.raster_base.migrations',
-              'build.lib.hyper_resource', 'build.lib.hyper_resource.resources', 'build.lib.controle_adesao',
-              'build.lib.controle_adesao.migrations', 'build.lib.image_generator', 'build.lib.user_management',
-              'build.lib.hyper_resource_py', 'build.lib.expression_interface',
-              'build.lib.expression_interface.migrations', 'controle', 'controle.migrations', 'hyper_test',
-              'hyper_test.migrations', 'raster_base', 'raster_base.migrations', 'hyper_resource',
-              'hyper_resource.resources', 'controle_adesao', 'controle_adesao.migrations', 'generate_files',
-              'image_generator', 'user_management', 'hyper_resource_py', 'expression_interface',
-              'expression_interface.migrations'],
+    packages=['hyper_resource', 'image_generator', 'user_management',
+              'hyper_resource_py', 'expression_interface', 'generate_files'],
+#    install_requires=['geobuf', 'bcrypt==3.1.3', 'certifi>=2017.7.27.1', 'cffi>=1.10.0', 'chardet==3.0.4',
+#                      'Django>=1.11.1', 'django-cors-headers==2.1.0', 'django-filter==1.0.4',
+#                      'django-simple-captcha==0.5.5' ,'djangorestframework>=3.6.3', 'djangorestframework-gis>=0.11.2',
+#                      'djangorestframework-jwt==1.10.0', 'html5lib==0.999999999', 'idna==2.5', 'Markdown==2.6.8',
+#                      'Pillow==3.1.0', 'pycparser==2.18', 'PyJWT==1.5.0', 'python-mimeparse==1.6.0',
+#                      'pytz==2017.2', 'requests==2.18.3', 'six==1.10.0', 'webencodings==0.5.1'],
     url='https://github.com/IDEHCO3/hyper_resource_py',
     license='GNU GENERAL PUBLIC LICENSE',
     author='Rogerio Borba',
     author_email='rogerio.borba17@gmail.com',
     description='Tool to work with apis of level three.',
-    scripts=['generate_files/generator_models_settings_files.py', 'generate_files/generator_files.py']
+    scripts=['generate_files/generatemodels.py', 'generate_files/generatefiles.py']
 )

@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'controle',
     'bcim',
     'raster_base',
+    'osm',
 ]
 
 MIDDLEWARE_CLASSES = [
@@ -155,6 +156,19 @@ DATABASES = {
     'user_management': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': 'user_management_db',
+    },
+
+    'osm': {
+        'ENGINE': 'django.contrib.gis.db.backends.postgis',
+		'OPTIONS': {
+			'options': '-c search_path=public',
+		},
+
+		'HOST': '172.30.137.117',
+		'PORT': '5401',
+		'NAME': 'gis',
+		'USER': 'docker',
+		'PASSWORD': 'docker'
     }
 }
 

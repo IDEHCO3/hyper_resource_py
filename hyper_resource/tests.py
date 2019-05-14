@@ -37,7 +37,7 @@ from django.test.runner import DiscoverRunner
 #python manage.py test hyper_resource.tests --testrunner=hyper_resource.tests.NoDbTestRunner
 from django.contrib.gis.db.models import Q
 
-HOST = 'gabriel:8000/'
+HOST = 'chi00560289:8001/'
 
 class NoDbTestRunner(DiscoverRunner):
    """ A test runner to test without database creation/deletion """
@@ -349,6 +349,7 @@ class AbstractRequestTest(SimpleTestCase):
         self.bcim_base_uri = "http://" + HOST + "api/bcim/"
         self.controle_base_uri = "http://" + HOST + "controle-list/"
         self.raster_base_uri = "http://" + HOST + "raster/"
+        self.osm_base_uri = "http://" + HOST + "osm/"
 
     def aux_get_dict_from_response(self, response):
         return dict( json.loads(response.text) )
@@ -3518,7 +3519,26 @@ class FeatureCollectionTest(AbstractGetRequestTest):
     Class for tests every possible GET request for FeatureCollectionResource
     '''
 
-    pass
+    def aux_get_first_feature_from_binary(self, response):
+        return geobuf.decode(response.content)["features"][0]['geometry']
+
+    def test_feature_collection_point_collection_simple_path_accept_octet_stream(self):
+        response = requests.get(self.osm_base_uri + "aldeia-indigena-list", headers={"Accept": "application/octet-stream"})
+        feature_dict = self.aux_get_first_feature_from_binary(response)
+        g = GEOSGeometry(json.dumps(feature_dict))
+        self.assertTrue(g.is_valid())
+
+    def test_feature_collection_linestring_collection_simple_path_accept_octet_stream(self):
+        response = requests.get(self.osm_base_uri + "trecho-ferroviario-list", headers={"Accept": "application/octet-stream"})
+        feature_dict = self.aux_get_first_feature_from_binary(response)
+        g = GEOSGeometry(json.dumps(feature_dict))
+        self.assertTrue(g.is_valid())
+
+    def test_feature_collection_multipolygon_collection_simple_path_accept_octet_stream(self):
+        response = requests.get(self.osm_base_uri + "trecho-ferroviario-list", headers={"Accept": "application/octet-stream"})
+        feature_dict = self.aux_get_first_feature_from_binary(response)
+        g = GEOSGeometry(json.dumps(feature_dict))
+        self.assertTrue(g.is_valid())
 
 #python manage.py test hyper_resource.tests.OptionsFeatureCollectionTest --testrunner=hyper_resource.tests.NoDbTestRunner
 class OptionsFeatureCollectionTest(AbstractOptionsRequestTest):
@@ -4170,7 +4190,7 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
 
-        get_headers.remove("Etag")
+        #get_headers.remove("Etag")
         self.assertEquals(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4283,7 +4303,7 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
 
-        get_headers.remove("Etag")
+        #get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4311,7 +4331,7 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
 
-        get_headers.remove("Etag")
+        #get_headers.remove("Etag")
         self.assertEquals(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4339,7 +4359,7 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
 
-        get_headers.remove("Etag")
+        #get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4432,7 +4452,7 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
 
-        get_headers.remove("Etag")
+        #get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4460,7 +4480,7 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
 
-        get_headers.remove("Etag")
+        #get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
