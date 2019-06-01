@@ -175,7 +175,7 @@ class HyperUserRegister(CollectionResource):
 
     def get(self, request, *args, **kwargs):
         if format == 'jsonld':
-            return super(HyperUserRegister, self).get(request, *args, *kwargs)
+            return super(HyperUserRegister, self).get(request, *args, **kwargs)
 
         if request.build_absolute_uri().endswith('.jsonld'):
             kwargs = self.remove_suffix_from_kwargs(**kwargs)
