@@ -52,7 +52,8 @@ class FeatureResource(SpatialResource):
     def get_object_from_operation(self, attributes_functions_str):
         att_funcs = attributes_functions_str.split('/')
         a_value = self._execute_attribute_or_method(self.object_model, att_funcs[0], att_funcs[1:])
-
+        if a_value is None:
+            return None
         if isinstance(a_value, GEOSGeometry):
             a_value = json.loads(a_value.geojson)
         elif isinstance(a_value, SpatialReference) or isinstance(a_value, OGRGeometry):
@@ -67,6 +68,7 @@ class FeatureResource(SpatialResource):
             except (json.decoder.JSONDecodeError, TypeError):
                 a_value = {self.name_of_last_operation_executed: a_value}
         return a_value
+
 
     def operation_name_method_dic(self):
         dict = super(FeatureResource, self).operation_name_method_dic()
@@ -557,6 +559,18 @@ class FeatureResource(SpatialResource):
             return self.required_object_for_invalid_sintax(attributes_functions_str)
         return res
 
+    def get_required_object_from_method_to_execute(self, request, attributes_functions_str):
+
+        att_funcs_str = attributes_functions_str[:-1] if attributes_functions_str.endswith('/') else attributes_functions_str
+
+        obj = None
+        try:
+            obj = self.get_object_from_operation(att_funcs_str)
+        except AttributeError as err:
+            return obj
+
+
+        return RequiredObject(obj,self.content_type_or_default_content_type(request),self, 200)
     def default_content_type(self):
         return CONTENT_TYPE_GEOJSON#self.temporary_content_type if self.temporary_content_type is not None else CONTENT_TYPE_GEOJSON
 
