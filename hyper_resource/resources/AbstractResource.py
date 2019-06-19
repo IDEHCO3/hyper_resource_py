@@ -53,6 +53,9 @@ CONTENT_TYPE_IMAGE_TIFF = "image/tiff"
 SUPPORTED_CONTENT_TYPES = (CONTENT_TYPE_GEOJSON, CONTENT_TYPE_JSON,CONTENT_TYPE_LD_JSON, CONTENT_TYPE_OCTET_STREAM, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_IMAGE_TIFF)
 #ACCESS_CONTROL_ALLOW_METHODS = ['GET', 'OPTIONS', 'HEAD', 'PUT', 'DELETE', 'POST']
 
+HYPR_RESOURCE_CONTEXT = 'http://www.w3.org/ns/json-hr#context'
+HYPER_RESOURCE_CONTENT_TYPE = 'application/hr+json'
+
 CORS_ALLOW_HEADERS = (
     'accept',
     'accept-encoding',
@@ -250,7 +253,7 @@ class AbstractResource(APIView):
         iri_father = iri_base[:idx]
 
         self.add_url_in_header(iri_father, response, 'up')
-        self.add_url_in_header(iri_base + '.jsonld', response, rel='http://www.w3.org/ns/json-ld#context"; type="application/ld+json')
+        self.add_url_in_header(iri_base + '.jsonld', response, rel= HYPR_RESOURCE_CONTEXT + "; type=" + HYPER_RESOURCE_CONTENT_TYPE)
         self.add_url_in_header(self.iri_metadata, response, rel="metadata")
         self.add_url_in_header(self.iri_style, response, rel="stylesheet")
         self.add_cors_headers_in_header(response)
@@ -658,7 +661,7 @@ class AbstractResource(APIView):
         tuple_etag_serialized_data = self.resource_in_cache(request)
 
         if tuple_etag_serialized_data is not None:
-            if request.META[HTTP_ACCEPT] in [CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_OCTET_STREAM]:
+            if HTTP_ACCEPT in request.META and request.META[HTTP_ACCEPT] in [CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_OCTET_STREAM]:
                 resp = HttpResponse(tuple_etag_serialized_data[1], content_type=request.META[HTTP_ACCEPT])
 
             else:
@@ -785,26 +788,36 @@ class AbstractResource(APIView):
 
         if HTTP_IF_MATCH not in request.META:
             data = {"Precondition required":"If-Match required"}
-            return Response(data=data, status=status.HTTP_428_PRECONDITION_REQUIRED)
+            response = Response(data=data, status=status.HTTP_428_PRECONDITION_REQUIRED)
+            response['access-control-allow-origin'] = self.access_control_allow_origin_str()
+            return response
 
         serializer = self.serializer_class(obj, data=request.data, context={'request': request})
 
         if not self.resource_etag_equals_request_if_none_match(request, obj):
             data = {"Precondition failed": "Data is already modified. You have to keep your current data, do another GET request for this resource and merge the modifications"}
-            return Response(data=data, status=status.HTTP_412_PRECONDITION_FAILED)
+            response = Response(data=data, status=status.HTTP_412_PRECONDITION_FAILED)
+            response['access-control-allow-origin'] = self.access_control_allow_origin_str()
+            return response
 
         if serializer.is_valid():
             serializer.save()
-            resp = Response(status=status.HTTP_204_NO_CONTENT)
-            return resp
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+            response = Response(status=status.HTTP_204_NO_CONTENT)
+            response['access-control-allow-origin'] = self.access_control_allow_origin_str()
+            return response
+
+        response = Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        response['access-control-allow-origin'] = self.access_control_allow_origin_str()
+        return response
 
     # Could be overridden
     def delete(self, request, *args, **kwargs):
         obj = self.get_object(kwargs)
         obj.delete()
 
-        return Response(status=status.HTTP_204_NO_CONTENT)
+        response = Response(status=status.HTTP_204_NO_CONTENT)
+        response['access-control-allow-origin'] = self.access_control_allow_origin_str()
+        return response
 
     def options(self, request, *args, **kwargs):
         response = super(AbstractResource, self).options(request, *args, **kwargs)

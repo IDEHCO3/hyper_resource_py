@@ -1,3 +1,4 @@
+from hyper_resource.models import BaseOperationController
 from hyper_resource.resources.AbstractResource import *
 
 COLLECTION_TYPE = "Collection"
@@ -851,9 +852,13 @@ class AbstractCollectionResource(AbstractResource):
             obj =  serializer.save()
             self.object_model = obj
 
-            return self.basic_post(request)
+            response = self.basic_post(request)
+            response['access-control-allow-origin'] = self.access_control_allow_origin_str()
+            return response
 
-        return Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        response = Response(serializer.errors, status=status.HTTP_400_BAD_REQUEST)
+        response['access-control-allow-origin'] = self.access_control_allow_origin_str()
+        return response
 
     def get_object_by_only_attributes(self, attribute_names_str):
         attribute_names_str_as_array = self.remove_last_slash(attribute_names_str).split(',')
