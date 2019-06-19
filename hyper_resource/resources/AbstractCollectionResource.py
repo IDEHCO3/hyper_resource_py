@@ -326,7 +326,7 @@ class AbstractCollectionResource(AbstractResource):
     # ---------------------------------------- REQUIRED CONTEXT FOR OPERATIONS ----------------------------------------
     def required_context_for_filter_operation(self, request, attributes_functions_str):
         context = self.get_context_for_filter_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_collect_operation(self, request, attributes_functions_str):
         if self.path_has_projection(attributes_functions_str):
@@ -338,34 +338,34 @@ class AbstractCollectionResource(AbstractResource):
                 return self.required_object_for_invalid_sintax(attributes_functions_str, message=message)
 
         context = self.get_context_for_collect_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_count_resource_operation(self, request, attributes_functions_str):
         context = self.get_context_for_count_resource_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_offset_limit_operation(self, request, attributes_functions_str):
         if not self.offset_limit_operation_sintax_is_ok(attributes_functions_str):
             return self.required_object_for_invalid_sintax(attributes_functions_str)
 
         context = self.get_context_for_offset_limit_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_distinct_operation(self, request, attributes_functions_str):
         context = self.get_context_for_distinct_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_group_by_operation(self, request, attributes_functions_str):
         context = self.get_context_for_group_by_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_group_by_count_operation(self, request, attributes_functions_str):
         context = self.get_context_for_group_by_count_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_group_by_sum_operation(self, request, attributes_functions_str):
         context = self.get_context_for_group_by_sum_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_offset_limit_and_collect_operation(self, request, attributes_functions_str):
         if not self.offset_limit_operation_sintax_is_ok(attributes_functions_str):
@@ -375,7 +375,7 @@ class AbstractCollectionResource(AbstractResource):
 
     def required_context_for_simple_path(self, request):
         resource_type = self.resource_representation_or_default_resource_representation(request)
-        return RequiredObject(self.context_resource.context(resource_type), CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(self.context_resource.context(resource_type), HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def generics_collection_operation_name(self):
        return self.operation_controller.feature_collection_operations_dict().keys()

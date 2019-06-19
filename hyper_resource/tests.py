@@ -344,6 +344,9 @@ class CollectionResourceTest(SimpleTestCase):
     """
 
 
+HYPR_RESOURCE_CONTEXT = 'http://www.w3.org/ns/json-hr#context'
+HYPER_RESOURCE_CONTENT_TYPE = 'application/hr+json'
+
 class AbstractRequestTest(SimpleTestCase):
     def setUp(self):
         self.bcim_base_uri = "http://" + HOST + "api/bcim/"
@@ -8664,7 +8667,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         response = requests.get(self.controle_base_uri)
         self.assertEquals(response.status_code, 200)
         self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link']) # has <Context>
         self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
         self.assertNotIn('rel="describedBy"', response.headers['link'])
         self.assertNotIn('rel="up"', response.headers['link'])
@@ -8674,7 +8677,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         response = requests.get(self.bcim_base_uri)
         self.assertEquals(response.status_code, 200)
         self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link']) # has <Context>
         self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
         self.assertNotIn('rel="describedBy"', response.headers['link'])
         self.assertNotIn('rel="up"', response.headers['link'])
@@ -8684,7 +8687,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         response = requests.get(self.raster_base_uri)
         self.assertEquals(response.status_code, 200)
         self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link']) # has <Context>
         self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
         self.assertNotIn('rel="describedBy"', response.headers['link'])
         self.assertNotIn('rel="up"', response.headers['link'])
@@ -8695,7 +8698,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         response = requests.head(self.controle_base_uri)
         self.assertEquals(response.status_code, 200)
         self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link']) # has <Context>
         self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
         self.assertNotIn('rel="describedBy"', response.headers['link'])
         self.assertNotIn('rel="up"', response.headers['link'])
@@ -8705,7 +8708,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         response = requests.head(self.bcim_base_uri)
         self.assertEquals(response.status_code, 200)
         self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link']) # has <Context>
         self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
         self.assertNotIn('rel="describedBy"', response.headers['link'])
         self.assertNotIn('rel="up"', response.headers['link'])
@@ -8715,7 +8718,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         response = requests.head(self.raster_base_uri)
         self.assertEquals(response.status_code, 200)
         self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link']) # has <Context>
         self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
         self.assertNotIn('rel="describedBy"', response.headers['link'])
         self.assertNotIn('rel="up"', response.headers['link'])
@@ -8726,7 +8729,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         response = requests.options(self.controle_base_uri)
         self.assertEquals(response.status_code, 200)
         self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link']) # has <Context>
         self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
         self.assertNotIn('rel="describedBy"', response.headers['link'])
         self.assertNotIn('rel="up"', response.headers['link'])
@@ -8736,7 +8739,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         response = requests.options(self.bcim_base_uri)
         self.assertEquals(response.status_code, 200)
         self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link']) # has <Context>
         self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
         self.assertNotIn('rel="describedBy"', response.headers['link'])
         self.assertNotIn('rel="up"', response.headers['link'])
@@ -8746,7 +8749,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         response = requests.options(self.raster_base_uri)
         self.assertEquals(response.status_code, 200)
         self.assertIn('rel="https://schema.org/EntryPoint"', response.headers['link']) # has <EntryPoint>
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE + '"', response.headers['link']) # has <Context>
         self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
         self.assertNotIn('rel="describedBy"', response.headers['link'])
         self.assertNotIn('rel="up"', response.headers['link'])
@@ -8760,7 +8763,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
     def test_get_for_feature_resource(self):
         response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES')
         self.assertEquals(response.status_code, 200)
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link']) # has <Context>
         self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
         self.assertIn('rel="up"', response.headers['link']) # has <Up>
         self.assertIn('rel="stylesheet', response.headers['link']) # has <Style>
@@ -8770,7 +8773,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
     def test_head_for_feature_resource(self):
         response = requests.head(self.bcim_base_uri + 'unidades-federativas/ES')
         self.assertEquals(response.status_code, 200)
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link']) # has <Context>
         self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
         self.assertIn('rel="up"', response.headers['link']) # has <Up>
         self.assertIn('rel="stylesheet', response.headers['link']) # has <Style>
@@ -8781,7 +8784,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
     def test_options_for_feature_resource(self):
         response = requests.options(self.bcim_base_uri + 'unidades-federativas/ES')
         self.assertEquals(response.status_code, 200)
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link']) # has <Context>
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE + '"', response.headers['link']) # has <Context>
         self.assertIn('rel="metadata"', response.headers['link']) # has <Metadata>
         self.assertIn('rel="up"', response.headers['link']) # has <Up>
         self.assertIn('rel="stylesheet', response.headers['link']) # has <Style>
@@ -8795,7 +8798,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         self.assertEquals(response.status_code, 200)
         self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
         self.assertIn('rel="describedBy"', response.headers['link']) # has <describedBy>
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
@@ -8805,7 +8808,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         self.assertEquals(response.status_code, 200)
         self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
         self.assertIn('rel="describedBy"', response.headers['link']) # has <describedBy>
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
@@ -8816,7 +8819,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         self.assertEquals(response.status_code, 200)
         self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
         self.assertIn('rel="describedBy"', response.headers['link']) # has <describedBy>
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE + '"', response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
@@ -8826,7 +8829,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
     def test_get_for_feature_collection_resource(self):
         response = requests.get(self.bcim_base_uri + 'unidades-federativas')
         self.assertEquals(response.status_code, 200)
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
@@ -8836,7 +8839,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
     def test_head_for_feature_collection_resource(self):
         response = requests.head(self.bcim_base_uri + 'unidades-federativas')
         self.assertEquals(response.status_code, 200)
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
@@ -8847,7 +8850,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
     def test_options_for_feature_collection_resource(self):
         response = requests.options(self.bcim_base_uri + 'unidades-federativas')
         self.assertEquals(response.status_code, 200)
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE + '"', response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
@@ -8864,7 +8867,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         self.assertEquals(response.status_code, 200)
         self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
         self.assertNotIn('rel="describedBy"', response.headers['link'])
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
@@ -8874,7 +8877,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         self.assertEquals(response.status_code, 200)
         self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
         self.assertNotIn('rel="describedBy"', response.headers['link'])
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
@@ -8885,7 +8888,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         self.assertEquals(response.status_code, 200)
         self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
         self.assertNotIn('rel="describedBy"', response.headers['link'])
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE + '"', response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
@@ -8897,7 +8900,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         self.assertEquals(response.status_code, 200)
         self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
         self.assertNotIn('rel="describedBy"', response.headers['link'])
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
@@ -8907,7 +8910,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         self.assertEquals(response.status_code, 200)
         self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
         self.assertNotIn('rel="describedBy"', response.headers['link'])
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE, response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
@@ -8918,7 +8921,7 @@ class LinkHeaderTest(AbstractHeadRequestTest):
         self.assertEquals(response.status_code, 200)
         self.assertNotIn('rel="https://schema.org/EntryPoint"', response.headers['link'])
         self.assertNotIn('rel="describedBy"', response.headers['link'])
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE + '"', response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
@@ -10056,7 +10059,7 @@ class RequestOptionsTest(AbstractOptionsRequestTest):
         self.assertEquals(response.status_code, 200)
 
         #self.assertEqual(response.headers['Link'],
-        #'<http://luc00557196:8000/api/bcim/>; rel="https://schema.org/EntryPoint" , <http://luc00557196:8000/api/bcim.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json"')
+        #'<http://luc00557196:8000/api/bcim/>; rel="https://schema.org/EntryPoint" , <http://luc00557196:8000/api/bcim.jsonld>; rel="http://www.w3.org/ns/json-hr#context"; type="application/ld+json"')
 
         a_context_keys = self.aux_get_keys_from_response_context(response)
         '''
@@ -10645,8 +10648,8 @@ class PaginationTest(AbstractHeadRequestTest):
         response = requests.get(self.controle_base_uri + "gasto-list/")
         self.assertEquals(response.status_code, 200)
         # the string must be hardcoded, if not, the test fails
-        expected_link = '<http://luc00557196:8000/controle-list/>; rel="up" , <http://luc00557196:8000/controle-list/gasto-list.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" , <http://luc00557196:8000/controle-list/gasto-list/offset-limit/101&100>; rel="next" '
-        #expected_link = '<' + HOST + 'api/bcim/>; rel="up" , <' + HOST + 'api/bcim/aldeias-indigenas.jsonld>; rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" , <' + HOST + 'api/bcim/aldeias-indigenas/offset-limit/101&100>; rel="next" '
+        expected_link = '<http://luc00557196:8000/controle-list/>; rel="up" , <http://luc00557196:8000/controle-list/gasto-list.jsonld>; rel="http://www.w3.org/ns/json-hr#context"; type="application/ld+json" , <http://luc00557196:8000/controle-list/gasto-list/offset-limit/101&100>; rel="next" '
+        #expected_link = '<' + HOST + 'api/bcim/>; rel="up" , <' + HOST + 'api/bcim/aldeias-indigenas.jsonld>; rel="http://www.w3.org/ns/json-hr#context"; type="application/ld+json" , <' + HOST + 'api/bcim/aldeias-indigenas/offset-limit/101&100>; rel="next" '
         self.assertEquals(response.headers["link"], expected_link)
     '''
 
@@ -10670,7 +10673,7 @@ class PaginationTest(AbstractHeadRequestTest):
         response = requests.head(self.controle_base_uri + "gasto-list/")
         self.assertEquals(response.status_code, 200)
 
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE + '"', response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
@@ -10679,7 +10682,7 @@ class PaginationTest(AbstractHeadRequestTest):
 
         up_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'up')
         self.assertEquals(up_hypermidia_control, "<" + self.controle_base_uri + ">")
-        context_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'http://www.w3.org/ns/json-ld#context')
+        context_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'http://www.w3.org/ns/json-hr#context')
         self.assertEquals(context_hypermidia_control, "<" + self.controle_base_uri + "gasto-list.jsonld>; type=\"application/ld+json\"")
         next_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'next')
         self.assertEquals(next_hypermidia_control, "<" + self.controle_base_uri + "gasto-list/offset-limit/1001/1000>")
@@ -10688,7 +10691,7 @@ class PaginationTest(AbstractHeadRequestTest):
         response = requests.head(self.controle_base_uri + "gasto-list/offset-limit/1001&1000")
         self.assertEquals(response.status_code, 200)
 
-        self.assertIn('rel="http://www.w3.org/ns/json-ld#context"; type="application/ld+json" ', response.headers['link'])
+        self.assertIn('rel="http://www.w3.org/ns/json-hr#context"; type="' + HYPER_RESOURCE_CONTENT_TYPE + '"', response.headers['link'])
         self.assertIn('rel="metadata"', response.headers['link'])
         self.assertIn('rel="stylesheet', response.headers['link'])
         self.assertIn('rel="up"', response.headers['link'])
@@ -10697,7 +10700,7 @@ class PaginationTest(AbstractHeadRequestTest):
 
         up_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'up')
         self.assertEquals(up_hypermidia_control, "<" + self.controle_base_uri + ">")
-        context_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'http://www.w3.org/ns/json-ld#context')
+        context_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'http://www.w3.org/ns/json-hr#context')
         self.assertEquals(context_hypermidia_control, "<" + self.controle_base_uri + "gasto-list/offset-limit/1001&1000.jsonld>; type=\"application/ld+json\"")
         next_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'next')
         self.assertEquals(next_hypermidia_control, "<" + self.controle_base_uri + "gasto-list/offset-limit/2001&1000>")

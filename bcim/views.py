@@ -120,10 +120,12 @@ class UnidadeFederacaoList(FeatureCollectionResource):
     serializer_class = UnidadeFederacaoSerializer
     contextclassname = UnidadeFederacao.contextclassname
 
+    '''
     def __init__(self):
         super(UnidadeFederacaoList, self).__init__()
         self.iri_metadata = 'http://www.metadados.geo.ibge.gov.br/geonetwork_ibge/srv/por/csw?request=GetRecordById&service=CSW&version=2.0.2&elementSetName=full&id=ff2d4215-9843-4137-bad9-c15f2a8caa9e'
         self.iri_style = 'http://styles.idehco4.tk/styles/unidade_federacao.sld'
+    '''
 
     def get_queryset_old(self):
 
@@ -357,6 +359,7 @@ class AglomeradoRuralIsoladoDetail(FeatureResource):
     def initialize_context(self):
         self.context_resource = AglomeradoRuralIsoladoContext()
         self.context_resource.resource= self
+
 class AldeiaIndigenaList(FeatureCollectionResource):
 
     queryset = AldeiaIndigena.objects.all()

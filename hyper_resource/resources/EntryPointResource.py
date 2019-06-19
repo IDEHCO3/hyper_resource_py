@@ -7,7 +7,9 @@ from rest_framework.views import APIView
 from hyper_resource.contexts import EntryPointResourceContext, FeatureEntryPointResourceContext, RasterEntryPointResourceContext, NonSpatialEntryPointResourceContext
 from hyper_resource.models import EntryPointResourceOperationController
 from hyper_resource.resources.AbstractCollectionResource import AbstractCollectionResource
-from hyper_resource.resources.AbstractResource import CORS_ALLOW_HEADERS, CORS_EXPOSE_HEADERS, AbstractResource, RequiredObject
+from hyper_resource.resources.AbstractResource import CORS_ALLOW_HEADERS, CORS_EXPOSE_HEADERS, AbstractResource, \
+    RequiredObject, HYPER_RESOURCE_CONTENT_TYPE
+
 
 class AbstractEntryPointResource(AbstractCollectionResource):
 
@@ -116,7 +118,7 @@ class AbstractEntryPointResource(AbstractCollectionResource):
 
     def options(self, request, *args, **kwargs):
         required_object = self.basic_options(request, *args, **kwargs)
-        response = Response(required_object.representation_object, status=status.HTTP_200_OK, content_type="application/ld+json")
+        response = Response(required_object.representation_object, status=status.HTTP_200_OK, content_type=HYPER_RESOURCE_CONTENT_TYPE)
         self.add_cors_headers_in_header(response)
         return self.add_entry_point_links_in_header(request, response)
 

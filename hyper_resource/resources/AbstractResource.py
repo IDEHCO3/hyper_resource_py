@@ -50,11 +50,13 @@ CONTENT_TYPE_LD_JSON = "application/ld+json"
 CONTENT_TYPE_OCTET_STREAM = "application/octet-stream"
 CONTENT_TYPE_IMAGE_PNG = "image/png"
 CONTENT_TYPE_IMAGE_TIFF = "image/tiff"
-SUPPORTED_CONTENT_TYPES = (CONTENT_TYPE_GEOJSON, CONTENT_TYPE_JSON,CONTENT_TYPE_LD_JSON, CONTENT_TYPE_OCTET_STREAM, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_IMAGE_TIFF)
+
 #ACCESS_CONTROL_ALLOW_METHODS = ['GET', 'OPTIONS', 'HEAD', 'PUT', 'DELETE', 'POST']
 
-HYPR_RESOURCE_CONTEXT = 'http://www.w3.org/ns/json-hr#context'
+HYPER_RESOURCE_CONTEXT = 'http://www.w3.org/ns/json-hr#context'
 HYPER_RESOURCE_CONTENT_TYPE = 'application/hr+json'
+
+SUPPORTED_CONTENT_TYPES = (CONTENT_TYPE_GEOJSON, CONTENT_TYPE_JSON,CONTENT_TYPE_LD_JSON, CONTENT_TYPE_OCTET_STREAM, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_IMAGE_TIFF, HYPER_RESOURCE_CONTENT_TYPE)
 
 CORS_ALLOW_HEADERS = (
     'accept',
@@ -253,7 +255,7 @@ class AbstractResource(APIView):
         iri_father = iri_base[:idx]
 
         self.add_url_in_header(iri_father, response, 'up')
-        self.add_url_in_header(iri_base + '.jsonld', response, rel= HYPR_RESOURCE_CONTEXT + "; type=" + HYPER_RESOURCE_CONTENT_TYPE)
+        self.add_url_in_header(iri_base + '.jsonld', response, rel=HYPER_RESOURCE_CONTEXT + '"; type="' + HYPER_RESOURCE_CONTENT_TYPE)
         self.add_url_in_header(self.iri_metadata, response, rel="metadata")
         self.add_url_in_header(self.iri_style, response, rel="stylesheet")
         self.add_cors_headers_in_header(response)
@@ -348,23 +350,23 @@ class AbstractResource(APIView):
 
     def required_context_for_simple_path(self, request):
         resource_representation = self.resource_representation_or_default_resource_representation(request)
-        return RequiredObject(self.context_resource.context(resource_representation), CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(self.context_resource.context(resource_representation), HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_only_attributes(self, request, attributes_functions_str):
         context = self.get_context_by_only_attributes(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_projection_operation(self, request, attributes_functions_str):
         context = self.get_context_for_projection_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_join_operation(self, request, attributes_functions_str):
         context = self.get_context_for_join_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_operation(self, request, attributes_functions_str):
         context = self.get_context_for_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def get_context_by_only_attributes(self, request, attributes_functions_str):
         attrs_list = self.remove_last_slash(attributes_functions_str).split(",")
