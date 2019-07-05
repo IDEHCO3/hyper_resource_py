@@ -55,6 +55,7 @@ CONTENT_TYPE_IMAGE_TIFF = "image/tiff"
 
 HYPER_RESOURCE_CONTEXT = 'http://www.w3.org/ns/json-hr#context'
 HYPER_RESOURCE_CONTENT_TYPE = 'application/hr+json'
+HYPER_RESOURCE_EXTENSION = '.jsonhr'
 
 SUPPORTED_CONTENT_TYPES = (CONTENT_TYPE_GEOJSON, CONTENT_TYPE_JSON,CONTENT_TYPE_LD_JSON, CONTENT_TYPE_OCTET_STREAM, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_IMAGE_TIFF, HYPER_RESOURCE_CONTENT_TYPE)
 
@@ -255,7 +256,7 @@ class AbstractResource(APIView):
         iri_father = iri_base[:idx]
 
         self.add_url_in_header(iri_father, response, 'up')
-        self.add_url_in_header(iri_base + '.jsonld', response, rel=HYPER_RESOURCE_CONTEXT + '"; type="' + HYPER_RESOURCE_CONTENT_TYPE)
+        self.add_url_in_header(iri_base + HYPER_RESOURCE_EXTENSION, response, rel=HYPER_RESOURCE_CONTEXT + '"; type="' + HYPER_RESOURCE_CONTENT_TYPE)
         self.add_url_in_header(self.iri_metadata, response, rel="metadata")
         self.add_url_in_header(self.iri_style, response, rel="stylesheet")
         self.add_cors_headers_in_header(response)
@@ -453,7 +454,7 @@ class AbstractResource(APIView):
 
     def _base_path(self, full_path):
         arr = full_path.split('/')
-        ind = arr.index(self.contextclassname) if self.contextclassname in arr else arr.index(self.contextclassname + '.jsonld')
+        ind = arr.index(self.contextclassname) if self.contextclassname in arr else arr.index(self.contextclassname + HYPER_RESOURCE_EXTENSION)
 
         return '/'.join(arr[:ind + 1])
 
@@ -489,7 +490,7 @@ class AbstractResource(APIView):
 
     def remove_suffix_from_kwargs(self, **kwargs):
         attrs_funcs_str = kwargs[self.attributes_functions_name_template()]
-        kwargs[self.attributes_functions_name_template()] = attrs_funcs_str[:attrs_funcs_str.index('.jsonld')]
+        kwargs[self.attributes_functions_name_template()] = attrs_funcs_str[:attrs_funcs_str.index(HYPER_RESOURCE_EXTENSION)]
         return kwargs
 
     def attributes_functions_name_template(self):
@@ -709,7 +710,7 @@ class AbstractResource(APIView):
 
         if self.required_object_is_binary(required_object):
             if type(required_object.representation_object) == bytes:
-                response = HttpResponse(required_object.representation_object, status=200, content_type=CONTENT_TYPE_OCTET_STREAM)
+                response = HttpResponse(required_object.representation_object, status=200, content_type=required_object.content_type)
                 response["Etag"] = self.e_tag
                 return response
             return self.response_base_get_binary(request, required_object)
@@ -744,10 +745,10 @@ class AbstractResource(APIView):
 
     # Could be overridden
     def get(self, request, format=None, *args, **kwargs):
-        if format == 'jsonld':
+        if format == 'jsonhr':
             return self.options(request, *args, **kwargs)
 
-        if request.build_absolute_uri().endswith('.jsonld'):
+        if request.build_absolute_uri().endswith(HYPER_RESOURCE_EXTENSION):
             kwargs = self.remove_suffix_from_kwargs(**kwargs)
             self.kwargs = kwargs
             return self.options(request, *args, **kwargs)

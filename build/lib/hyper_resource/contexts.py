@@ -27,6 +27,9 @@ from hyper_resource.resources.AbstractResource import *
 from hyper_resource.resources.AbstractCollectionResource import GROUP_BY_SUM_PROPERTY_NAME
 from django.db.models.fields import NOT_PROVIDED
 
+HYPER_RESOURCE_CONTEXT = 'http://www.w3.org/ns/json-hr#context'
+HYPER_RESOURCE_CONTENT_TYPE = 'application/hr+json'
+HYPER_RESOURCE_EXTENSION = '.jsonhr'
 
 class Reflection:
 
@@ -978,9 +981,9 @@ class EntryPointResourceContext(AbstractCollectionResourceContext):
 
         url = request.build_absolute_uri()
         url = url if url[-1] != '/' else url[:-1]
-        url = url + ".jsonld"
+        url = url + HYPER_RESOURCE_EXTENSION
 
-        context_link = ' <'+url+'>; rel=\"http://www.w3.org/ns/json-ld#context\"; type=\"application/ld+json\" '
+        context_link = ' <'+url+'>; rel="' + HYPER_RESOURCE_CONTEXT + '"; type="' + HYPER_RESOURCE_CONTENT_TYPE + '"'
         if "Link" not in response:
             response['Link'] = context_link
         else:

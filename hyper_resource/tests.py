@@ -4193,7 +4193,7 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
 
-        #get_headers.remove("Etag")
+        get_headers.remove("Etag")
         self.assertEquals(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4306,7 +4306,7 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
 
-        #get_headers.remove("Etag")
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4334,7 +4334,7 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
 
-        #get_headers.remove("Etag")
+        get_headers.remove("Etag")
         self.assertEquals(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4362,7 +4362,7 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
 
-        #get_headers.remove("Etag")
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4455,7 +4455,7 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
 
-        #get_headers.remove("Etag")
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -4483,7 +4483,7 @@ class HeadFeatureCollectionTest(AbstractHeadRequestTest):
         head_headers = self.aux_get_headers_list_from_response(response_head)
         get_headers = self.aux_get_headers_list_from_response(response_get)
 
-        #get_headers.remove("Etag")
+        get_headers.remove("Etag")
         self.assertListEqual(head_headers, get_headers)
 
         self.assertEquals(response_head.headers["access-control-allow-headers"],    response_get.headers["access-control-allow-headers"])
@@ -10151,7 +10151,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
     # --------------- TESTS FOR FEATURE RESOURCE ---------------------------------
     # tests for feature resource simple path
     def test_suffixed_request_to_feature_resource_simple_path(self):
-        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES.jsonld")
+        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES/.jsonhr")
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10187,7 +10187,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
 
     # tests for feature resource attributes
     def test_suffixed_request_to_feature_resource_only_attributes(self):
-        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES/geom,geocodigo,sigla.jsonld")
+        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES/geom,geocodigo,sigla.jsonhr")
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10214,7 +10214,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
         self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
 
     def test_suffixed_request_to_feature_resource_only_alphanumeric_attributes(self):
-        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES/geocodigo,sigla.jsonld")
+        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES/geocodigo,sigla.jsonhr")
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10239,7 +10239,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
         self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
 
     def test_suffixed_request_to_feature_resource_only_geometric_attribute(self):
-        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES/geom.jsonld")
+        response = requests.get(self.bcim_base_uri + "unidades-federativas/ES/geom.jsonhr")
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10263,7 +10263,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
 
     # tests for feature resource operations
     def test_suffixed_request_to_feature_resource_operation_with_float_return(self):
-        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES/area.jsonld')
+        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES/area.jsonhr')
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10286,7 +10286,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
         self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
 
     def test_suffixed_request_to_feature_resource_operation_with_geometry_return(self):
-        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES/buffer/1.2.jsonld')
+        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES/buffer/1.2.jsonhr')
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10307,7 +10307,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
         self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
 
     def test_suffixed_request_to_feature_resource_point_on_surface_operation(self):
-        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES/point_on_surface.jsonld')
+        response = requests.get(self.bcim_base_uri + 'unidades-federativas/ES/point_on_surface.jsonhr')
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10331,7 +10331,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
     # --------------- TESTS FOR FEATURE COLLECTION ---------------------------------
     # tests for feature collection simple path
     def test_suffixed_request_to_feature_collection_resource_simple_path(self):
-        response = requests.get(self.bcim_base_uri + "unidades-federativas.jsonld")
+        response = requests.get(self.bcim_base_uri + "unidades-federativas.jsonhr")
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10367,7 +10367,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
 
     # tests for feature collection attributes
     def test_suffixed_request_to_feature_collection_resource_only_attributes(self):
-        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/nome,geom.jsonld")
+        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/nome,geom.jsonhr")
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10392,7 +10392,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
         self.assertEquals(response_dict["subClassOf"], self.collection_vocab)
 
     def test_suffixed_request_feature_collection_only_geometric_attribute(self):
-        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/geom.jsonld")
+        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/geom.jsonhr")
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10415,7 +10415,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
         self.assertEquals(response_dict["subClassOf"], self.collection_vocab)
 
     def test_suffixed_request_feature_collection_only_alphanumeric_attributes(self):
-        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/nome,nomeabrev.jsonld")
+        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/nome,nomeabrev.jsonhr")
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10441,7 +10441,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
 
     # tests for feature collection operations
     def test_suffixed_request_feature_collection_operation_with_geometry_collection_return(self):
-        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + "unidades-federativas/ES.jsonld")
+        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/within/" + self.bcim_base_uri + "unidades-federativas/ES.jsonhr")
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10481,7 +10481,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
         self.assertEquals(response_dict["subClassOf"], self.collection_vocab)
 
     def test_suffixed_request_feature_collection_operation_with_integer_return(self):
-        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/count-resource.jsonld")
+        response = requests.get(self.bcim_base_uri + "aldeias-indigenas/count-resource.jsonhr")
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10510,7 +10510,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
     # --------------- TESTS FOR NON SPATIAL RESOURCE ---------------------------------
     # tests for nonspatialresource simple path
     def test_suffixed_request_to_non_spatial_resource_simple_path(self):
-        response = requests.get(self.controle_base_uri + "usuario-list/1.jsonld")
+        response = requests.get(self.controle_base_uri + "usuario-list/1.jsonhr")
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10546,7 +10546,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
 
     # tests for nonspatialresource attributes
     def test_suffixed_request_to_non_spatial_resource_only_attributes(self):
-        response = requests.get(self.controle_base_uri + "usuario-list/1/nome,email.jsonld")
+        response = requests.get(self.controle_base_uri + "usuario-list/1/nome,email.jsonhr")
         self.assertEquals(response.status_code, 200)
 
         response_keys = self.aux_get_keys_from_response(response)
@@ -10574,7 +10574,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
     # --------------- TESTS FOR COLLECTION ---------------------------------
     # tests for collection simple path
     def test_suffixed_request_to_collection_resource_simple_path(self):
-        response = requests.get(self.controle_base_uri + "usuario-list.jsonld")
+        response = requests.get(self.controle_base_uri + "usuario-list.jsonhr")
         self.assertEquals(response.status_code, 200)
 
         response_dict_keys = self.aux_get_keys_from_response(response)
@@ -10610,7 +10610,7 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
 
     # tests for collection attributes
     def test_suffixed_request_to_collection_resource_only_attributes(self):
-        response = requests.get(self.controle_base_uri + 'gasto-list/data,valor.jsonld')
+        response = requests.get(self.controle_base_uri + 'gasto-list/data,valor.jsonhr')
         self.assertEquals(response.status_code, 200)
 
         response_keys = self.aux_get_keys_from_response(response)
@@ -10683,7 +10683,7 @@ class PaginationTest(AbstractHeadRequestTest):
         up_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'up')
         self.assertEquals(up_hypermidia_control, "<" + self.controle_base_uri + ">")
         context_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'http://www.w3.org/ns/json-hr#context')
-        self.assertEquals(context_hypermidia_control, "<" + self.controle_base_uri + "gasto-list.jsonld>; type=\"application/ld+json\"")
+        self.assertEquals(context_hypermidia_control, "<" + self.controle_base_uri + "gasto-list.jsonhr>; type=\"application/hr+json\"")
         next_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'next')
         self.assertEquals(next_hypermidia_control, "<" + self.controle_base_uri + "gasto-list/offset-limit/1001/1000>")
 
@@ -10701,7 +10701,7 @@ class PaginationTest(AbstractHeadRequestTest):
         up_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'up')
         self.assertEquals(up_hypermidia_control, "<" + self.controle_base_uri + ">")
         context_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'http://www.w3.org/ns/json-hr#context')
-        self.assertEquals(context_hypermidia_control, "<" + self.controle_base_uri + "gasto-list/offset-limit/1001&1000.jsonld>; type=\"application/ld+json\"")
+        self.assertEquals(context_hypermidia_control, "<" + self.controle_base_uri + "gasto-list/offset-limit/1001&1000.jsonhr>; type=\"application/hr+json\"")
         next_hypermidia_control = self.aux_get_hypermidia_control_from_link_header(response, 'next')
         self.assertEquals(next_hypermidia_control, "<" + self.controle_base_uri + "gasto-list/offset-limit/2001&1000>")
 

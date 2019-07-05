@@ -295,25 +295,25 @@ arr_options_for_collection_operation = [
     RequestTest("api/bcim/unidades-federativas/filter/sigla/in/RJ&ES&MG&SP/*count-resource", 200, method="OPTIONS"),
 ]
 
-# The suffixed requests just need simple tests (once requests suffixed with '.jsonld' is just repassed to options() method)
+# The suffixed requests just need simple tests (once requests suffixed with '.jsonhr' is just repassed to options() method)
 # More complex tests must be applied in OPTIONS requests (without suffix)
 arr_get_for_collect_operation_context = [
-    RequestTest("controle-list/usuario-list/filter/id/gt/5.jsonld", 200),
-    RequestTest("controle-list/usuario-list/collect/nome/upper.jsonld", 200),
-    RequestTest("controle-list/usuario-list/collect/id&email/upper.jsonld", 200),
-    RequestTest("controle-list/usuario-list/projection/id,email/collect/id&email/upper.jsonld", 200),
-    RequestTest("controle-list/usuario-list/projection/email/collect/id&email/upper.jsonld", 400),
-    RequestTest("api/bcim/unidades-federativas/collect/nome/upper.jsonld", 200),
-    RequestTest("api/bcim/unidades-federativas/collect/nome&sigla/lower.jsonld", 200),
-    RequestTest("api/bcim/unidades-federativas/collect/geom&sigla/lower.jsonld", 200),
-    RequestTest("api/bcim/unidades-federativas/collect/sigla&geom/buffer/0.2.jsonld", 200),
-    RequestTest("api/bcim/unidades-federativas/collect/geom/buffer/0.2.jsonld", 200),
-    RequestTest("api/bcim/unidades-federativas/collect/geom/area.jsonld", 200),
-    RequestTest("api/bcim/unidades-federativas/collect/sigla&geom/area.jsonld", 200),
-    RequestTest("api/bcim/unidades-federativas/collect/sigla&geom/point_on_surface.jsonld", 200),
-    RequestTest("api/bcim/unidades-federativas/collect/geom/point_on_surface.jsonld", 200),
-    RequestTest("api/bcim/unidades-federativas/projection/sigla,geom/collect/sigla&geom/area.jsonld", 200),
-    RequestTest("api/bcim/unidades-federativas/projection/sigla/collect/sigla&geom/area.jsonld", 400),
+    RequestTest("controle-list/usuario-list/filter/id/gt/5.jsonhr", 200),
+    RequestTest("controle-list/usuario-list/collect/nome/upper.jsonhr", 200),
+    RequestTest("controle-list/usuario-list/collect/id&email/upper.jsonhr", 200),
+    RequestTest("controle-list/usuario-list/projection/id,email/collect/id&email/upper.jsonhr", 200),
+    RequestTest("controle-list/usuario-list/projection/email/collect/id&email/upper.jsonhr", 400),
+    RequestTest("api/bcim/unidades-federativas/collect/nome/upper.jsonhr", 200),
+    RequestTest("api/bcim/unidades-federativas/collect/nome&sigla/lower.jsonhr", 200),
+    RequestTest("api/bcim/unidades-federativas/collect/geom&sigla/lower.jsonhr", 200),
+    RequestTest("api/bcim/unidades-federativas/collect/sigla&geom/buffer/0.2.jsonhr", 200),
+    RequestTest("api/bcim/unidades-federativas/collect/geom/buffer/0.2.jsonhr", 200),
+    RequestTest("api/bcim/unidades-federativas/collect/geom/area.jsonhr", 200),
+    RequestTest("api/bcim/unidades-federativas/collect/sigla&geom/area.jsonhr", 200),
+    RequestTest("api/bcim/unidades-federativas/collect/sigla&geom/point_on_surface.jsonhr", 200),
+    RequestTest("api/bcim/unidades-federativas/collect/geom/point_on_surface.jsonhr", 200),
+    RequestTest("api/bcim/unidades-federativas/projection/sigla,geom/collect/sigla&geom/area.jsonhr", 200),
+    RequestTest("api/bcim/unidades-federativas/projection/sigla/collect/sigla&geom/area.jsonhr", 400),
 
 ]
 

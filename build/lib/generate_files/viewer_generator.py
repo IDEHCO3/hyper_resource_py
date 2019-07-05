@@ -7,6 +7,11 @@ from django.contrib.gis.db.models import GeometryField
 
 from hyper_resource.models import FeatureModel
 
+ENTRYPOINT_CLASSNAME = "EntryPoint"
+TAB_1X = (' ' * 4)
+TAB_2X = (' ' * 8)
+TAB_3X = (' ' * 12)
+
 def generate_get_root_response(a_name_space, model_class_name):
 
     context_name = convert_camel_case_to_hifen(model_class_name) + '-list'
@@ -17,48 +22,74 @@ def convert_camel_case_to_hifen(camel_case_string):
     s1 = re.sub('(.)([A-Z][a-z]+)', r'\1-\2', camel_case_string)
     return re.sub('([a-z0-9])([A-Z])', r'\1-\2', s1).lower()
 
-def get_unique_field_name_or_none(model_class):
-    obj = model_class()
-    unique_field_name_arr = [field.name for field in obj._meta.fields if field.unique and not field.primary_key]
-    return unique_field_name_arr[0] if len(unique_field_name_arr) == 1 else None
+def get_unique_fields_dict(model_class):
+    unique_fields_dict = dict()
+
+    for field in model_class._meta.fields:
+        if field.unique and not field.primary_key:
+            if type(field) not in unique_fields_dict:
+                unique_fields_dict.update({type(field): field.name})
+
+    return unique_fields_dict
+
+def unique_fields_views_snippets(model_class_name, unique_fields_dict, is_list_view=True):
+    snippet_arr = []
+
+    if len(unique_fields_dict) > 0:
+        for field_type, field_name in unique_fields_dict.items():
+            snippet_arr.append('\n')
+            snippet_arr.append(TAB_1X + 'def get(self, request, format=None, *args, **kwargs):\n')
+            snippet_arr.append(TAB_2X + "if kwargs.get('" + field_name + "') is not None:\n")
+            snippet_arr.append(TAB_3X + "kwargs['" + field_name + "'] = kwargs.get('" + field_name + "')\n")
+            snippet_arr.append(TAB_3X + "self.kwargs['" + field_name + "'] = kwargs.get('" + field_name + "')\n\n")
+
+            if is_list_view:
+                snippet_arr.append(TAB_2X + 'return super(' + model_class_name + 'List, self).get(request, *args, **self.kwargs)\n\n')
+            else:
+                snippet_arr.append(TAB_2X + 'return super(' + model_class_name + 'Detail, self).get(request, *args, **self.kwargs)\n\n')
+
+            snippet_arr.append('\n')
+            snippet_arr.append(TAB_1X + 'def options(self, request, *args, **kwargs):\n')
+
+        for field_type, field_name in unique_fields_dict.items():
+            snippet_arr.append(TAB_2X + "if kwargs.get('" + field_name + "') is not None:\n")
+            snippet_arr.append(TAB_3X + "kwargs['" + field_name + "'] = kwargs.get('" + field_name + "')\n")
+            snippet_arr.append(TAB_3X + "self.kwargs['" + field_name + "'] = kwargs.get('" + field_name + "')\n\n")
+
+            if is_list_view:
+                snippet_arr.append(TAB_2X + 'return super(' + model_class_name + 'List, self).get(request, *args, **self.kwargs)\n\n')
+            else:
+                snippet_arr.append(TAB_2X + 'return super(' + model_class_name + 'Detail, self).get(request, *args, **self.kwargs)\n\n')
+
+    return snippet_arr
 
 def generate_snippets_to_view(model_class_name, model_class, is_spatial):
     super_class_collection_name = 'FeatureCollectionResource' if is_spatial else 'CollectionResource'
     super_class_name = 'FeatureResource' if is_spatial else 'NonSpatialResource'
-    serializer_class_snippet = (' ' * 4) + 'serializer_class = ' + model_class_name + 'Serializer\n'
+    serializer_class_snippet = TAB_1X + 'serializer_class = ' + model_class_name + 'Serializer\n'
     context_name = convert_camel_case_to_hifen(model_class_name)
-    context = convert_camel_case_to_hifen((' ' * 4) + 'contextclassname = ' + "'" + context_name + "-list'\n")
-    unique_field_name = get_unique_field_name_or_none(model_class)
+    context = convert_camel_case_to_hifen(TAB_1X + 'contextclassname = ' + "'" + context_name + "-list'\n")
+    unique_fields_dict = get_unique_fields_dict(model_class)
     arr = []
     arr.append('class ' + model_class_name + 'List('+ super_class_collection_name +'):\n')
-    arr.append((' ' * 4) + 'queryset = ' + model_class_name + '.objects.all()' + '\n')
+    arr.append(TAB_1X + 'queryset = ' + model_class_name + '.objects.all()' + '\n')
     arr.append(serializer_class_snippet)
     arr.append(context)
-    arr.append((' ' * 4) + 'def initialize_context(self):\n')
-    arr.append((' ' * 8) + 'self.context_resource = ' + model_class_name + 'ListContext()\n')
-    arr.append((' ' * 8) + 'self.context_resource.resource = self\n')
+    arr.append(TAB_1X + 'def initialize_context(self):\n')
+    arr.append(TAB_2X + 'self.context_resource = ' + model_class_name + 'ListContext()\n')
+    arr.append(TAB_2X + 'self.context_resource.resource = self\n')
+
+    arr.extend(unique_fields_views_snippets(model_class_name, unique_fields_dict, is_list_view=True))
+
     arr.append('\n')
     arr.append('class ' + model_class_name + 'Detail(' + super_class_name +'):\n')
     arr.append(serializer_class_snippet)
     arr.append(context)
-    arr.append((' ' * 4) + 'def initialize_context(self):\n')
-    arr.append((' ' * 8) + 'self.context_resource = ' + model_class_name + 'DetailContext()\n')
-    arr.append((' ' * 8) + 'self.context_resource.resource = self\n')
+    arr.append(TAB_1X + 'def initialize_context(self):\n')
+    arr.append(TAB_2X + 'self.context_resource = ' + model_class_name + 'DetailContext()\n')
+    arr.append(TAB_2X + 'self.context_resource.resource = self\n')
 
-    if unique_field_name:
-        arr.append('\n')
-        arr.append((' ' * 4) + 'def get(self, request, format=None, *args, **kwargs):\n')
-        arr.append((' ' * 8) + "if kwargs.get('" + unique_field_name + "') is not None:\n")
-        arr.append((' ' * 12) + "kwargs['" + unique_field_name + "'] = kwargs.get('" + unique_field_name + "')\n")
-        arr.append((' ' * 12) + "self.kwargs['" + unique_field_name + "'] = kwargs.get('" + unique_field_name + "')\n")
-        arr.append((' ' * 8) + 'return super(' + model_class_name + 'Detail, self).get(request, *args, **self.kwargs)\n')
-
-        arr.append('\n')
-        arr.append((' ' * 4) + 'def options(self, request, *args, **kwargs):\n')
-        arr.append((' ' * 8) + "if kwargs.get('" + unique_field_name + "') is not None:\n")
-        arr.append((' ' * 12) + "kwargs['" + unique_field_name + "'] = kwargs.get('" + unique_field_name + "')\n")
-        arr.append((' ' * 12) + "self.kwargs['" + unique_field_name + "'] = kwargs.get('" + unique_field_name + "')\n")
-        arr.append((' ' * 8) + 'return super(' + model_class_name + 'Detail, self).options(request, *args, **self.kwargs)\n')
+    arr.extend(unique_fields_views_snippets(model_class_name, unique_fields_dict, is_list_view=False))
 
     return arr
 
@@ -83,7 +114,6 @@ def imports_str_as_array(a_name):
     arr.append("from " + a_name + ".models import *\n")
     arr.append("from " + a_name + ".serializers import *\n")
     arr.append("from " + a_name + ".contexts import *\n\n")
-    #arr.append("from hyper_resource.contexts import BaseContext, NonSpatialAPIRoot, FeatureAPIRoot\n")
     arr.append("from hyper_resource.resources.EntryPointResource import *\n")
     arr.append("from hyper_resource.resources.AbstractCollectionResource import AbstractCollectionResource\n")
     arr.append("from hyper_resource.resources.AbstractResource import *\n")
@@ -118,31 +148,17 @@ def generate_file(package_name, default_name='views.py'):
             sr.write('class APIRoot(FeatureEntryPointResource):\n\n')
         else:
             sr.write('class APIRoot(NonSpatialEntryPointResource):\n\n')
-        sr.write((' ' * 4) + 'serializer_class = EntryPointSerializer\n\n')
+        sr.write(TAB_1X + 'serializer_class = EntryPointSerializer\n\n')
 
-        '''
-        # only applicable in non root EntryPoints
-        sr.write((' ' * 4) + 'def head(self, request, *args, **kwargs):\n')
-        sr.write((' ' * 8) + 'response = super(APIRoot, self).head(request, *args, **kwargs)\n')
-        sr.write((' ' * 8) + 'parent_url = reverse("' + package_name + ':api_root", request=request, format=None)\n')
-        sr.write((' ' * 8) + 'response = self.add_url_in_header(parent_url, response, "up")\n')
-        sr.write((' ' * 8) + 'return response\n\n')
-
-        sr.write((' ' * 4) + 'def get(self, request, format=None, *args, **kwargs):\n')
-        sr.write((' ' * 8) + 'response = super(APIRoot, self).get(request, format=format, *args, **kwargs)\n')
-        sr.write((' ' * 8) + 'parent_url = reverse("' + package_name + ':api_root", request=request, format=format)\n')
-        sr.write((' ' * 8) + 'response = self.add_url_in_header(parent_url, response, "up")\n')
-        sr.write((' ' * 8) + 'return response\n\n')
-        '''
-
-        sr.write((' ' * 4) + 'def get_root_response(self, request, format=None, *args, **kwargs):\n')
-        sr.write((' ' * 8) + 'root_links = {\n\n')
+        sr.write(TAB_1X + 'def get_root_response(self, request, format=None, *args, **kwargs):\n')
+        sr.write(TAB_2X + 'root_links = {\n\n')
         for tuple_name_and_class in arr_tuple_name_and_class:
-            get_root_str = generate_get_root_response(package_name ,tuple_name_and_class[0])
-            sr.write((' ' * 10) + get_root_str)
-        sr.write((' ' * 8) + '}\n\n')
-        sr.write((' ' * 8) + 'ordered_dict_of_link = OrderedDict(sorted(root_links.items(), key=lambda t: t[0]))\n')
-        sr.write((' ' * 8) + 'return ordered_dict_of_link\n\n')
+            if tuple_name_and_class[0] != ENTRYPOINT_CLASSNAME:
+                get_root_str = generate_get_root_response(package_name ,tuple_name_and_class[0])
+                sr.write((' ' * 10) + get_root_str)
+        sr.write(TAB_2X + '}\n\n')
+        sr.write(TAB_2X + 'ordered_dict_of_link = OrderedDict(sorted(root_links.items(), key=lambda t: t[0]))\n')
+        sr.write(TAB_2X + 'return ordered_dict_of_link\n\n')
         for tuple_name_and_class in arr_tuple_name_and_class:
 
             for str in generate_snippets_to_view(tuple_name_and_class[0], tuple_name_and_class[1], is_spatial(tuple_name_and_class[1])):

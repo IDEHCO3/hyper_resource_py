@@ -1191,6 +1191,10 @@ class SpatialModel(BusinessModel):
 
 class FeatureModel(SpatialModel):
 
+    def __init__(self, *args, **kwargs):
+        self.iri_metadata = ""
+        super(FeatureModel, self).__init__(*args, **kwargs)
+
     class Meta:
         abstract = True
 

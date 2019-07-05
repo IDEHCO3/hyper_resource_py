@@ -157,7 +157,7 @@ class MunicipioList(FeatureCollectionResource):
     #iri_style = 'http://styles.idehco4.tk/styles/municipio.sld'
 
     def __init__(self):
-        super().__init__()
+        super(MunicipioList, self).__init__()
         self.iri_metadata = 'http://www.metadados.geo.ibge.gov.br/geonetwork_ibge/srv/por/csw?request=GetRecordById&service=CSW&version=2.0.2&elementSetName=full&id=3cd8176c-2f59-4eab-8232-3da978d0ecf3'
         self.iri_style = 'http://ggt-des.ibge.gov.br/styles/svgs/aerialway-11.svg'
 

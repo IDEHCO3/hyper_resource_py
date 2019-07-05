@@ -24,6 +24,7 @@ def marge_list_elements(default_installed_apps, template_instaled_apps, app_name
 
     [all_apps.append(app) for app in default_installed_apps if app not in all_apps]
     [all_apps.append(app) for app in template_instaled_apps if app not in all_apps]
+    all_apps.remove('django.contrib.admin') # 'django.contrib.admin' causing middleware probles
 
     if app_name not in all_apps:
         all_apps.append(app_name)

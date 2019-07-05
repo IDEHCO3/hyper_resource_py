@@ -890,3 +890,21 @@ class FeatureCollectionResource(SpatialCollectionResource):
     def get(self, request, format=None, *args, **kwargs):
         self.change_request_if_image_png_into_IRI(request)
         return super(FeatureCollectionResource,self).get(request, *args, **self.kwargs)
+
+    def head(self, request, *args, **kwargs):
+        if self.is_simple_path(self.kwargs.get('attributes_functions')):
+            self.iri_metadata = self.model_class().objects.first().iri_metadata
+        return super(FeatureCollectionResource, self).head(request, *args, **kwargs)
+
+    def basic_get(self, request, *args, **kwargs):
+        self.set_basic_context_resource(request)
+        attributes_functions_str = self.kwargs.get('attributes_functions')
+
+        if not self.is_simple_path(attributes_functions_str):
+            return super(FeatureCollectionResource, self).basic_get(request, *args, **kwargs)
+
+        self.object_model = self.model_class()()
+        self.add_allowed_methods(['delete', 'post'])
+        self.iri_metadata = self.model_class().objects.first().iri_metadata
+
+        return self.required_object_for_simple_path(request)

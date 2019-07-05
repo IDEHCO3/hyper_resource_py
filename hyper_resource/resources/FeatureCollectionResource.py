@@ -892,7 +892,8 @@ class FeatureCollectionResource(SpatialCollectionResource):
         return super(FeatureCollectionResource,self).get(request, *args, **self.kwargs)
 
     def head(self, request, *args, **kwargs):
-        self.iri_metadata = self.model_class().objects.first().iri_metadata
+        if self.is_simple_path(self.kwargs.get('attributes_functions')):
+            self.iri_metadata = self.model_class().objects.first().iri_metadata
         return super(FeatureCollectionResource, self).head(request, *args, **kwargs)
 
     def basic_get(self, request, *args, **kwargs):

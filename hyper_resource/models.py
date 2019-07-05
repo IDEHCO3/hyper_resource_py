@@ -812,7 +812,7 @@ class CollectionResourceOperationController(BaseOperationController):
         self.join_operation_name = 'join'
         self.group_by_sum_collection_operation_name = "group-by-sum"
         self.projection_operation_name = 'projection'
-        self.all_operations_dict = self.collection_operations_dict()
+        #self.all_operations_dict = self.collection_operations_dict()
 
     '''
     # operations that return a subcollection of an collection

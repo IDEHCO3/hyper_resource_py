@@ -666,4 +666,5 @@ class FeatureResource(SpatialResource):
 
     def get(self, request, format=None, *args, **kwargs):
         self.change_request_if_image_png_into_IRI(request)
+        #self.iri_metadata = self.model_class().objects.first().iri_metadata
         return super(FeatureResource,self).get(request, *args, **self.kwargs)
