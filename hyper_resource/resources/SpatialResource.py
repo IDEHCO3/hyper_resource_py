@@ -74,8 +74,3 @@ class SpatialResource(AbstractResource):
             response = Response(data={"This request is not supported": self.kwargs.get("attributes_functions", None)},
                                 status=required_object.status_code)
         return response
-
-    def head(self, request, *args, **kwargs):
-        if self.is_simple_path(self.kwargs.get('attributes_functions')):
-            self.add_allowed_methods(['delete', 'put'])
-        return super(SpatialResource, self).head(request, *args, **kwargs)

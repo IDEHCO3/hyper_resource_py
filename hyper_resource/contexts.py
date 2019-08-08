@@ -27,9 +27,22 @@ from hyper_resource.resources.AbstractResource import *
 from hyper_resource.resources.AbstractCollectionResource import GROUP_BY_SUM_PROPERTY_NAME
 from django.db.models.fields import NOT_PROVIDED
 
+from hyper_resource.resources.FeatureResource import FEATURE_RESOURCE_TYPE
+from hyper_resource.utils import IMAGE_RESOURCE_TYPE
+
+'''
 HYPER_RESOURCE_CONTEXT = 'http://www.w3.org/ns/json-hr#context'
 HYPER_RESOURCE_CONTENT_TYPE = 'application/hr+json'
 HYPER_RESOURCE_EXTENSION = '.jsonhr'
+IMAGE_RESOURCE_TYPE = "Image"
+
+CONTENT_TYPE_GEOJSON = "application/vnd.geo+json"
+CONTENT_TYPE_JSON = "application/json"
+CONTENT_TYPE_LD_JSON = "application/ld+json"
+CONTENT_TYPE_OCTET_STREAM = "application/octet-stream"
+CONTENT_TYPE_IMAGE_PNG = "image/png"
+CONTENT_TYPE_IMAGE_TIFF = "image/tiff"
+'''
 
 class Reflection:
 
@@ -279,12 +292,24 @@ def OperationVocabularyDict():
 
     return dic
 
+def mediaTypeDict():
+    dicti = {}
+    geometric_media_types = [CONTENT_TYPE_GEOJSON, CONTENT_TYPE_OCTET_STREAM, CONTENT_TYPE_IMAGE_PNG]
+    dicti[GeometryField] = geometric_media_types
+    dicti[GEOSGeometry] = geometric_media_types
+    dicti[GEOSGeometry] = geometric_media_types
+    dicti[FeatureCollection] = geometric_media_types
+    dicti['Feature'] = geometric_media_types
+    return dicti
 
 def vocabulary(a_key):
     return vocabularyDict()[a_key] if a_key in vocabularyDict() else None
 
 def operation_vocabulary(a_key):
     return OperationVocabularyDict()[a_key] if a_key in OperationVocabularyDict() else None
+
+def media_type_for_resource_type(resource_type):
+    return mediaTypeDict()[resource_type] if resource_type in mediaTypeDict() else None
 
 
 class SupportedProperty():
@@ -372,6 +397,7 @@ def initialize_dict():
     dict['Feature'] = oc.geometry_operations_dict()
     dict['Geobuf'] = oc.geometry_operations_dict()
     dict[GEOSGeometry] = oc.geometry_operations_dict()
+    dict['Image'] = oc.geometry_operations_dict()
     dict[Point] = oc.point_operations_dict()
     dict[PointField] = oc.point_operations_dict()
     dict[Polygon] = oc.polygon_operations_dict()
@@ -496,6 +522,16 @@ class ContextResource:
         dicti.update(self.get_hydra_term_definition())
         return dicti
 
+    def available_formats_term_definition(self):
+        dicti = {
+            "availableFormats": {
+                "@id": "https://schema.org/domainIncludes",
+                "@container": "@set"
+            },
+            "format": "https://schema.org/encodingFormat"
+        }
+        return dicti
+
     def get_hydra_term_definition(self):
         return {"hydra": vocabulary("hydra")}
 
@@ -505,6 +541,7 @@ class ContextResource:
         for field_model in fields:
             dic_field[field_model.name] = self.attribute_contextualized_dict_for_field(field_model)
         dic_field.update(self.get_subClassOf_term_definition())
+        #dic_field.update(self.available_formats_term_definition()) #todo: future hypermidia control
         return dic_field
 
     def selectedAttributeContextualized_dict(self, attribute_name_array):
@@ -595,11 +632,11 @@ class ContextResource:
         return dicti
 
     def get_default_resource_id_vocabulary(self):
-        id_vocabulary = vocabulary(self.resource.default_resource_representation())
+        id_vocabulary = vocabulary(self.resource.default_resource_type())
         return id_vocabulary if id_vocabulary is not None else vocabulary(object)
 
     def get_default_resource_type_vocabulary(self):
-        type_vocabulary = vocabulary(self.resource.default_resource_representation())
+        type_vocabulary = vocabulary(self.resource.default_resource_type())
         return type_vocabulary if type_vocabulary is not None else vocabulary(object)
 
     def get_resource_id_and_type_by_attributes_return_type(self, attr_list, return_type):
@@ -647,27 +684,47 @@ class ContextResource:
         dict[operation_name] = { "@id": vocabulary(operation_name),"@type": "@id" }
         return {"@context": dict}
 
+    def available_formats_for(self, resource_type):
+        media_type_arr = media_type_for_resource_type(resource_type)
+        dicti = {
+            "availableFormats": []
+        }
+        for media_type in media_type_arr:
+            dicti['availableFormats'].append({ "format": media_type })
+        return dicti
+
     def initalize_context(self, resource_type):
         self.dict_context = {}
         self.dict_context["@context"] = self.attributes_contextualized_dict()
-        #self.dict_context["@context"].update(self.get_hydra_term_definition())
-        #self.dict_context["@context"].update(self.get_subClassOf_term_definition())
         self.dict_context["hydra:supportedProperties"] = self.supportedProperties()
         self.dict_context["hydra:supportedOperations"] = self.supportedOperationsFor(self.resource.object_model, resource_type)
         self.dict_context["hydra:representationName"] = self.representationName()
         self.dict_context["hydra:iriTemplate"] = self.iriTemplates()
         self.dict_context.update(self.get_default_context_superclass())
         self.dict_context.update(self.get_default_resource_type_identification())
+        #self.dict_context.update(self.available_formats_for(resource_type)) #todo: future hypermidia control
 
         return deepcopy(self.dict_context)
 
     def context(self, resource_type=None):
         if self.dict_context is None:
-            resource_type = resource_type if resource_type is not None else self.resource.default_resource_representation()
+            resource_type = resource_type if resource_type is not None else self.resource.default_resource_type()
             self.initalize_context(resource_type)
         return deepcopy(self.dict_context)
 
 class FeatureResourceContext(ContextResource):
+
+    def context_for_image(self):
+        self.dict_context = {}
+        self.dict_context["@context"] = self.get_subClassOf_term_definition()
+        self.dict_context["hydra:supportedProperties"] = self.supportedProperties()
+        self.dict_context["hydra:supportedOperations"] = self.supportedOperationsFor(self.resource.object_model, IMAGE_RESOURCE_TYPE)
+        self.dict_context["hydra:representationName"] = self.representationName()
+        self.dict_context["hydra:iriTemplate"] = self.iriTemplates()
+        self.dict_context.update(self.get_default_context_superclass())
+        self.dict_context.update(self.get_default_resource_type_identification())
+        #self.dict_context.update( self.available_formats_for(FEATURE_RESOURCE_TYPE) )  # todo: future hypermidia control
+        return deepcopy(self.dict_context)
 
     def resource_id_and_type_by_operation_dict(self, operation_return_type):
         dicti = super(FeatureResourceContext, self).resource_id_and_type_by_operation_dict(operation_return_type)
@@ -1020,4 +1077,26 @@ class RasterEntryPointResourceContext(EntryPointResourceContext):
     pass
 
 class NonSpatialEntryPointResourceContext(EntryPointResourceContext):
+    pass
+
+
+class AbstractResourceContext(ContextResource):
+    pass
+
+class CollectionResourceContext(ContextResource):
+    pass
+
+class SpatialCollectionResourceContext(ContextResource):
+    pass
+
+class SpatialResourceContext(ContextResource):
+    pass
+
+class StyleResourceContext(ContextResource):
+    pass
+
+class TiffResourceContext(ContextResource):
+    pass
+
+class ProxiedNonSpatialResourceContext(ContextResource):
     pass

@@ -284,7 +284,6 @@ class HyperUserRegister(CollectionResource):
     '''
 
     def head(self, request, *args, **kwargs):
-        self.add_allowed_methods(["post"])
         resp = Response(data={}, status=status.HTTP_200_OK, content_type=self.default_content_type())
         self.add_base_headers(request, resp)
         return resp
@@ -326,14 +325,11 @@ class HyperUserLogin(CollectionResource):
             kwargs = self.remove_suffix_from_kwargs(**kwargs)
             self.kwargs = kwargs
             return self.options(request, *args, **kwargs)
-
-        self.add_allowed_methods(["post"])
         resp = Response(status=status.HTTP_204_NO_CONTENT)
         self.add_base_headers(request, resp)
         return resp
 
     def head(self, request, *args, **kwargs):
-        self.add_allowed_methods(["post"])
         resp = Response(data={}, status=status.HTTP_200_OK, content_type=self.default_content_type())
         self.add_base_headers(request, resp)
         return resp

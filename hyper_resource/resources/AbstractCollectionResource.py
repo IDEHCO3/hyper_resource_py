@@ -1,5 +1,7 @@
 from hyper_resource.models import BaseOperationController
 from hyper_resource.resources.AbstractResource import *
+#from hyper_resource.resources import ProxiedNonSpatialResource
+from hyper_resource.resources.ProxiedNonSpatialResource import ProxiedNonSpatialResource
 
 COLLECTION_TYPE = "Collection"
 GROUP_BY_SUM_PROPERTY_NAME = "sum"
@@ -8,33 +10,57 @@ class AbstractCollectionResource(AbstractResource):
 
     def __init__(self):
         super(AbstractCollectionResource, self).__init__()
+        self.http_allowed_methods = LIST_METHODS
         self.queryset = None
 
-    def default_resource_representation(self):
+    def set_list_allowed_methods(self, response):
+        list_methods_str = ", ".join(LIST_METHODS)
+        response._headers["access-control-allow-methods"] = ("access-control-allow-methods", list_methods_str)
+        response._headers["allow"] = ("allow", list_methods_str)
+
+    def dispatch(self, request, *args, **kwargs):
+        response = super(AbstractCollectionResource, self).dispatch(request, *args, **kwargs)
+
+        attributes_functions_str = self.kwargs.get("attributes_functions", None)
+        if self.is_simple_path(attributes_functions_str):
+            self.set_list_allowed_methods(response)
+        return response
+
+    def default_resource_type(self):
         return COLLECTION_TYPE
 
-    def define_resource_representation_by_only_attributes(self, request, attributes_functions_str):
-        return self.resource_representation_or_default_resource_representation(request)
+    def resource_type_by_only_attributes(self, request, attributes_functions_str):
+        return self.resource_type_or_default_resource_type(request)
 
     def define_resource_representation_from_collect_operation(self, request, attributes_functions_str):
         raise NotImplementedError("'define_resource_representation_by_collect_operation' must be implemented in subclasses")
 
     def define_resource_representation_from_count_resource_operation(self, request, attributes_functions_str):
-        resource_representation_by_accept = self.resource_representation_or_default_resource_representation(request)
-        if resource_representation_by_accept == self.dict_by_accept_resource_representation()[CONTENT_TYPE_OCTET_STREAM]:
+        resource_representation_by_accept = self.resource_type_or_default_resource_type(request)
+        if resource_representation_by_accept == self.dict_by_accept_resource_type()[CONTENT_TYPE_OCTET_STREAM]:
             return bytes
         return self.get_operation_type_called(attributes_functions_str).return_type
 
     def define_resource_representation_from_distinct_operation(self, request, attributes_functions_str):
-        resource_representation_by_accept = self.resource_representation_or_default_resource_representation(request)
-        if resource_representation_by_accept != self.default_resource_representation():
+        resource_representation_by_accept = self.resource_type_or_default_resource_type(request)
+        if resource_representation_by_accept != self.default_resource_type():
             return resource_representation_by_accept
         return self.return_type_for_distinct_operation(attributes_functions_str)
+
+    def content_type_for_collect_operation(self, objects_dict_list, request, attributes_functions_str):
+        attrs_funcs_arr = self.remove_projection_from_path(attributes_functions_str).split("/")
+        operated_attr = self.extract_collect_operation_attributes(attributes_functions_str)[-1]
+
+        operation_in_collect = operated_attr + "/" + "/".join(attrs_funcs_arr[2:])
+
+        proxied_obj = ProxiedNonSpatialResource()
+        proxied_obj.set_object_model(self.object_model)
+        return  proxied_obj.content_type_for_operation(request, operation_in_collect)
 
     def attributes_functions_str_is_filter_with_spatial_operation(self, attributes_functions_str):
         arr_str = attributes_functions_str.split('/')[1:]
 
-        geom_ops = self.operation_controller.geometry_operations_dict()
+        geom_ops = self.operation_controller.geometry_operations_dict
 
         for str_ in arr_str:
             if self.is_spatial_attribute(str_):
@@ -93,9 +119,11 @@ class AbstractCollectionResource(AbstractResource):
         collect_attrs = collect_oper_snippet_arr[1]
         return collect_attrs.replace('&', ',') if as_string else collect_attrs.split('&')
 
+    '''
     def extract_operation_snippet_from_collect_operation_str(self, attributes_functions_str):
         operation_in_collect_arr =  self.extract_collect_operation_snippet(attributes_functions_str).split("/")[2:]
         return "/".join(operation_in_collect_arr)
+    '''
 
     def get_operation_in_collect_return_type(self, attributes_functions_str):
         operation_in_collect_name = self.extract_collect_operation_snippet(attributes_functions_str).split("/")[2]
@@ -182,7 +210,7 @@ class AbstractCollectionResource(AbstractResource):
 
     # ---------------------------------------- REQUIRED OBJECT FOR OPERATIONS ----------------------------------------
     def required_object_for_count_resource_operation(self,request, attributes_functions_str):
-        c_type_by_operation = self.define_content_type_by_operation(request, self.get_operation_name_from_path(attributes_functions_str))
+        c_type_by_operation = self.content_type_for_operation(request, self.get_operation_name_from_path(attributes_functions_str))
         operation_name = self.operation_controller.count_resource_collection_operation_name
         return RequiredObject({operation_name: self.model_class().objects.count()}, c_type_by_operation, self.object_model, 200)
 
@@ -196,7 +224,7 @@ class AbstractCollectionResource(AbstractResource):
             projection_atts_str = self.extract_projection_attributes(attributes_functions_str, as_string=True)
             objects = self.get_object_serialized_by_only_attributes(projection_atts_str, queryset_or_objects)
 
-            return RequiredObject(objects, self.content_type_or_default_content_type(request), queryset_or_objects, 200)
+            return RequiredObject(objects, self.content_type_by_accept(request), queryset_or_objects, 200)
 
         return self.required_object(request, queryset_or_objects)
 
@@ -207,7 +235,7 @@ class AbstractCollectionResource(AbstractResource):
             projection_attrs = self.extract_projection_attributes(attributes_functions_str, as_string=True)
             serialized_data = self.get_object_serialized_by_only_attributes(projection_attrs, queryset_or_objects)
 
-            return RequiredObject(serialized_data, self.content_type_or_default_content_type(request), queryset_or_objects, 200)
+            return RequiredObject(serialized_data, self.content_type_by_accept(request), queryset_or_objects, 200)
 
         return self.required_object(request, queryset_or_objects)
 
@@ -237,7 +265,7 @@ class AbstractCollectionResource(AbstractResource):
         else:
             serialized_data = self.serializer_class(business_objects, many=True, context={'request': request}).data
 
-        return RequiredObject(serialized_data, self.content_type_or_default_content_type(request), business_objects, 200)
+        return RequiredObject(serialized_data, self.content_type_by_accept(request), business_objects, 200)
 
     def required_object_for_collect_operation(self, request, attributes_functions_str):
         collect_operation_snippet = self.remove_last_slash(attributes_functions_str)
@@ -251,7 +279,7 @@ class AbstractCollectionResource(AbstractResource):
 
         business_objects = self.get_objects_from_collect_operation(collect_operation_snippet)
 
-        return RequiredObject(business_objects, self.content_type_or_default_content_type(request), business_objects, 200)
+        return RequiredObject(business_objects, self.content_type_for_collect_operation(business_objects, request, attributes_functions_str), business_objects, 200)
 
     def required_object_for_filter_and_collect_collection_operation(self, request, attributes_functions_str):
         filter_and_collect_operation_snippet = self.remove_last_slash(attributes_functions_str)
@@ -269,7 +297,7 @@ class AbstractCollectionResource(AbstractResource):
 
         collect_operation_snippet = self.extract_collect_operation_snippet(filter_and_collect_operation_snippet)
         serialized_data = self.get_objects_serialized_by_collect_operation(collect_operation_snippet, business_objects)
-        return RequiredObject(serialized_data, self.content_type_or_default_content_type(request), business_objects, 200)
+        return RequiredObject(serialized_data, self.content_type_by_accept(request), business_objects, 200)
 
     def required_object_for_offset_limit_and_collect_collection_operation(self, request, attributes_functions_str):
         if not self.offset_limit_operation_sintax_is_ok(attributes_functions_str):
@@ -290,7 +318,7 @@ class AbstractCollectionResource(AbstractResource):
 
         collect_operation_snippet = self.extract_collect_operation_snippet(offset_limit_and_collect_snippet)
         serialized_data = self.get_objects_serialized_by_collect_operation(collect_operation_snippet, business_objects)
-        return RequiredObject(serialized_data, self.content_type_or_default_content_type(request), business_objects, 200)
+        return RequiredObject(serialized_data, self.content_type_by_accept(request), business_objects, 200)
 
     def required_object_for_filter_and_count_resource_collection_operation(self, request, attributes_functions_str):
         attrs_funcs_str = self.remove_projection_from_path(attributes_functions_str)
@@ -302,19 +330,19 @@ class AbstractCollectionResource(AbstractResource):
 
     def required_object(self, request, business_objects):
         serialized_data = self.serializer_class(business_objects, many=True, context={'request': request}).data
-        required_obj =  RequiredObject(serialized_data,self.content_type_or_default_content_type(request), business_objects, 200)
+        required_obj =  RequiredObject(serialized_data, self.content_type_by_accept(request), business_objects, 200)
 
         return required_obj
 
     def required_object_for_aggregation_operation(self, request, a_dictionary):
-        required_obj =  RequiredObject(a_dictionary,self.content_type_or_default_content_type(request), a_dictionary, 200)
+        required_obj =  RequiredObject(a_dictionary, self.content_type_by_accept(request), a_dictionary, 200)
 
         return required_obj
 
     def required_object_for_simple_path(self, request):
         objects = self.get_objects_from_simple_path()
         serializer = self.serializer_class(objects, many=True, context={'request': request})
-        required_object = RequiredObject(serializer.data, self.content_type_or_default_content_type(request), objects, 200)
+        required_object = RequiredObject(serializer.data, self.content_type_by_accept(request), objects, 200)
         self.temporary_content_type= required_object.content_type
 
         return required_object
@@ -374,7 +402,7 @@ class AbstractCollectionResource(AbstractResource):
         return self.required_context_for_collect_operation(request, attributes_functions_str)
 
     def required_context_for_simple_path(self, request):
-        resource_type = self.resource_representation_or_default_resource_representation(request)
+        resource_type = self.resource_type_or_default_resource_type(request)
         return RequiredObject(self.context_resource.context(resource_type), HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def generics_collection_operation_name(self):
@@ -571,7 +599,7 @@ class AbstractCollectionResource(AbstractResource):
         #raise NotImplementedError("'required_context_for_offset_limit_operation' must be implemented in subclasses")
 
     def get_context_for_group_by_operation(self, request, attributes_functions_str):
-        resource_type = self.resource_representation_or_default_resource_representation(request)
+        resource_type = self.resource_type_or_default_resource_type(request)
         context = self.get_context_for_operation_resource_type(attributes_functions_str, resource_type)
 
         attr_name = self.remove_last_slash(attributes_functions_str).split('/')[-1]
@@ -581,7 +609,7 @@ class AbstractCollectionResource(AbstractResource):
         return context
 
     def get_context_for_group_by_count_operation(self, request, attributes_functions_str):
-        resource_type = self.resource_representation_or_default_resource_representation(request)
+        resource_type = self.resource_type_or_default_resource_type(request)
         context = self.get_context_for_operation_resource_type(attributes_functions_str, resource_type)
         context["@context"] = self.context_resource.get_hydra_term_definition()
         context["@context"].update(self.context_resource.get_subClassOf_term_definition())
@@ -787,19 +815,19 @@ class AbstractCollectionResource(AbstractResource):
         })
         return dicti
 
-    def operation_name_resource_representation_dic(self):
-        dicti = super(AbstractCollectionResource, self).operation_name_resource_representation_dic()
+    def operation_name_resource_type_dic(self):
+        dicti = super(AbstractCollectionResource, self).operation_name_resource_type_dic()
         dicti.update({
-            self.operation_controller.filter_collection_operation_name:                     self.define_resource_representation_by_operation,
-            self.operation_controller.collect_collection_operation_name:                    self.define_resource_representation_by_operation,
-            self.operation_controller.count_resource_collection_operation_name:             self.define_resource_representation_by_operation,
-            self.operation_controller.offset_limit_collection_operation_name:               self.define_resource_representation_by_operation,
-            self.operation_controller.distinct_collection_operation_name:                   self.define_resource_representation_by_operation,
-            self.operation_controller.group_by_count_collection_operation_name:             self.define_resource_representation_by_operation,
-            self.operation_controller.filter_and_collect_collection_operation_name:         self.define_resource_representation_by_operation,
-            self.operation_controller.offset_limit_and_collect_collection_operation_name:   self.define_resource_representation_by_operation,
-            self.operation_controller.filter_and_count_resource_collection_operation_name:  self.define_resource_representation_by_operation,
-            self.operation_controller.group_by_sum_collection_operation_name:               self.define_resource_representation_by_operation,
+            self.operation_controller.filter_collection_operation_name:                     self.resource_type_by_operation,
+            self.operation_controller.collect_collection_operation_name:                    self.resource_type_by_operation,
+            self.operation_controller.count_resource_collection_operation_name:             self.resource_type_by_operation,
+            self.operation_controller.offset_limit_collection_operation_name:               self.resource_type_by_operation,
+            self.operation_controller.distinct_collection_operation_name:                   self.resource_type_by_operation,
+            self.operation_controller.group_by_count_collection_operation_name:             self.resource_type_by_operation,
+            self.operation_controller.filter_and_collect_collection_operation_name:         self.resource_type_by_operation,
+            self.operation_controller.offset_limit_and_collect_collection_operation_name:   self.resource_type_by_operation,
+            self.operation_controller.filter_and_count_resource_collection_operation_name:  self.resource_type_by_operation,
+            self.operation_controller.group_by_sum_collection_operation_name:               self.resource_type_by_operation,
         })
         return dicti
 
@@ -811,7 +839,6 @@ class AbstractCollectionResource(AbstractResource):
         attributes_functions_str = self.kwargs.get('attributes_functions')
 
         if self.is_simple_path(attributes_functions_str):
-            self.add_allowed_methods(['delete', 'post'])
             return self.required_object_for_simple_path(request)
 
         if self.path_has_only_attributes(attributes_functions_str):
@@ -833,11 +860,6 @@ class AbstractCollectionResource(AbstractResource):
         if required_object.status_code == 200:
             self.add_options_headers(request, response)
         return response
-
-    def head(self, request, *args, **kwargs):
-        if self.is_simple_path(self.kwargs.get('attributes_functions')):
-            self.add_allowed_methods(['delete', 'post'])
-        return super(AbstractCollectionResource, self).head(request, *args, **kwargs)
 
     def basic_post(self, request):
         response =  Response(status=status.HTTP_201_CREATED, content_type=CONTENT_TYPE_JSON)

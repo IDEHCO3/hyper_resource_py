@@ -14,21 +14,26 @@ from rest_framework.response import Response
 from hyper_resource.resources.AbstractResource import *
 from hyper_resource.resources.AbstractResource import RequiredObject
 from hyper_resource.resources.FeatureResource import FeatureResource
+#from hyper_resource.resources.ProxiedFeatureResource import ProxiedFeatureResource
+from hyper_resource.resources.ProxiedFeatureResource import ProxiedFeatureResource
 from hyper_resource.resources.SpatialCollectionResource import SpatialCollectionResource
 from hyper_resource.resources.AbstractCollectionResource import AbstractCollectionResource, COLLECTION_TYPE
 from hyper_resource.models import SpatialCollectionOperationController, BaseOperationController, FactoryComplexQuery, \
     ConverterType, FeatureModel, FeatureCollection
 from copy import deepcopy
 from image_generator.img_generator import BuilderPNG
+from django.contrib.gis.geos import Polygon
 
 
 class FeatureCollectionResource(SpatialCollectionResource):
     def __init__(self):
-         super(FeatureCollectionResource, self).__init__()
-         self.operation_controller = SpatialCollectionOperationController()
-         #self.operation_controller.initialize()
+        super(FeatureCollectionResource, self).__init__()
+        self.operation_controller = SpatialCollectionOperationController()
+        self.default_media_types =[]
+        #self.operation_controller.initialize()
+        self.content_types_for_resource = [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_GEOJSON]
 
-    def default_resource_representation(self):
+    def default_resource_type(self):
         return FeatureCollection
 
     def geometry_operations(self):
@@ -49,22 +54,88 @@ class FeatureCollectionResource(SpatialCollectionResource):
     def dict_list_as_geometry_collection(self, dict_list):
         return {'type': 'GeometryCollection', 'geometries': dict_list}
 
-    def default_content_type(self):
-        return self.temporary_content_type if self.temporary_content_type is not None else CONTENT_TYPE_GEOJSON
+    def resource_type_content_type_dict(self):
+        contypes_dict = super(FeatureCollectionResource, self).resource_type_content_type_dict()
+        contypes_dict.update({
+            GEOSGeometry:       [CONTENT_TYPE_GEOJSON, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_OCTET_STREAM],
+            SpatialReference:   [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM],
+            PointField:         [CONTENT_TYPE_GEOJSON, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_OCTET_STREAM],
+            LineStringField:    [CONTENT_TYPE_GEOJSON, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_OCTET_STREAM],
+            PolygonField:       [CONTENT_TYPE_GEOJSON, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_OCTET_STREAM],
+            MultiPointField:    [CONTENT_TYPE_GEOJSON, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_OCTET_STREAM],
+            MultiPolygonField:  [CONTENT_TYPE_GEOJSON, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_OCTET_STREAM]
+        })
+        return contypes_dict
 
-    def define_content_type_by_only_attributes(self, request, attributes_functions_str):
-        content_type_by_accept = self.content_type_or_default_content_type(request)
-        attrs_arr = self.remove_last_slash(attributes_functions_str).split(',')
+    def available_content_types_for(self, resource_type):
+        try:
+            if issubclass(resource_type, GEOSGeometry):
+                return [CONTENT_TYPE_GEOJSON, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_OCTET_STREAM]
+        except TypeError:
+            if issubclass(type(resource_type), GeometryField):
+                return [CONTENT_TYPE_GEOJSON, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_OCTET_STREAM]
+
+        return super(FeatureCollectionResource, self).available_content_types_for(resource_type)
+
+    def default_content_type(self):
+        return CONTENT_TYPE_GEOJSON
+
+    def content_type_by_attributes(self, request, attributes_str):
+        attrs_arr = self.remove_last_slash(attributes_str).split(LIST_ELEMENTS_SEPARATOR)
 
         if self.geometry_field_name() in attrs_arr:
-            return content_type_by_accept
+            return self.content_type_by_accept(request)
 
-        if content_type_by_accept != self.default_content_type():
-            return content_type_by_accept
-        return CONTENT_TYPE_JSON
+        return super(FeatureCollectionResource, self).content_type_by_attributes(request, attributes_str)
 
-    def define_content_type_by_operation(self, request, operation_name):
-        content_type_by_accept = self.content_type_or_default_content_type(request)
+    def content_type_for_collect_operation(self, objects_dict_list, request, attributes_functions_str):
+        contype_accept = self.content_type_by_accept(request)
+        attrs_funcs_str = self.remove_projection_from_path(attributes_functions_str)
+
+        collected_attrs = self.extract_collect_operation_attributes(attributes_functions_str)
+
+        if self.geometry_field_name() not in collected_attrs:
+            return super(FeatureCollectionResource, self).content_type_for_collect_operation(objects_dict_list, request, attributes_functions_str)
+
+        operated_attr = collected_attrs[-1]
+        if operated_attr != self.geometry_field_name():
+            geometry_field = self.field_for(self.geometry_field_name())
+            if contype_accept in self.available_content_types_for(geometry_field):
+                return contype_accept
+            else:
+                return self.default_content_type_for(geometry_field)
+
+
+        collected_oper = attrs_funcs_str.split("/")[2:]
+
+        operation_in_collect = self.geometry_field_name() + "/" + "/".join(collected_oper)
+
+        proxied_obj = ProxiedFeatureResource()
+        proxied_obj.set_object_model(self.object_model)
+        proxied_obj.set_serializer_class(self.serializer_class)
+        return proxied_obj.content_type_for_operation(request, operation_in_collect)
+
+    '''
+    def content_type_for_collect_operation(self, request, attributes_function_str):
+    	if self.geometry_field_name() not in self.extract_collect_operation_attributes(attributes_function_str, as_string=False):
+    		return super(FeatureCollectionResource, self).content_type_for_collect_operation(request, attributes_function_str)
+
+        
+    	se operacao em collect não retornar uma geometria:
+            return super(FeatureCollectionResource, self).content_type_for_collect_operation(request, attributes_function_str)
+
+    	contype_accept
+
+    	# aqui podemos ter certeza que existe atributo geometrico e que a operação em collect retorna uma geometria
+    	possiveis content types = buscar no dicionario os possiveis content type para GEOSGeometry
+    	se contype_accept in possiveis content types:
+    		return contype_accept
+    	return CONTENT_TYPE_GEOJSON
+    '''
+
+    '''
+    def content_type__operation(self, request, operation_name):
+        content_type_by_accept = self.content_type_by_accept(request)
         oper_ret_type = self._dict_all_operation_dict()[operation_name].return_type
 
         if content_type_by_accept != self.default_content_type():
@@ -73,24 +144,25 @@ class FeatureCollectionResource(SpatialCollectionResource):
         if issubclass(oper_ret_type, GEOSGeometry):
             return self.default_content_type()
         return CONTENT_TYPE_JSON
+    '''
 
-    def dict_by_accept_resource_representation(self):
+    def dict_by_accept_resource_type(self):
         dict = {
             CONTENT_TYPE_OCTET_STREAM: 'GeobufCollection'
         }
 
         return dict
 
-    def define_resource_representation_by_operation(self, request, attributes_functions_str):
-        resource_representation_by_accept = self.resource_representation_or_default_resource_representation(request)
+    def resource_type_by_operation(self, request, attributes_functions_str):
+        resource_representation_by_accept = self.resource_type_or_default_resource_type(request)
         resource_representation_by_return_type = self.execute_method_to_get_return_type_from_operation(attributes_functions_str)
-        accept_is_binary = resource_representation_by_accept == self.dict_by_accept_resource_representation()[CONTENT_TYPE_OCTET_STREAM]
+        accept_is_binary = resource_representation_by_accept == self.dict_by_accept_resource_type()[CONTENT_TYPE_OCTET_STREAM]
 
         if not issubclass(resource_representation_by_return_type, GEOSGeometry):
             if accept_is_binary:
                 return bytes
 
-        if resource_representation_by_accept != self.default_resource_representation():
+        if resource_representation_by_accept != self.default_resource_type():
             if accept_is_binary:
                 if resource_representation_by_return_type not in [FeatureCollection, GeometryCollection]:
                     return "Geobuf"
@@ -100,10 +172,10 @@ class FeatureCollectionResource(SpatialCollectionResource):
     #todo: need prioritize in unity tests
     def define_resource_representation_from_collect_operation(self, request, attributes_functions_str):
         collected_attrs = self.extract_collect_operation_attributes(attributes_functions_str)
-        res_type_by_accept = self.resource_representation_or_default_resource_representation(request)
+        res_type_by_accept = self.resource_type_or_default_resource_type(request)
         oper_in_collect_ret_type = self.get_operation_in_collect_return_type(attributes_functions_str)
 
-        if res_type_by_accept != self.default_resource_representation():
+        if res_type_by_accept != self.default_resource_type():
             if self.geometry_field_name() not in collected_attrs:
                 return bytes
 
@@ -127,21 +199,21 @@ class FeatureCollectionResource(SpatialCollectionResource):
 
         return res_type_by_accept
 
-    def define_resource_representation_by_only_attributes(self, request, attributes_functions_str):
+    def resource_type_by_only_attributes(self, request, attributes_functions_str):
         attr_arr = self.remove_last_slash(attributes_functions_str).split(",")
-        resource_type_by_accept = self.resource_representation_or_default_resource_representation(request)
+        resource_type_by_accept = self.resource_type_or_default_resource_type(request)
         accept_content_type = request.META.get(HTTP_ACCEPT, '')
 
-        alpha_dict_by_accept = super(FeatureCollectionResource, self).dict_by_accept_resource_representation()
+        alpha_dict_by_accept = super(FeatureCollectionResource, self).dict_by_accept_resource_type()
 
-        if resource_type_by_accept != self.default_resource_representation():
+        if resource_type_by_accept != self.default_resource_type():
             if self.geometry_field_name() in attr_arr:
                 return resource_type_by_accept
             return alpha_dict_by_accept[ accept_content_type ] if accept_content_type in alpha_dict_by_accept else "Thing"
 
         if self.geometry_field_name() in attr_arr:
             if len(attr_arr) > 1:
-                return self.default_resource_representation()
+                return self.default_resource_type()
             return GeometryCollection
 
         return COLLECTION_TYPE
@@ -282,7 +354,7 @@ class FeatureCollectionResource(SpatialCollectionResource):
              self.operation_controller.bbcontaining_operation_name: self.required_object_for_specialized_operation,
              self.operation_controller.contained_operation_name: self.required_object_for_specialized_operation,
              self.operation_controller.containing_operation_name: self.required_object_for_specialized_operation,
-             self.operation_controller.containing_properly_operation_name: self.required_object_for_specialized_operation,
+             self.operation_controller.containing_properly_operation_name:  self.required_object_for_specialized_operation,
              self.operation_controller.covering_by_operation_name: self.required_object_for_specialized_operation,
              self.operation_controller.covering_operation_name: self.required_object_for_specialized_operation,
              self.operation_controller.crossing_operation_name: self.required_object_for_specialized_operation,
@@ -301,14 +373,15 @@ class FeatureCollectionResource(SpatialCollectionResource):
              self.operation_controller.overlaping_below_operation_name: self.required_object_for_specialized_operation,
              self.operation_controller.strictly_above_operation_name: self.required_object_for_specialized_operation,
              self.operation_controller.strictly_below_operation_name: self.required_object_for_specialized_operation,
-             self.operation_controller.distance_gt_operation_name: self.required_object_for_specialized_operation,
-             self.operation_controller.distance_gte_operation_name: self.required_object_for_specialized_operation,
-             self.operation_controller.distance_lt_operation_name: self.required_object_for_specialized_operation,
-             self.operation_controller.distance_lte_operation_name: self.required_object_for_specialized_operation,
-             self.operation_controller.dwithin_operation_name: self.required_object_for_specialized_operation,
-             self.operation_controller.union_collection_operation_name: self.required_object_for_union_operation,
-             self.operation_controller.extent_collection_operation_name: self.required_object_for_extent_operation,
+             self.operation_controller.distance_gt_operation_name:          self.required_object_for_specialized_operation,
+             self.operation_controller.distance_gte_operation_name:         self.required_object_for_specialized_operation,
+             self.operation_controller.distance_lt_operation_name:          self.required_object_for_specialized_operation,
+             self.operation_controller.distance_lte_operation_name:         self.required_object_for_specialized_operation,
+             self.operation_controller.dwithin_operation_name:              self.required_object_for_specialized_operation,
+             self.operation_controller.union_collection_operation_name:     self.required_object_for_union_operation,
+             self.operation_controller.extent_collection_operation_name:    self.required_object_for_extent_operation,
              self.operation_controller.make_line_collection_operation_name: self.required_object_for_make_line_operation,
+             self.operation_controller.envelope_collection_operation_name:  self.required_object_for_envelope_operation
         })
 
         return dicti
@@ -316,8 +389,8 @@ class FeatureCollectionResource(SpatialCollectionResource):
     def operation_name_context_dic(self):
         dicti = super(FeatureCollectionResource, self).operation_name_context_dic()
         dicti.update({
-             self.operation_controller.bbcontaining_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.contained_operation_name: self.required_context_for_specialized_operation,
+             self.operation_controller.bbcontaining_operation_name:         self.required_context_for_specialized_operation,
+             self.operation_controller.contained_operation_name:            self.required_context_for_specialized_operation,
              self.operation_controller.containing_operation_name: self.required_context_for_specialized_operation,
              self.operation_controller.containing_properly_operation_name: self.required_context_for_specialized_operation,
              self.operation_controller.covering_by_operation_name: self.required_context_for_specialized_operation,
@@ -333,20 +406,20 @@ class FeatureCollectionResource(SpatialCollectionResource):
              self.operation_controller.on_left_operation_name: self.required_context_for_specialized_operation,
              self.operation_controller.on_right_operation_name: self.required_context_for_specialized_operation,
              self.operation_controller.overlaping_left_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.overlaping_right_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.overlaping_above_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.overlaping_below_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.strictly_above_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.strictly_below_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.distance_gt_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.distance_gte_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.distance_lt_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.distance_lte_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.dwithin_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.union_collection_operation_name: self.required_context_for_union_operation,
-             self.operation_controller.extent_collection_operation_name: self.required_context_for_extent_operation,
+             self.operation_controller.overlaping_right_operation_name:     self.required_context_for_specialized_operation,
+             self.operation_controller.overlaping_above_operation_name:     self.required_context_for_specialized_operation,
+             self.operation_controller.overlaping_below_operation_name:     self.required_context_for_specialized_operation,
+             self.operation_controller.strictly_above_operation_name:       self.required_context_for_specialized_operation,
+             self.operation_controller.strictly_below_operation_name:       self.required_context_for_specialized_operation,
+             self.operation_controller.distance_gt_operation_name:          self.required_context_for_specialized_operation,
+             self.operation_controller.distance_gte_operation_name:         self.required_context_for_specialized_operation,
+             self.operation_controller.distance_lt_operation_name:          self.required_context_for_specialized_operation,
+             self.operation_controller.distance_lte_operation_name:         self.required_context_for_specialized_operation,
+             self.operation_controller.dwithin_operation_name:              self.required_context_for_specialized_operation,
+             self.operation_controller.union_collection_operation_name:     self.required_context_for_union_operation,
+             self.operation_controller.extent_collection_operation_name:    self.required_context_for_extent_operation,
              self.operation_controller.make_line_collection_operation_name: self.required_context_for_make_line_operation,
-             self.operation_controller.join_operation_name: self.required_context_for_specialized_operation,
+             self.operation_controller.join_operation_name:                 self.required_context_for_specialized_operation,
         })
         return dicti
 
@@ -387,40 +460,40 @@ class FeatureCollectionResource(SpatialCollectionResource):
         })
         return dicti
 
-    def operation_name_resource_representation_dic(self):
-        dicti = super(FeatureCollectionResource, self).operation_name_resource_representation_dic()
+    def operation_name_resource_type_dic(self):
+        dicti = super(FeatureCollectionResource, self).operation_name_resource_type_dic()
         dicti.update({
-            self.operation_controller.bbcontaining_operation_name:          self.define_resource_representation_by_operation,
-            self.operation_controller.bboverlaping_operation_name:          self.define_resource_representation_by_operation,
-            self.operation_controller.contained_operation_name:             self.define_resource_representation_by_operation,
-            self.operation_controller.containing_operation_name:            self.define_resource_representation_by_operation,
-            self.operation_controller.containing_properly_operation_name:   self.define_resource_representation_by_operation,
-            self.operation_controller.covering_by_operation_name:           self.define_resource_representation_by_operation,
-            self.operation_controller.covering_operation_name:              self.define_resource_representation_by_operation,
-            self.operation_controller.crossing_operation_name:              self.define_resource_representation_by_operation,
-            self.operation_controller.disjointing_operation_name:           self.define_resource_representation_by_operation,
-            self.operation_controller.intersecting_operation_name:          self.define_resource_representation_by_operation,
-            self.operation_controller.isvalid_operation_name:               self.define_resource_representation_by_operation,
-            self.operation_controller.overlaping_operation_name:            self.define_resource_representation_by_operation,
-            self.operation_controller.relating_operation_name:              self.define_resource_representation_by_operation,
-            self.operation_controller.touching_operation_name:              self.define_resource_representation_by_operation,
-            self.operation_controller.within_operation_name:                self.define_resource_representation_by_operation,
-            self.operation_controller.on_left_operation_name:               self.define_resource_representation_by_operation,
-            self.operation_controller.on_right_operation_name:              self.define_resource_representation_by_operation,
-            self.operation_controller.overlaping_left_operation_name:       self.define_resource_representation_by_operation,
-            self.operation_controller.overlaping_right_operation_name:      self.define_resource_representation_by_operation,
-            self.operation_controller.overlaping_above_operation_name:      self.define_resource_representation_by_operation,
-            self.operation_controller.overlaping_below_operation_name:      self.define_resource_representation_by_operation,
-            self.operation_controller.strictly_above_operation_name:        self.define_resource_representation_by_operation,
-            self.operation_controller.strictly_below_operation_name:        self.define_resource_representation_by_operation,
-            self.operation_controller.distance_gt_operation_name:           self.define_resource_representation_by_operation,
-            self.operation_controller.distance_gte_operation_name:          self.define_resource_representation_by_operation,
-            self.operation_controller.distance_lt_operation_name:           self.define_resource_representation_by_operation,
-            self.operation_controller.distance_lte_operation_name:          self.define_resource_representation_by_operation,
-            self.operation_controller.dwithin_operation_name:               self.define_resource_representation_by_operation,
-            self.operation_controller.union_collection_operation_name:      self.define_resource_representation_by_operation,
-            self.operation_controller.extent_collection_operation_name:     self.define_resource_representation_by_operation,
-            self.operation_controller.make_line_collection_operation_name:  self.define_resource_representation_by_operation
+            self.operation_controller.bbcontaining_operation_name:          self.resource_type_by_operation,
+            self.operation_controller.bboverlaping_operation_name:          self.resource_type_by_operation,
+            self.operation_controller.contained_operation_name:             self.resource_type_by_operation,
+            self.operation_controller.containing_operation_name:            self.resource_type_by_operation,
+            self.operation_controller.containing_properly_operation_name:   self.resource_type_by_operation,
+            self.operation_controller.covering_by_operation_name:           self.resource_type_by_operation,
+            self.operation_controller.covering_operation_name:              self.resource_type_by_operation,
+            self.operation_controller.crossing_operation_name:              self.resource_type_by_operation,
+            self.operation_controller.disjointing_operation_name:           self.resource_type_by_operation,
+            self.operation_controller.intersecting_operation_name:          self.resource_type_by_operation,
+            self.operation_controller.isvalid_operation_name:               self.resource_type_by_operation,
+            self.operation_controller.overlaping_operation_name:            self.resource_type_by_operation,
+            self.operation_controller.relating_operation_name:              self.resource_type_by_operation,
+            self.operation_controller.touching_operation_name:              self.resource_type_by_operation,
+            self.operation_controller.within_operation_name:                self.resource_type_by_operation,
+            self.operation_controller.on_left_operation_name:               self.resource_type_by_operation,
+            self.operation_controller.on_right_operation_name:              self.resource_type_by_operation,
+            self.operation_controller.overlaping_left_operation_name:       self.resource_type_by_operation,
+            self.operation_controller.overlaping_right_operation_name:      self.resource_type_by_operation,
+            self.operation_controller.overlaping_above_operation_name:      self.resource_type_by_operation,
+            self.operation_controller.overlaping_below_operation_name:      self.resource_type_by_operation,
+            self.operation_controller.strictly_above_operation_name:        self.resource_type_by_operation,
+            self.operation_controller.strictly_below_operation_name:        self.resource_type_by_operation,
+            self.operation_controller.distance_gt_operation_name:           self.resource_type_by_operation,
+            self.operation_controller.distance_gte_operation_name:          self.resource_type_by_operation,
+            self.operation_controller.distance_lt_operation_name:           self.resource_type_by_operation,
+            self.operation_controller.distance_lte_operation_name:          self.resource_type_by_operation,
+            self.operation_controller.dwithin_operation_name:               self.resource_type_by_operation,
+            self.operation_controller.union_collection_operation_name:      self.resource_type_by_operation,
+            self.operation_controller.extent_collection_operation_name:     self.resource_type_by_operation,
+            self.operation_controller.make_line_collection_operation_name:  self.resource_type_by_operation
         })
         return dicti
 
@@ -473,7 +546,7 @@ class FeatureCollectionResource(SpatialCollectionResource):
         return GeometryCollection
 
     def return_type_for_specialized_operation(self, attributes_functions_str):
-        return self.default_resource_representation()
+        return self.default_resource_type()
 
     def return_type_for_union_operation(self, attributes_functions_str):
         geometry_field_type = type(self.field_for(self.geometry_field_name()))
@@ -545,15 +618,34 @@ class FeatureCollectionResource(SpatialCollectionResource):
                 spatial_objects = self.get_objects_from_specialized_operation(attributes_functions_str)
                 serialized_data = {'count_resource': spatial_objects}
 
-            return RequiredObject(serialized_data, self.content_type_or_default_content_type(request), spatial_objects, 200)
+            return RequiredObject(serialized_data, self.content_type_by_accept(request), spatial_objects, 200)
 
         spatial_objects = self.get_objects_from_specialized_operation(attributes_functions_str)
         if self.path_has_projection(attributes_functions_str):
             attrs_str = self.extract_projection_attributes(attributes_functions_str, as_string=True)
             serialized_data = self.get_object_serialized_by_only_attributes(attrs_str, spatial_objects)
-            return RequiredObject(serialized_data,self.content_type_or_default_content_type(request), spatial_objects, 200)
+            return RequiredObject(serialized_data, self.content_type_by_accept(request), spatial_objects, 200)
         else:
             return self.required_object(request, spatial_objects)
+
+    def required_object_for_envelope_operation(self, request, attributes_functions_str):
+        poly = self.get_object_from_envelope_spatial_operation(attributes_functions_str)
+        proxied_resource = ProxiedFeatureResource()
+        return proxied_resource.required_object_for_proxied_get(poly, request, attributes_functions_str)
+
+    def get_object_from_envelope_spatial_operation(self, attributes_functions_str):
+        poly_extent = self.get_objects_from_extent_spatial_operation(attributes_functions_str)
+        extent = poly_extent.pop(self.geometry_field_name() + '__extent')
+        minx = extent[0]
+        miny = extent[1]
+        maxx = extent[2]
+        maxy = extent[3]
+        tupla_coord = ((minx, miny), (minx, maxy), (maxx, maxy), (maxx, miny), (minx, miny))
+        p = Polygon(tupla_coord, srid=4326)
+        return p
+        # p.transform(3587, True)
+        # trans_p = p.transform(3587, True)
+        #return queryset_or_model_class.aggregate( Union( self.geometry_field_name()  ))
 
     def required_context_for_specialized_operation(self, request, attributes_functions_str):
         context = self.get_context_for_specialized_operation(request, attributes_functions_str)
@@ -611,7 +703,8 @@ class FeatureCollectionResource(SpatialCollectionResource):
             return self.required_object_for_image(business_objects, request)
 
         serialized_data = self.get_objects_serialized_by_collect_operation(collect_operation_snippet, business_objects)
-        return RequiredObject(serialized_data, self.content_type_or_default_content_type(request), business_objects, 200)
+
+        return RequiredObject(serialized_data, self.content_type_for_collect_operation(serialized_data, request, attributes_functions_str), business_objects, 200)
 
     def get_objects_from_join_operation(self, request, attributes_functions_str):
         join_operation = self.build_join_operation(request, attributes_functions_str)
@@ -904,7 +997,6 @@ class FeatureCollectionResource(SpatialCollectionResource):
             return super(FeatureCollectionResource, self).basic_get(request, *args, **kwargs)
 
         self.object_model = self.model_class()()
-        self.add_allowed_methods(['delete', 'post'])
         self.iri_metadata = self.model_class().objects.first().iri_metadata
 
         return self.required_object_for_simple_path(request)

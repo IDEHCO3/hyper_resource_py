@@ -1,7 +1,7 @@
 import requests, os, sys
 #se'rvidor = ''
 #servidor = 'http://LUC00557347.ibge.gov.br/'
-SERVER = 'http://chi00560289:8001/'
+SERVER = 'http://chi00560289:8000/'
 #SERVER = "http://172.30.11.72:8000/"
 
 class RequestTest():
@@ -446,6 +446,8 @@ if '-a' in args:
     os.system("python manage.py test hyper_resource.tests.OptionsCollectionResource --testrunner=hyper_resource.tests.NoDbTestRunner")
     print("\n\n<<< Testing OptionsNonSpatialResource >>>")
     os.system("python manage.py test hyper_resource.tests.OptionsNonSpatialResource --testrunner=hyper_resource.tests.NoDbTestRunner")
+    print("\n\n<<< Testing OptionsFeatureResourceAsImageTest >>>")
+    os.system("python manage.py test hyper_resource.tests.OptionsFeatureResourceAsImageTest --testrunner=hyper_resource.tests.NoDbTestRunner")
 
     # HEAD Tests
     print("\n\n\n<<< INITIALIZING HEAD TEST SET >>>\n")
