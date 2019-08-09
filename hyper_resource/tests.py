@@ -12018,3 +12018,4 @@ class OptionsFeatureResourceAsImageTest(AbstractOptionsRequestTest):
         self.assertEquals(response_dict["@id"], "https://schema.org/name")
         self.assertEquals(response_dict["@type"], "https://schema.org/Text")
         self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
+

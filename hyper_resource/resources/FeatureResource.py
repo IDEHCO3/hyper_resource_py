@@ -390,8 +390,10 @@ class FeatureResource(SpatialResource):
 
         return super(FeatureResource, self).required_object_for_only_attributes(request, attributes_functions_str)
 
+    '''
     def required_object_for_transform_operation(self, request, attributes_functions_str):
         self.get_object_from_transform_spatial_operation(attributes_functions_str)
+    '''
 
     def default_content_type_for(self, resource_type):
         if issubclass(resource_type, GEOSGeometry):
@@ -662,7 +664,7 @@ class FeatureResource(SpatialResource):
     '''
 
     def default_value_for_field(self, field):
-        if self.geometry_field_name() == field.name:
+        try:
             geometries_dict = {
                 "GEOMETRY": GEOSGeometry("POINT(0 0)"),
                 "POINT": GEOSGeometry("POINT(0 0)"),
@@ -673,6 +675,18 @@ class FeatureResource(SpatialResource):
                 'MULTIPOLYGON': GEOSGeometry("MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)),((20 35, 10 30, 10 10, 30 5, 45 20, 20 35),(30 20, 20 15, 20 25, 30 20)))"),
             }
             return geometries_dict[field.geom_type]
+        except (KeyError, AttributeError):
+            if issubclass(field, GEOSGeometry):
+                geometries_dict = {
+                    GEOSGeometry: GEOSGeometry("POINT(0 0)"),
+                    Point: GEOSGeometry("POINT(0 0)"),
+                    LineString: GEOSGeometry("LINESTRING (30 10, 10 30, 40 40)"),
+                    Polygon: GEOSGeometry("POLYGON ((35 10, 45 45, 15 40, 10 20, 35 10),(20 30, 35 35, 30 20, 20 30))"),
+                    MultiPoint: GEOSGeometry("MULTIPOINT (10 40, 40 30, 20 20, 30 10)"),
+                    MultiLineString: GEOSGeometry("MULTILINESTRING ((10 10, 20 20, 10 40),(40 40, 30 30, 40 20, 30 10))"),
+                    MultiPolygon: GEOSGeometry("MULTIPOLYGON (((40 40, 20 45, 45 30, 40 40)),((20 35, 10 30, 10 10, 30 5, 45 20, 20 35),(30 20, 20 15, 20 25, 30 20)))"),
+                }
+                return geometries_dict[field]
         return super(FeatureResource, self).default_value_for_field(field)
 
     '''

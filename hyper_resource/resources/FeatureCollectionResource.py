@@ -629,9 +629,19 @@ class FeatureCollectionResource(SpatialCollectionResource):
             return self.required_object(request, spatial_objects)
 
     def required_object_for_envelope_operation(self, request, attributes_functions_str):
+        attrs_funcs_arr = self.remove_last_slash(attributes_functions_str).split("/")
         poly = self.get_object_from_envelope_spatial_operation(attributes_functions_str)
+        if len(attrs_funcs_arr) == 1:
+            return RequiredObject(
+                json.loads(poly.geojson),
+                self.content_type_for_operation(request, attributes_functions_str),
+                self.object_model, 200
+            )
+
         proxied_resource = ProxiedFeatureResource()
-        return proxied_resource.required_object_for_proxied_get(poly, request, attributes_functions_str)
+        proxied_resource.set_object_model(self.object_model)
+        proxied_resource.set_serializer_class(self.serializer_class)
+        return proxied_resource.required_object_for_proxied_get(poly, request, "/".join(attrs_funcs_arr[1:]))
 
     def get_object_from_envelope_spatial_operation(self, attributes_functions_str):
         poly_extent = self.get_objects_from_extent_spatial_operation(attributes_functions_str)

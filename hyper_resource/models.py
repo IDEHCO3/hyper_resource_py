@@ -1043,6 +1043,7 @@ class SpatialCollectionOperationController(CollectionResourceOperationController
 
         return d
 
+# todo: this class is a copy of BaseOperationController - refactor to inherit from "SpatialOperationController" (to be implemented)
 class ProxiedSpatialOperationController(BaseOperationController):
     _instance = None
 
@@ -1200,6 +1201,37 @@ class ProxiedSpatialOperationController(BaseOperationController):
             self.z_operation_name:                  Type_Called('z', [], float)
         })
         return opers_dict
+
+    def dict_all_operation_dict(self):
+        return self.dict_by_type_geometry_operations_dict()
+
+    def point_operations_dict(self):
+        return self.geometry_operations_dict()
+
+    def line_operations_dict(self):
+        return self.geometry_operations_dict()
+
+    def polygon_operations_dict(self):
+        return self.geometry_operations_dict()
+
+    def dict_by_type_geometry_operations_dict(self):
+        return {
+            GEOSGeometry: self.geometry_operations_dict(),
+            GeometryField: self.geometry_operations_dict(),
+            PointField: self.geometry_operations_dict(),
+            LineStringField: self.geometry_operations_dict(),
+            PolygonField: self.geometry_operations_dict(),
+            MultiPointField: self.geometry_operations_dict(),
+            MultiLineStringField: self.geometry_operations_dict(),
+            MultiPolygonField: self.geometry_operations_dict(),
+            Point: self.point_operations_dict(),
+            Polygon: self.polygon_operations_dict(),
+            LineString: self.line_operations_dict(),
+            MultiPoint: self.point_operations_dict(),
+            MultiPolygon: self.polygon_operations_dict(),
+            MultiLineString: self.line_operations_dict(),
+            GeometryCollection: self.geometry_operations_dict()
+        }
 
 class ProxiedNonSpatialResourceOperationController(object):
     _instance = None
