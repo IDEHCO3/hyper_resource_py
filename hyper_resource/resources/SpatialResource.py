@@ -5,12 +5,14 @@ from django.contrib.gis.geos import GEOSGeometry, GeometryCollection
 
 from rest_framework.response import Response
 
+from hyper_resource.models import SpatialOperationController
 from hyper_resource.resources.AbstractResource import AbstractResource
 
 
 class SpatialResource(AbstractResource):
     def __init__(self):
         super(SpatialResource, self).__init__()
+        self.operation_controller = SpatialOperationController()
         self.iri_style = ''
 
     def spatial_field_name(self):

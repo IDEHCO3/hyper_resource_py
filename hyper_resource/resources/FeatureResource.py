@@ -1,7 +1,7 @@
 from hyper_resource.resources.AbstractResource import *
 from hyper_resource.resources.SpatialResource import SpatialResource
 IMAGE_RESOURCE_TYPE = "Image"
-FEATURE_RESOURCE_TYPE = 'Feature'
+FEATURE_RESOURCE_TYPE = FeatureModel
 GEOBUF = 'Geobuf'
 
 
@@ -108,7 +108,6 @@ class FeatureResource(SpatialResource):
             self.operation_controller.equals_exact_operation_name:      self.required_object_for_spatial_operation,
             self.operation_controller.ewkb_operation_name:              self.required_object_for_spatial_operation,
             self.operation_controller.ewkt_operation_name:              self.required_object_for_spatial_operation,
-            #self.operation_controller.extend_operation_name:            self.required_object_for_spatial_operation,
             self.operation_controller.extent_operation_name:            self.required_object_for_spatial_operation,
             self.operation_controller.geojson_operation_name:           self.required_object_for_spatial_operation,
             self.operation_controller.geom_type_operation_name:         self.required_object_for_spatial_operation,
@@ -249,7 +248,6 @@ class FeatureResource(SpatialResource):
             self.operation_controller.equals_exact_operation_name:      self.return_type_for_generic_spatial_operation,
             self.operation_controller.ewkb_operation_name:              self.return_type_for_geometric_representation_operation,
             self.operation_controller.ewkt_operation_name:              self.return_type_for_generic_spatial_operation,
-            #self.operation_controller.extend_operation_name:            self.return_type_for_generic_spatial_operation,
             self.operation_controller.extent_operation_name:            self.return_type_for_generic_spatial_operation,
             self.operation_controller.geojson_operation_name:           self.return_type_for_geometric_representation_operation,
             self.operation_controller.geom_type_operation_name:         self.return_type_for_generic_spatial_operation,
@@ -323,7 +321,6 @@ class FeatureResource(SpatialResource):
             self.operation_controller.equals_exact_operation_name:      self.resource_type_by_operation,
             self.operation_controller.ewkb_operation_name:              self.resource_type_by_operation,
             self.operation_controller.ewkt_operation_name:              self.define_resource_representation_by_str_return_type_operation,
-            #self.operation_controller.extend_operation_name:            self.resource_type_by_operation,
             self.operation_controller.extent_operation_name:            self.resource_type_by_operation,
             self.operation_controller.geojson_operation_name:           self.define_resource_representation_by_str_return_type_operation,
             self.operation_controller.geom_type_operation_name:         self.resource_type_by_operation,
@@ -395,6 +392,14 @@ class FeatureResource(SpatialResource):
         self.get_object_from_transform_spatial_operation(attributes_functions_str)
     '''
 
+    def define_head_content_type(self, request, attributes_functions_str):
+        if self.is_simple_path(attributes_functions_str):
+            return self.content_type_by_accept(request)
+        if self.path_has_only_attributes(attributes_functions_str):
+            return self.content_type_by_attributes(request, attributes_functions_str)
+
+        return self.content_type_for_operation(request, attributes_functions_str)
+
     def default_content_type_for(self, resource_type):
         if issubclass(resource_type, GEOSGeometry):
             return self.default_content_type()
@@ -430,22 +435,30 @@ class FeatureResource(SpatialResource):
 
         return super(FeatureResource, self).content_type_by_attributes(request, attributes_str)
 
+    def content_type_for_operation(self, request, attributes_functions_str):
+        contype_accept = self.content_type_by_accept(request)
+        operation_return_type = self.operation_controller.state_machine(attributes_functions_str)
+
+        if contype_accept in self.available_content_types_for(operation_return_type):
+            return contype_accept
+        return self.default_content_type_for(operation_return_type)
+
     def required_object_for_spatial_operation(self, request, attributes_functions_str):
         if self.path_has_url(attributes_functions_str.lower()):
             result = self.get_object_from_operation_attributes_functions_str_with_url(attributes_functions_str, request)
         else:
             result = self.get_object_from_operation(self.remove_last_slash(attributes_functions_str))
 
-        if self.is_image_content_type(request):
+        operation_contype = self.content_type_for_operation(request, attributes_functions_str)
+
+        if operation_contype == CONTENT_TYPE_IMAGE_PNG:
             return self.required_object_for_image( GEOSGeometry(json.dumps(result)), request)
 
         elif isinstance(result, memoryview) or isinstance(result, buffer) or isinstance(result, bytes):
             return RequiredObject(result, CONTENT_TYPE_IMAGE_PNG, self.object_model, 200)
 
         else:
-            return RequiredObject(result,
-                self.content_type_for_operation(request, attributes_functions_str),
-                self.object_model, 200)
+            return RequiredObject(result, operation_contype, self.object_model, 200)
 
     def get_objects_from_join_operation(self, request, attributes_functions_str):
         join_operation = self.build_join_operation(request, attributes_functions_str)
@@ -511,9 +524,21 @@ class FeatureResource(SpatialResource):
     def add_context_to_joined_external_attributes(self, external_attributes_context):
         pass
 
+    def get_context_for_operation(self, request, attributes_functions_str):
+        operation_name = self.get_operation_name_from_path(attributes_functions_str)
+
+        operation_return_type = self.operation_controller.state_machine(attributes_functions_str)
+        if issubclass(GEOSGeometry, operation_return_type) or issubclass(GeometryField, operation_return_type):
+            operation_return_type = self.dict_string_to_geom_type()[self.initial_geom_type]
+
+        context = self.context_resource.get_resource_id_and_type_by_operation_return_type(operation_name, operation_return_type)
+        context['@context'] = self.context_resource.get_subClassOf_term_definition()
+        context[HYPER_RESOURCE_SUPPORTED_OPERATIONS_LABEL] = self.context_resource.supportedOperationsFor(self.object_model, operation_return_type)
+        return context
+
     def required_context_for_non_spatial_return_operation(self, request, attributes_functions_str):
         context = self.get_context_for_non_spatial_return_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_simple_path(self, request):
         resource_representation = self.resource_type_or_default_resource_type(request)
@@ -599,6 +624,19 @@ class FeatureResource(SpatialResource):
                 return serialized_object[self.geometry_field_name()]
         return serialized_object
 
+    def get_operation_name_from_path(self, attributes_functions_str):
+        arr_att_funcs = self.remove_last_slash(attributes_functions_str).lower().split('/')
+
+        # join operation has priority
+        if self.path_has_join_operation(attributes_functions_str):
+            return self.operation_controller.join_operation_name
+        else:
+            first_part_name =  arr_att_funcs[0]
+
+        if first_part_name not in self.operation_controller.operations_dict():
+            return None
+        return first_part_name
+
     def basic_get(self, request, *args, **kwargs):
         self.object_model = self.get_object(kwargs)
         self.current_object_state = self.object_model
@@ -613,6 +651,24 @@ class FeatureResource(SpatialResource):
             return self.required_object_for_only_attributes(request, attributes_functions_str)
 
         res = self.get_required_object_from_method_to_execute(request, attributes_functions_str)
+        if res is None:
+            return self.required_object_for_invalid_sintax(attributes_functions_str)
+        return res
+
+    def basic_options(self, request, *args, **kwargs):
+        self.object_model = self.model_class()()
+        self.set_basic_context_resource(request)
+        attributes_functions_str = self.kwargs.get("attributes_functions", None)
+
+        dicti = self.dic_with_only_identitier_field(kwargs)
+        self.initial_geom_type = self.model_class().objects.get(**dicti).geom_type()
+
+        if self.is_simple_path(attributes_functions_str):
+            return self.required_context_for_simple_path(request)
+        if self.path_has_only_attributes(attributes_functions_str):
+            return self.required_context_for_only_attributes(request, attributes_functions_str)
+
+        res = self.get_required_context_from_method_to_execute(request, attributes_functions_str)
         if res is None:
             return self.required_object_for_invalid_sintax(attributes_functions_str)
         return res
@@ -632,36 +688,15 @@ class FeatureResource(SpatialResource):
 
         return r_type if self.geometry_field_name() in attrs_functs_arr else 'Thing'
 
-    '''
-    def content_type_by_attributes(self, request, attributes_functions_str):
-        if self.path_has_projection(attributes_functions_str):
-            attrs_functs_arr = self.extract_projection_attributes(attributes_functions_str)
-        else:
-            attrs_functs_arr = self.remove_last_slash(attributes_functions_str).split(',')
-        content_type_by_accept = self.content_type_by_accept(request)
-
-        # if 'Accept' is application/octet-stream, image/png, etc ...
-        if content_type_by_accept != self.default_content_type():
-            return content_type_by_accept
-
-        if self.geometry_field_name() in attrs_functs_arr:
-            return self.default_content_type()
-        return CONTENT_TYPE_JSON
-    '''
-
-    '''
-    # todo: delete this method (may not cover all required situations)
-    def content_type_by_operation(self, request, operation_name):
-        content_type_by_accept = self.content_type_by_accept(request)
-        oper_ret_type = self.operation_controller.dict_all_operation_dict()[operation_name].return_type
-
-        if content_type_by_accept != self.default_content_type():
-            return content_type_by_accept
-
-        if issubclass(oper_ret_type, GEOSGeometry):
-            return self.default_content_type()
-        return CONTENT_TYPE_JSON
-    '''
+    def dict_string_to_geom_type(self):
+        return {
+            'Point': Point,
+            'LineString': LineString,
+            'Polygon': Polygon,
+            'MultiPoint': MultiPoint,
+            'MultiLineString': MultiLineString,
+            'MultiPolygon': MultiPolygon
+        }
 
     def default_value_for_field(self, field):
         try:
@@ -689,12 +724,6 @@ class FeatureResource(SpatialResource):
                 return geometries_dict[field]
         return super(FeatureResource, self).default_value_for_field(field)
 
-    '''
-    def get_operation_type_called(self, attributes_functions_str):
-        operation_name = self.get_operation_name_from_path(attributes_functions_str)
-        return self.operation_controller.dict_all_operation_dict()[operation_name]
-    '''
-
     def return_type_for_operation(self, object, attribute_or_function_name, parameters):
         attribute_or_function_name_striped = self.remove_last_slash(attribute_or_function_name)
         self.name_of_last_operation_executed = attribute_or_function_name_striped
@@ -705,7 +734,7 @@ class FeatureResource(SpatialResource):
         return self.default_value_for_field( self.field_for(attribute_or_function_name) )
 
     def resource_type_by_operation(self, request, attributes_functions_str):
-        operation_return_type = self.execute_method_to_get_return_type_from_operation(attributes_functions_str)
+        operation_return_type = self.operation_controller.state_machine(attributes_functions_str)
         res_type_by_accept = self.resource_type_or_default_resource_type(request)
 
         if operation_return_type == GEOSGeometry:

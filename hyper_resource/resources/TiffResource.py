@@ -245,11 +245,11 @@ class TiffResource(RasterResource):
 
     def required_context_for_transform_operation(self, request, attributes_functions_str):
         context = self.get_context_for_transform_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_driver_operation(self, request, attributes_functions_str):
         context = self.get_context_for_driver_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def get_context_by_only_attributes(self, request, attributes_functions_str):
         attrs_list = self.remove_last_slash(attributes_functions_str).split(",")

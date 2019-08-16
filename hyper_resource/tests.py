@@ -12019,3 +12019,34 @@ class OptionsFeatureResourceAsImageTest(AbstractOptionsRequestTest):
         self.assertEquals(response_dict["@type"], "https://schema.org/Text")
         self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
+# python manage.py test hyper_resource.tests.SpatialMachineStateTest --testrunner=hyper_resource.tests.NoDbTestRunner
+class SpatialMachineStateTest(SimpleTestCase):
+    def setUp(self):
+        super(SpatialMachineStateTest, self).setUp()
+        self.feature_resource = FeatureResource()
+
+    def test_feature_resource_simple_operations(self):
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("area"), float)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("boundary"), GEOSGeometry)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("centroid"), Point)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("hasz"), bool)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("convex_hull"), Polygon)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("coords"), tuple)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("dims"), int)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("crs"), SpatialReference)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("ewkt"), str)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("wkb"), bytes)
+
+    def test_feature_resource_concat_operations_without_params(self):
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("boundary/convex_hull/centroid/ewkt"), str)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("boundary/area"), float)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("boundary/convex_hull/centroid/ewkb"), bytes)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("convex_hull/centroid"), Point)
+
+    def test_feature_resource_operations_with_proxing(self):
+        #FeatureResource (Unidade Federativa ES) turn into String (valid_reason) proxing to another String (upper) and proxing to boolean (isalpha)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("valid_reason/upper/isalpha"), bool)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("valid_reason/count/e"), int)
+
+    def test_feature_resource_operations_with_url(self):
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("contains/" + HOST + "api/bcim/unidades-federativas/ES/"), bool)

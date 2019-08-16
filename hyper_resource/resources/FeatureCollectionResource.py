@@ -33,6 +33,9 @@ class FeatureCollectionResource(SpatialCollectionResource):
         #self.operation_controller.initialize()
         self.content_types_for_resource = [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_GEOJSON]
 
+    def get_content_types_for_resource(self):
+        return [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_GEOJSON]
+
     def default_resource_type(self):
         return FeatureCollection
 
@@ -57,6 +60,7 @@ class FeatureCollectionResource(SpatialCollectionResource):
     def resource_type_content_type_dict(self):
         contypes_dict = super(FeatureCollectionResource, self).resource_type_content_type_dict()
         contypes_dict.update({
+            FeatureModel:       [CONTENT_TYPE_GEOJSON, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_OCTET_STREAM],
             GEOSGeometry:       [CONTENT_TYPE_GEOJSON, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_OCTET_STREAM],
             SpatialReference:   [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM],
             PointField:         [CONTENT_TYPE_GEOJSON, CONTENT_TYPE_IMAGE_PNG, CONTENT_TYPE_OCTET_STREAM],
@@ -114,37 +118,6 @@ class FeatureCollectionResource(SpatialCollectionResource):
         proxied_obj.set_object_model(self.object_model)
         proxied_obj.set_serializer_class(self.serializer_class)
         return proxied_obj.content_type_for_operation(request, operation_in_collect)
-
-    '''
-    def content_type_for_collect_operation(self, request, attributes_function_str):
-    	if self.geometry_field_name() not in self.extract_collect_operation_attributes(attributes_function_str, as_string=False):
-    		return super(FeatureCollectionResource, self).content_type_for_collect_operation(request, attributes_function_str)
-
-        
-    	se operacao em collect não retornar uma geometria:
-            return super(FeatureCollectionResource, self).content_type_for_collect_operation(request, attributes_function_str)
-
-    	contype_accept
-
-    	# aqui podemos ter certeza que existe atributo geometrico e que a operação em collect retorna uma geometria
-    	possiveis content types = buscar no dicionario os possiveis content type para GEOSGeometry
-    	se contype_accept in possiveis content types:
-    		return contype_accept
-    	return CONTENT_TYPE_GEOJSON
-    '''
-
-    '''
-    def content_type__operation(self, request, operation_name):
-        content_type_by_accept = self.content_type_by_accept(request)
-        oper_ret_type = self._dict_all_operation_dict()[operation_name].return_type
-
-        if content_type_by_accept != self.default_content_type():
-            return content_type_by_accept
-
-        if issubclass(oper_ret_type, GEOSGeometry):
-            return self.default_content_type()
-        return CONTENT_TYPE_JSON
-    '''
 
     def dict_by_accept_resource_type(self):
         dict = {
@@ -391,21 +364,21 @@ class FeatureCollectionResource(SpatialCollectionResource):
         dicti.update({
              self.operation_controller.bbcontaining_operation_name:         self.required_context_for_specialized_operation,
              self.operation_controller.contained_operation_name:            self.required_context_for_specialized_operation,
-             self.operation_controller.containing_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.containing_properly_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.covering_by_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.covering_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.crossing_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.disjointing_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.intersecting_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.isvalid_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.overlaping_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.relating_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.touching_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.within_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.on_left_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.on_right_operation_name: self.required_context_for_specialized_operation,
-             self.operation_controller.overlaping_left_operation_name: self.required_context_for_specialized_operation,
+             self.operation_controller.containing_operation_name:           self.required_context_for_specialized_operation,
+             self.operation_controller.containing_properly_operation_name:  self.required_context_for_specialized_operation,
+             self.operation_controller.covering_by_operation_name:          self.required_context_for_specialized_operation,
+             self.operation_controller.covering_operation_name:             self.required_context_for_specialized_operation,
+             self.operation_controller.crossing_operation_name:             self.required_context_for_specialized_operation,
+             self.operation_controller.disjointing_operation_name:          self.required_context_for_specialized_operation,
+             self.operation_controller.intersecting_operation_name:         self.required_context_for_specialized_operation,
+             self.operation_controller.isvalid_operation_name:              self.required_context_for_specialized_operation,
+             self.operation_controller.overlaping_operation_name:           self.required_context_for_specialized_operation,
+             self.operation_controller.relating_operation_name:             self.required_context_for_specialized_operation,
+             self.operation_controller.touching_operation_name:             self.required_context_for_specialized_operation,
+             self.operation_controller.within_operation_name:               self.required_context_for_specialized_operation,
+             self.operation_controller.on_left_operation_name:              self.required_context_for_specialized_operation,
+             self.operation_controller.on_right_operation_name:             self.required_context_for_specialized_operation,
+             self.operation_controller.overlaping_left_operation_name:      self.required_context_for_specialized_operation,
              self.operation_controller.overlaping_right_operation_name:     self.required_context_for_specialized_operation,
              self.operation_controller.overlaping_above_operation_name:     self.required_context_for_specialized_operation,
              self.operation_controller.overlaping_below_operation_name:     self.required_context_for_specialized_operation,
@@ -419,6 +392,7 @@ class FeatureCollectionResource(SpatialCollectionResource):
              self.operation_controller.union_collection_operation_name:     self.required_context_for_union_operation,
              self.operation_controller.extent_collection_operation_name:    self.required_context_for_extent_operation,
              self.operation_controller.make_line_collection_operation_name: self.required_context_for_make_line_operation,
+             self.operation_controller.envelope_collection_operation_name:  self.required_context_for_envelope_operation,
              self.operation_controller.join_operation_name:                 self.required_context_for_specialized_operation,
         })
         return dicti
@@ -456,7 +430,8 @@ class FeatureCollectionResource(SpatialCollectionResource):
             self.operation_controller.dwithin_operation_name:               self.return_type_for_specialized_operation,
             self.operation_controller.union_collection_operation_name:      self.return_type_for_union_operation,
             self.operation_controller.extent_collection_operation_name:     self.return_type_for_extent_operation,
-            self.operation_controller.make_line_collection_operation_name:  self.return_type_for_make_line_operation
+            self.operation_controller.make_line_collection_operation_name:  self.return_type_for_make_line_operation,
+            self.operation_controller.envelope_collection_operation_name:   self.return_type_for_envelope_operation
         })
         return dicti
 
@@ -493,7 +468,8 @@ class FeatureCollectionResource(SpatialCollectionResource):
             self.operation_controller.dwithin_operation_name:               self.resource_type_by_operation,
             self.operation_controller.union_collection_operation_name:      self.resource_type_by_operation,
             self.operation_controller.extent_collection_operation_name:     self.resource_type_by_operation,
-            self.operation_controller.make_line_collection_operation_name:  self.resource_type_by_operation
+            self.operation_controller.make_line_collection_operation_name:  self.resource_type_by_operation,
+            self.operation_controller.envelope_collection_operation_name:   self.resource_type_by_operation
         })
         return dicti
 
@@ -563,6 +539,9 @@ class FeatureCollectionResource(SpatialCollectionResource):
 
     def return_type_for_make_line_operation(self, attributes_functions_str):
         return LineString
+
+    def return_type_for_envelope_operation(self, attributes_functions_str):
+        return Polygon
 
     def return_type_for_extent_operation(self, attributes_functions_str):
         return list
@@ -659,19 +638,23 @@ class FeatureCollectionResource(SpatialCollectionResource):
 
     def required_context_for_specialized_operation(self, request, attributes_functions_str):
         context = self.get_context_for_specialized_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_union_operation(self, request, attributes_functions_str):
         context = self.get_context_for_union_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_extent_operation(self, request, attributes_functions_str):
         context = self.get_context_for_extent_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_make_line_operation(self, request, attributes_functions_str):
         context = self.get_context_for_make_line_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
+
+    def required_context_for_envelope_operation(self, request, attributes_functions_str):
+        context = self.get_context_for_envelope_operation(request, attributes_functions_str)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_object_for_extent_operation(self, request, attributes_functions_str):
         extent_dict = self.get_objects_from_extent_spatial_operation(attributes_functions_str)
@@ -893,6 +876,9 @@ class FeatureCollectionResource(SpatialCollectionResource):
         #resource_type_by_accept = self.resource_representation_or_default_resource_representation(request)
         #resource_type = resource_type_by_accept if resource_type_by_accept != self.default_resource_representation() else 'Feature'
         #return self.get_context_for_operation_resource_type(attributes_functions_str, resource_type)
+
+    def get_context_for_envelope_operation(self, request, attributes_functions_str):
+        return self.get_context_for_operation(request, attributes_functions_str)
 
     def get_context_for_extent_operation(self, request, attributes_functions_str):
         context = self.get_context_for_operation(request, attributes_functions_str)

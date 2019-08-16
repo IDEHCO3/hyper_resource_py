@@ -36,8 +36,6 @@ from requests import HTTPError
 from django.db import connections, connection
 from .utils import *
 
-#GEOSGEOMETRY_SUBCLASSES = ['POINT', 'MULTIPOINT', 'LINESTRING', 'MULTILINESTRING', 'POLYGON', 'MULTIPOLYGON', 'GEOMETRYCOLLECTION']
-
 class FeatureCollection(GeometryCollection):
     pass
 
@@ -455,6 +453,7 @@ class FactoryComplexQuery():
 #s = [ ("self." + i + "_operation_name = " + "'" + i + "'" ) for i in arr]
 #d = [ ("d[self." + i + "_operation_name] = Type_Called(" + "'" + i + "'" + ", [], object)" ) for i in arr]
 
+
 class BaseOperationController(object):
 
     _instance = None
@@ -564,7 +563,7 @@ class BaseOperationController(object):
             self.envelope_operation_name:           Type_Called('envelope', [], GEOSGeometry),
             self.equals_operation_name:             Type_Called('equals', [GEOSGeometry], bool),
             self.equals_exact_operation_name:       Type_Called('equals_exact', [GEOSGeometry], bool),
-            self.ewkb_operation_name:               Type_Called('ewkb', [], str),
+            self.ewkb_operation_name:               Type_Called('ewkb', [], bytes),
             self.ewkt_operation_name:               Type_Called('ewkt', [], str),
             #self.extend_operation_name:             Type_Called('extend', [], tuple),
             self.extent_operation_name:             Type_Called('extent', [], tuple),
@@ -599,15 +598,15 @@ class BaseOperationController(object):
             self.relate_pattern_operation_name:     Type_Called('relate_pattern', [GEOSGeometry, str], bool),
             self.ring_operation_name:               Type_Called('ring', [], bool),
             self.simple_operation_name:             Type_Called('simple', [], bool),
-            self.simplify_operation_name:           Type_Called('simplify', [float, bool], GEOSGeometry),
+            self.simplify_operation_name:           Type_Called('simplify', [], GEOSGeometry),
             self.srid_operation_name:               Type_Called('srid', [], int),
             self.srs_operation_name:                Type_Called('srs', [], SpatialReference),
             self.sym_difference_operation_name:     Type_Called('sym_difference', [GEOSGeometry], GEOSGeometry),
             self.touches_operation_name:            Type_Called('touches', [GEOSGeometry], bool),
             self.transform_operation_name:          Type_Called('transform', [int, {"clone": True}], GEOSGeometry),
             self.union_operation_name:              Type_Called('union', [GEOSGeometry], GEOSGeometry),
-            self.valid_operation_name:              Type_Called('valid', [GEOSGeometry], bool),
-            self.valid_reason_operation_name:       Type_Called('valid_reason', [GEOSGeometry], str),
+            self.valid_operation_name:              Type_Called('valid', [], bool),
+            self.valid_reason_operation_name:       Type_Called('valid_reason', [], str),
             self.within_operation_name:             Type_Called('within', [GEOSGeometry], bool),
             self.wkb_operation_name:                Type_Called('wkb', [], bytes),
             self.wkt_operation_name:                Type_Called('wkt', [], str),
@@ -626,6 +625,12 @@ class BaseOperationController(object):
 
     def polygon_operations_dict(self):
         return self.geometry_operations_dict()
+
+    def operations_dict_by_type(self):
+        return {}
+
+    def proxer_operations_dict_by_type(self):
+        return {}
 
     def generic_object_operations_dict(self):
         return {
@@ -935,17 +940,17 @@ class SpatialCollectionOperationController(CollectionResourceOperationController
     #Abstract spatial collection Operations
     def spatial_collection_operations_dict(self):
         d = {
-            self.bbcontaining_operation_name: Type_Called(self.bbcontaining_operation_name, [GEOSGeometry], GEOSGeometry),
-            self.bboverlaping_operation_name: Type_Called(self.bboverlaping_operation_name, [GEOSGeometry], GEOSGeometry),
-            self.contained_operation_name: Type_Called(self.contained_operation_name, [GEOSGeometry], GEOSGeometry),
-            self.containing_operation_name: Type_Called(self.containing_operation_name, [GEOSGeometry], GEOSGeometry),
-            self.containing_properly_operation_name: Type_Called(self.containing_properly_operation_name, [GEOSGeometry], GEOSGeometry),
-            self.covering_by_operation_name: Type_Called(self.covering_by_operation_name, [GEOSGeometry], GEOSGeometry),
-            self.covering_operation_name: Type_Called(self.covering_operation_name, [GEOSGeometry], GEOSGeometry),
-            self.crossing_operation_name: Type_Called(self.crossing_operation_name, [GEOSGeometry], GEOSGeometry),
-            self.disjointing_operation_name: Type_Called(self.disjointing_operation_name, [GEOSGeometry], GEOSGeometry),
-            self.intersecting_operation_name: Type_Called(self.intersecting_operation_name, [GEOSGeometry], GEOSGeometry),
-            self.isvalid_operation_name: Type_Called(self.isvalid_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.bbcontaining_operation_name:           Type_Called(self.bbcontaining_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.bboverlaping_operation_name:           Type_Called(self.bboverlaping_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.contained_operation_name:              Type_Called(self.contained_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.containing_operation_name:             Type_Called(self.containing_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.containing_properly_operation_name:    Type_Called(self.containing_properly_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.covering_by_operation_name:            Type_Called(self.covering_by_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.covering_operation_name:               Type_Called(self.covering_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.crossing_operation_name:               Type_Called(self.crossing_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.disjointing_operation_name:            Type_Called(self.disjointing_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.intersecting_operation_name:           Type_Called(self.intersecting_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.isvalid_operation_name:                Type_Called(self.isvalid_operation_name, [GEOSGeometry], GEOSGeometry),
             self.overlaping_operation_name:             Type_Called(self.overlaping_operation_name, [GEOSGeometry], GEOSGeometry),
             self.relating_operation_name:               Type_Called(self.relating_operation_name, [tuple], GEOSGeometry),
             self.touching_operation_name:               Type_Called(self.touching_operation_name, [GEOSGeometry], GEOSGeometry),
@@ -967,7 +972,7 @@ class SpatialCollectionOperationController(CollectionResourceOperationController
             self.union_collection_operation_name:       Type_Called(self.union_collection_operation_name, [GEOSGeometry], GEOSGeometry),
             self.extent_collection_operation_name:      Type_Called(self.extent_collection_operation_name, [GEOSGeometry], tuple),
             self.make_line_collection_operation_name:   Type_Called(self.make_line_collection_operation_name, [GEOSGeometry], GEOSGeometry),
-            self.envelope_collection_operation_name:    Type_Called(self.envelope_collection_operation_name, [GEOSGeometry], GEOSGeometry)
+            self.envelope_collection_operation_name:    Type_Called(self.envelope_collection_operation_name, [GEOSGeometry], Polygon)
         }
 
         d.update(self.generic_object_operations_dict())
@@ -1043,9 +1048,67 @@ class SpatialCollectionOperationController(CollectionResourceOperationController
 
         return d
 
-# todo: this class is a copy of BaseOperationController - refactor to inherit from "SpatialOperationController" (to be implemented)
-class ProxiedSpatialOperationController(BaseOperationController):
+class OperationNotRecognized(Exception):
+    pass
+
+# todo: Maybe this class could be a new BaseOperationController
+class StringOperationController(object):
+    INITIAL_STATE = str
     _instance = None
+
+    def __new__(cls, *args, **kwargs):
+        if not cls._instance:
+            cls._instance = object.__new__(cls, *args, **kwargs)
+            cls._instance.initialize()
+
+        return cls._instance
+
+    def initialize(self):
+        self.capitalize_operation_name = "capitalize"
+        self.center_operation_name = "center"
+        self.count_operation_name = "count"
+        self.endswith_operation_name = "endswith"
+        self.find_operation_name = "find"
+        self.isdigit_operation_name = "isdigit"
+        self.isalnum_operation_name = "isalnum"
+        self.isalpha_operation_name = "isalpha"
+        self.islower_operation_name = "islower"
+        self.isupper_operation_name = "isupper"
+        self.lower_operation_name = "lower"
+        self.join_operation_name = "join"
+        self.startswith_operation_name = "startswith"
+        self.split_operation_name = "split"
+        self.upper_operation_name = "upper"
+
+    def operations_dict(self):
+        return {
+            self.capitalize_operation_name: Type_Called(self.capitalize_operation_name, [], str),
+            self.center_operation_name:     Type_Called(self.center_operation_name, [int], str),
+            self.count_operation_name:      Type_Called(self.count_operation_name, [str], int),
+            self.endswith_operation_name:   Type_Called(self.endswith_operation_name, [str], bool),
+            self.find_operation_name:       Type_Called(self.find_operation_name, [str], int),
+            self.isdigit_operation_name:    Type_Called(self.isdigit_operation_name, [], bool),
+            self.isalnum_operation_name:    Type_Called(self.isalnum_operation_name, [], bool),
+            self.isalpha_operation_name:    Type_Called(self.isalpha_operation_name, [], bool),
+            self.islower_operation_name:    Type_Called(self.islower_operation_name, [], bool),
+            self.isupper_operation_name:    Type_Called(self.isupper_operation_name, [], bool),
+            self.lower_operation_name:      Type_Called(self.lower_operation_name, [], str),
+            self.join_operation_name:       Type_Called(self.join_operation_name, [str], bool),
+            self.startswith_operation_name: Type_Called(self.startswith_operation_name, [str], bool),
+            self.split_operation_name:      Type_Called(self.split_operation_name, [str], list),
+            self.upper_operation_name:      Type_Called(self.upper_operation_name, [], str),
+        }
+
+    def operations_dict_by_type(self):
+        #d = super(StringOperationController, self).operations_dict_by_type()
+        #d.update({
+        return {str: self.operations_dict()}
+        #})
+        #return d
+
+class SpatialOperationController(BaseOperationController):
+    _instance = None
+    INITIAL_STATE = GEOSGeometry
 
     def __new__(cls, *args, **kwargs):
         if not cls._instance:
@@ -1076,7 +1139,6 @@ class ProxiedSpatialOperationController(BaseOperationController):
         self.equals_exact_operation_name = 'equals_exact'
         self.ewkb_operation_name = 'ewkb'
         self.ewkt_operation_name = 'ewkt'
-        #self.extend_operation_name = 'extend'
         self.extent_operation_name = 'extent'
         self.geojson_operation_name = 'geojson'
         self.geom_type_operation_name = 'geom_type'
@@ -1123,12 +1185,116 @@ class ProxiedSpatialOperationController(BaseOperationController):
         self.x_operation_name = 'x'
         self.y_operation_name = 'y'
         self.z_operation_name = 'z'
+
+        self.final_states = [bool, bytes, int, list, float, SpatialReference]
+
         self.join_operation_name = 'join'
         self.projection_operation_name = 'projection'
 
-        # Spatial Operations
+    def point_operations_dict(self):
+        return self.geometry_operations_dict()
 
-    def geometry_operations_dict(self):
+    def line_operations_dict(self):
+        return self.geometry_operations_dict()
+
+    def polygon_operations_dict(self):
+        return self.geometry_operations_dict()
+
+    def operations_dict_by_type(self):
+        '''
+        All operations supported by SpatialResource directly
+        '''
+        d = super(SpatialOperationController, self).operations_dict_by_type()
+        d.update({
+            FeatureModel:           self.operations_dict(),
+            GEOSGeometry:           self.operations_dict(),
+            GeometryField:          self.operations_dict(),
+            PointField:             self.point_operations_dict(),
+            LineStringField:        self.line_operations_dict(),
+            PolygonField:           self.polygon_operations_dict(),
+            MultiPointField:        self.point_operations_dict(),
+            MultiLineStringField:   self.line_operations_dict(),
+            MultiPolygonField:      self.polygon_operations_dict(),
+            Point:                  self.point_operations_dict(),
+            Polygon:                self.polygon_operations_dict(),
+            LineString:             self.line_operations_dict(),
+            MultiPoint:             self.point_operations_dict(),
+            MultiPolygon:           self.polygon_operations_dict(),
+            MultiLineString:        self.line_operations_dict(),
+            GeometryCollection:     self.operations_dict()
+        })
+        #d.update(self.proxied_operations_dict_by_type())
+        return d
+
+    def proxer_operations_dict_by_type(self):
+        """
+        All operations supported by SpatialResource indirectly (i. e. 'upper' can be applied to a SpatialResource after 'valid_reason')
+        """
+        d = super(SpatialOperationController, self).proxer_operations_dict_by_type()
+        d.update(StringOperationController().operations_dict_by_type())
+        return d
+
+    def recognized_operation(self, state, operation_name):
+        if state in self.operations_dict_by_type() and operation_name in self.operations_dict_by_type()[state]:
+            return True
+
+        if state in self.proxer_operations_dict_by_type() and operation_name in self.proxer_operations_dict_by_type()[state]:
+            return True
+
+        return False
+
+    def get_type_called_by_type(self, operation_name, current_state):
+        if current_state in self.operations_dict_by_type() and operation_name in self.operations_dict_by_type()[current_state]:
+            return self.operations_dict_by_type()[current_state][operation_name]
+
+        return self.proxer_operations_dict_by_type()[current_state][operation_name]
+
+    def split_operation_by_url(self, operation_str):
+        operation_str = remove_last_slash(operation_str)
+        if not path_has_url(operation_str):
+            current_operation_name, operation_snippet_arr = remove_last_slash(operation_str).split("/")[0], remove_last_slash(operation_str).split("/")[1:]
+            return (current_operation_name, operation_snippet_arr)
+
+        current_operation_name, operation_snippet_arr = operation_with_url_splitted_by_slash(operation_str)[0], operation_with_url_splitted_by_slash(operation_str)[1:]
+        return (current_operation_name, operation_snippet_arr)
+
+    def state_machine(self, operation_str, current_state=INITIAL_STATE):
+        fst_operation_name, snippet_operation_arr = self.split_operation_by_url(operation_str)
+
+        # todo: if a operation isn't recognized maybe call super() is the right thing to do
+        if not self.recognized_operation(current_state, fst_operation_name):
+            raise OperationNotRecognized("This operation doesn't exist for this resource")
+
+        type_called = self.get_type_called_by_type(fst_operation_name, current_state)
+        current_state = type_called.return_type
+
+        if not type_called.has_parameters():
+            next_state_str = "/".join(snippet_operation_arr) if snippet_operation_arr != [] else None
+            if next_state_str:
+                return self.state_machine(next_state_str, current_state)
+            return current_state
+
+        params_val = snippet_operation_arr[0].split(PARAM_SEPARATOR)
+        for idx, type_to_convert in enumerate(type_called.get_parameters()):
+            cut_idx = idx
+            try:
+                if path_has_url( params_val[idx] ):
+                    continue # url parameters is accepted as valid parameter
+                try:
+                    type_to_convert( params_val[idx] )
+                except ValueError:
+                    raise OperationNotRecognized("Wrong parameter type for operation '" + fst_operation_name + "'")
+            except IndexError:
+                raise OperationNotRecognized("Not enougth parameters for operation '" + fst_operation_name + "'")
+
+        next_state_str = "/".join(snippet_operation_arr[1:]) if snippet_operation_arr[1:] != [] else None
+        if current_state in self.final_states or next_state_str is None:
+            return current_state
+
+        return self.state_machine(next_state_str, current_state)
+
+
+    def operations_dict(self):
         opers_dict = self.generic_object_operations_dict()
         opers_dict.update({
             self.area_operation_name:               Type_Called(self.area_operation_name, [], float),
@@ -1147,91 +1313,68 @@ class ProxiedSpatialOperationController(BaseOperationController):
             self.disjoint_operation_name:           Type_Called(self.disjoint_operation_name, [GEOSGeometry], bool),
             self.distance_operation_name:           Type_Called(self.distance_operation_name, [GEOSGeometry], float),
             self.empty_operation_name:              Type_Called(self.empty_operation_name, [], bool),
-            self.envelope_operation_name:           Type_Called(self.envelope_operation_name, [], GEOSGeometry),
+            self.envelope_operation_name:           Type_Called(self.envelope_operation_name, [], Polygon),
             self.equals_operation_name:             Type_Called(self.equals_operation_name, [GEOSGeometry], bool),
             self.equals_exact_operation_name:       Type_Called(self.equals_exact_operation_name, [GEOSGeometry], bool),
-            self.ewkb_operation_name:               Type_Called('ewkb', [], str),
-            self.ewkt_operation_name:               Type_Called('ewkt', [], str),
-            #self.extend_operation_name:             Type_Called('extend', [], tuple),
-            self.extent_operation_name:             Type_Called('extent', [], tuple),
-            self.geojson_operation_name:            Type_Called('geojson', [], str),
-            self.geom_type_operation_name:          Type_Called('geom_type', [], str),
+            self.ewkb_operation_name:               Type_Called(self.ewkb_operation_name, [], bytes),
+            self.ewkt_operation_name:               Type_Called(self.ewkt_operation_name, [], str),
+            self.extent_operation_name:             Type_Called(self.extent_operation_name, [], tuple),
+            self.geojson_operation_name:            Type_Called(self.geojson_operation_name, [], str),
+            self.geom_type_operation_name:          Type_Called(self.geom_type_operation_name, [], str),
             self.geom_typeid_operation_name:        Type_Called(self.geom_typeid_operation_name, [], int),
-            self.get_coords_operation_name:         Type_Called('get_coords', [], tuple),
-            self.get_srid_operation_name:           Type_Called('get_srid', [], str),
-            self.get_x_operation_name:              Type_Called('get_x', [], str),
-            self.get_y_operation_name:              Type_Called('get_y', [], str),
-            self.get_z_operation_name:              Type_Called('get_z', [], str),
-            self.has_cs_operation_name:             Type_Called('has_cs', [], bool),
-            self.hasz_operation_name:               Type_Called('hasz', [], bool),
-            self.hex_operation_name:                Type_Called('hex', [], str),
-            self.hexewkb_operation_name:            Type_Called('hexewkb', [], str),
-            self.index_operation_name:              Type_Called('index', [], int),
-            self.intersection_operation_name:       Type_Called('intersection', [GEOSGeometry], GEOSGeometry),
-            self.intersects_operation_name:         Type_Called('intersects', [GEOSGeometry], bool),
-            self.interpolate_operation_name:        Type_Called('interpolate', [float], Point),
-            self.json_operation_name:               Type_Called('json', [], str),
-            self.kml_operation_name:                Type_Called('kml', [], str),
-            self.length_operation_name:             Type_Called('length', [], float),
-            self.normalize_operation_name:          Type_Called('normalize', [float], Point),
-            self.num_coords_operation_name:         Type_Called('num_coords', [], int),
-            self.num_geom_operation_name:           Type_Called('num_geom', [], int),
-            self.num_points_operation_name:         Type_Called('num_points', [], int),
-            self.ogr_operation_name:                Type_Called('ogr', [], str),
-            self.overlaps_operation_name:           Type_Called('overlaps', [GEOSGeometry], bool),
-            self.point_on_surface_operation_name:   Type_Called('point_on_surface', [], Point),
-            self.relate_operation_name:             Type_Called('relate', [GEOSGeometry], str),
-            self.relate_pattern_operation_name:     Type_Called('relate_pattern', [GEOSGeometry, str], bool),
-            self.ring_operation_name:               Type_Called('ring', [], bool),
-            self.simple_operation_name:             Type_Called('simple', [], bool),
-            self.simplify_operation_name:           Type_Called('simplify', [float, bool], GEOSGeometry),
-            self.srid_operation_name:               Type_Called('srid', [], int),
-            self.srs_operation_name:                Type_Called('srs', [], SpatialReference),
-            self.sym_difference_operation_name:     Type_Called('sym_difference', [GEOSGeometry], GEOSGeometry),
-            self.touches_operation_name:            Type_Called('touches', [GEOSGeometry], bool),
-            self.transform_operation_name:          Type_Called('transform', [int, {"clone": True}], GEOSGeometry),
-            self.union_operation_name:              Type_Called('union', [GEOSGeometry], GEOSGeometry),
-            self.valid_operation_name:              Type_Called('valid', [GEOSGeometry], bool),
-            self.valid_reason_operation_name:       Type_Called('valid_reason', [GEOSGeometry], str),
-            self.within_operation_name:             Type_Called('within', [GEOSGeometry], bool),
-            self.wkb_operation_name:                Type_Called('wkb', [], bytes),
-            self.wkt_operation_name:                Type_Called('wkt', [], str),
-            self.x_operation_name:                  Type_Called('x', [], float),
-            self.y_operation_name:                  Type_Called('y', [], float),
-            self.z_operation_name:                  Type_Called('z', [], float)
+            self.get_coords_operation_name:         Type_Called(self.get_coords_operation_name, [], tuple),
+            self.get_srid_operation_name:           Type_Called(self.get_srid_operation_name, [], str),
+            self.get_x_operation_name:              Type_Called(self.get_x_operation_name, [], str),
+            self.get_y_operation_name:              Type_Called(self.get_y_operation_name, [], str),
+            self.get_z_operation_name:              Type_Called(self.get_z_operation_name, [], str),
+            self.has_cs_operation_name:             Type_Called(self.has_cs_operation_name, [], bool),
+            self.hasz_operation_name:               Type_Called(self.hasz_operation_name, [], bool),
+            self.hex_operation_name:                Type_Called(self.hex_operation_name, [], str),
+            self.hexewkb_operation_name:            Type_Called(self.hexewkb_operation_name, [], str),
+            self.index_operation_name:              Type_Called(self.index_operation_name, [], int),
+            self.intersection_operation_name:       Type_Called(self.intersection_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.intersects_operation_name:         Type_Called(self.intersects_operation_name, [GEOSGeometry], bool),
+            self.interpolate_operation_name:        Type_Called(self.interpolate_operation_name, [float], Point),
+            self.json_operation_name:               Type_Called(self.json_operation_name, [], str),
+            self.kml_operation_name:                Type_Called(self.kml_operation_name, [], str),
+            self.length_operation_name:             Type_Called(self.length_operation_name, [], float),
+            self.normalize_operation_name:          Type_Called(self.normalize_operation_name, [float], Point),
+            self.num_coords_operation_name:         Type_Called(self.num_coords_operation_name, [], int),
+            self.num_geom_operation_name:           Type_Called(self.num_geom_operation_name, [], int),
+            self.num_points_operation_name:         Type_Called(self.num_points_operation_name, [], int),
+            self.ogr_operation_name:                Type_Called(self.ogr_operation_name, [], str),
+            self.overlaps_operation_name:           Type_Called(self.overlaps_operation_name, [GEOSGeometry], bool),
+            self.point_on_surface_operation_name:   Type_Called(self.point_on_surface_operation_name, [], Point),
+            self.relate_operation_name:             Type_Called(self.relate_operation_name, [GEOSGeometry], str),
+            self.relate_pattern_operation_name:     Type_Called(self.relate_pattern_operation_name, [GEOSGeometry, str], bool),
+            self.ring_operation_name:               Type_Called(self.ring_operation_name, [], bool),
+            self.simple_operation_name:             Type_Called(self.simple_operation_name, [], bool),
+            self.simplify_operation_name:           Type_Called(self.simplify_operation_name, [], GEOSGeometry),  # todo: need to implement tolerance (float) and preserve_topology (bool) optional parameters
+            self.srid_operation_name: Type_Called('srid', [], int),
+            self.srs_operation_name: Type_Called('srs', [], SpatialReference),
+            self.sym_difference_operation_name: Type_Called('sym_difference', [GEOSGeometry], GEOSGeometry),
+            self.touches_operation_name: Type_Called('touches', [GEOSGeometry], bool),
+            self.transform_operation_name: Type_Called('transform', [int], GEOSGeometry),
+            self.union_operation_name: Type_Called('union', [GEOSGeometry], GEOSGeometry),
+            self.valid_operation_name: Type_Called('valid', [], bool),
+            self.valid_reason_operation_name: Type_Called('valid_reason', [], str),
+            self.within_operation_name: Type_Called('within', [GEOSGeometry], bool),
+            self.wkb_operation_name: Type_Called('wkb', [], bytes),
+            self.wkt_operation_name: Type_Called('wkt', [], str),
+            self.x_operation_name: Type_Called('x', [], float),
+            self.y_operation_name: Type_Called('y', [], float),
+            self.z_operation_name: Type_Called('z', [], float)
         })
         return opers_dict
 
+# todo: this class is a copy of BaseOperationController - refactor to inherit from "SpatialOperationController" (to be implemented)
+class ProxiedSpatialOperationController(SpatialOperationController):
+
+    def geometry_operations_dict(self):
+        return self.operations_dict()
+
     def dict_all_operation_dict(self):
         return self.dict_by_type_geometry_operations_dict()
-
-    def point_operations_dict(self):
-        return self.geometry_operations_dict()
-
-    def line_operations_dict(self):
-        return self.geometry_operations_dict()
-
-    def polygon_operations_dict(self):
-        return self.geometry_operations_dict()
-
-    def dict_by_type_geometry_operations_dict(self):
-        return {
-            GEOSGeometry: self.geometry_operations_dict(),
-            GeometryField: self.geometry_operations_dict(),
-            PointField: self.geometry_operations_dict(),
-            LineStringField: self.geometry_operations_dict(),
-            PolygonField: self.geometry_operations_dict(),
-            MultiPointField: self.geometry_operations_dict(),
-            MultiLineStringField: self.geometry_operations_dict(),
-            MultiPolygonField: self.geometry_operations_dict(),
-            Point: self.point_operations_dict(),
-            Polygon: self.polygon_operations_dict(),
-            LineString: self.line_operations_dict(),
-            MultiPoint: self.point_operations_dict(),
-            MultiPolygon: self.polygon_operations_dict(),
-            MultiLineString: self.line_operations_dict(),
-            GeometryCollection: self.geometry_operations_dict()
-        }
 
 class ProxiedNonSpatialResourceOperationController(object):
     _instance = None

@@ -101,6 +101,7 @@ def vocabularyDict():
     dict['FeatureCollection'] = 'https://purl.org/geojson/vocab#FeatureCollection'
     dict[FeatureCollection] = 'https://purl.org/geojson/vocab#FeatureCollection'
     dict['Feature'] = 'https://purl.org/geojson/vocab#Feature'
+    dict[FeatureModel] = 'https://purl.org/geojson/vocab#Feature'
     dict[FeatureResource] = 'https://purl.org/geojson/vocab#Feature'
     dict[GeometryField] = 'https://purl.org/geojson/vocab#geometry'
     dict[PointField] = 'https://purl.org/geojson/vocab#Point'
@@ -300,6 +301,7 @@ def mediaTypeDict():
     dicti[GEOSGeometry] = geometric_media_types
     dicti[FeatureCollection] = geometric_media_types
     dicti['Feature'] = geometric_media_types
+    dicti[FeatureModel] = geometric_media_types
     return dicti
 
 def vocabulary(a_key):
@@ -395,6 +397,7 @@ def initialize_dict():
     oc = BaseOperationController()
     dict[GeometryField] = oc.geometry_operations_dict()
     dict['Feature'] = oc.geometry_operations_dict()
+    dict[FeatureModel] = oc.geometry_operations_dict()
     dict['Geobuf'] = oc.geometry_operations_dict()
     dict[GEOSGeometry] = oc.geometry_operations_dict()
     dict['Image'] = oc.geometry_operations_dict()
@@ -730,6 +733,7 @@ class FeatureResourceContext(ContextResource):
         dicti = super(FeatureResourceContext, self).resource_id_and_type_by_operation_dict(operation_return_type)
         dicti.update({
             self.resource.operation_controller.area_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
+            self.resource.operation_controller.buffer_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
             self.resource.operation_controller.contains_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
             self.resource.operation_controller.coord_seq_operation_name:        {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
             self.resource.operation_controller.coords_operation_name:           {"@id": vocabulary(self.resource.operation_controller.coords_operation_name), "@type": vocabulary(object)},
@@ -895,6 +899,7 @@ class FeatureCollectionResourceContext(AbstractCollectionResourceContext):
             self.resource.operation_controller.extent_collection_operation_name:    {"@id": vocabulary(operation_return_type), "@type": "https://schema.org/Thing"},
             self.resource.operation_controller.make_line_collection_operation_name: {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
             self.resource.operation_controller.union_collection_operation_name:     {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.envelope_collection_operation_name:  {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
         })
         return dicti
 

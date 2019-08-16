@@ -1122,6 +1122,7 @@ class AbstractResource(APIView):
 
     def default_value_for_field(self, field):
         values_dict = {
+            str: "",
             CharField: "",
             IntegerField: 0,
             FloatField: 0.0,
