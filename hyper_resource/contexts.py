@@ -30,19 +30,7 @@ from django.db.models.fields import NOT_PROVIDED
 from hyper_resource.resources.FeatureResource import FEATURE_RESOURCE_TYPE
 from hyper_resource.utils import IMAGE_RESOURCE_TYPE
 
-'''
-HYPER_RESOURCE_CONTEXT = 'http://www.w3.org/ns/json-hr#context'
-HYPER_RESOURCE_CONTENT_TYPE = 'application/hr+json'
-HYPER_RESOURCE_EXTENSION = '.jsonhr'
-IMAGE_RESOURCE_TYPE = "Image"
-
-CONTENT_TYPE_GEOJSON = "application/vnd.geo+json"
-CONTENT_TYPE_JSON = "application/json"
-CONTENT_TYPE_LD_JSON = "application/ld+json"
-CONTENT_TYPE_OCTET_STREAM = "application/octet-stream"
-CONTENT_TYPE_IMAGE_PNG = "image/png"
-CONTENT_TYPE_IMAGE_TIFF = "image/tiff"
-'''
+HYPER_RESOURCE_SUPPORTED_OPERATIONS_LABEL = "hydra:supportedOperations" #todo: change to something like "hyper:supportedOperations" when created hyper vocab
 
 class Reflection:
 
@@ -374,6 +362,7 @@ class SupportedOperation():
                 "hydra:returns": self.returns,
                 "hydra:statusCode": '',
                 "@id": self.link,
+                #'@type': self.type,
                 "hydra:description": self.description
         }
 
@@ -461,8 +450,36 @@ class ContextResource:
         '''
         Used as resource identification and typing
         '''
-        dic = {}
+        dic = {
+            self.resource.operation_controller.projection_operation_name: {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+        }
         return dic
+
+    def resource_description_type_by_content_type_dict(self):
+        return {
+            CONTENT_TYPE_OCTET_STREAM:  "https://schema.org/Thing",
+            CONTENT_TYPE_IMAGE_PNG:     "https://schema.org/ImageObject"
+        }
+
+    # todo: currently there is no way to specificaly determine @id for a resource that is a result of an operation, therefore we define it generically based on operation return type
+    def resource_description_id_by_return_type_dict(self):
+        return {
+            object: "https://schema.org/Thing",
+            float:  "https://schema.org/Float",
+            int:    "https://schema.org/Integer",
+            bool:   "https://schema.org/Boolean",
+            str:    "https://schema.org/Text"
+        }
+
+    def get_resource_description_id(self, return_type):
+        if return_type in self.resource_description_id_by_return_type_dict():
+            return { "@id": self.resource_description_id_by_return_type_dict()[return_type]}
+        return {"@id": "https://schema.org/Thing"}
+
+    def get_resource_description_type(self, content_type):
+        if content_type in self.resource_description_type_by_content_type_dict():
+            return { "@type": self.resource_description_type_by_content_type_dict()[content_type]}
+        return {"@type": "https://schema.org/Thing"}
 
     def attributes_term_definition_context_dict(self, attrs_list):
         dic_field = {}
@@ -732,61 +749,65 @@ class FeatureResourceContext(ContextResource):
     def resource_id_and_type_by_operation_dict(self, operation_return_type):
         dicti = super(FeatureResourceContext, self).resource_id_and_type_by_operation_dict(operation_return_type)
         dicti.update({
-            self.resource.operation_controller.area_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.buffer_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.contains_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.coord_seq_operation_name:        {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
+            self.resource.operation_controller.area_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.buffer_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.boundary_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.centroid_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.contains_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.convex_hull_operation_name:      {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.coord_seq_operation_name:        {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
             self.resource.operation_controller.coords_operation_name:           {"@id": vocabulary(self.resource.operation_controller.coords_operation_name), "@type": vocabulary(object)},
-            self.resource.operation_controller.count_operation_name:            {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.crosses_operation_name:          {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.crs_operation_name:              {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.difference_operation_name:       {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.dims_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.disjoint_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.distance_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.empty_operation_name:            {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.equals_exact_operation_name:     {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.equals_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.ewkb_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.ewkt_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(str)},
-            self.resource.operation_controller.extent_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.geojson_operation_name:          {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.geom_type_operation_name:        {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.geom_typeid_operation_name:      {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.has_cs_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.hasz_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.hex_operation_name:              {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
-            self.resource.operation_controller.hexewkb_operation_name:          {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.intersection_operation_name:     {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.intersects_operation_name:       {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.json_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.kml_operation_name:              {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.length_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.num_coords_operation_name:       {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.num_geom_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.num_points_operation_name:       {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.ogr_operation_name:              {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.overlaps_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.point_on_surface_operation_name: {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.relate_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.relate_pattern_operation_name:   {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.ring_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.simple_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.simplify_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.srid_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.srs_operation_name:              {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.sym_difference_operation_name:   {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.touches_operation_name:          {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.transform_operation_name:        {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.union_operation_name:            {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.valid_operation_name:            {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.valid_reason_operation_name:     {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.within_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.wkb_operation_name:              {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.wkt_operation_name:              {"@id": vocabulary(operation_return_type), "@type": vocabulary(str)},
-            self.resource.operation_controller.x_operation_name:                {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.y_operation_name:                {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
-            self.resource.operation_controller.z_operation_name:                {"@id": vocabulary(operation_return_type), "@type": vocabulary(object)},
+            self.resource.operation_controller.count_operation_name:            {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.crosses_operation_name:          {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.crs_operation_name:              {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.difference_operation_name:       {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.dims_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.disjoint_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.distance_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.empty_operation_name:            {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.envelope_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.equals_exact_operation_name:     {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.equals_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.ewkb_operation_name:             {"@id": vocabulary(GEOSGeometry), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.ewkt_operation_name:             {"@id": vocabulary(GEOSGeometry), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.extent_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.geojson_operation_name:          {"@id": vocabulary(GEOSGeometry), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.geom_type_operation_name:        {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.geom_typeid_operation_name:      {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.has_cs_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.hasz_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.hex_operation_name:              {"@id": vocabulary(GEOSGeometry), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.hexewkb_operation_name:          {"@id": vocabulary(GEOSGeometry), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.intersection_operation_name:     {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.intersects_operation_name:       {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.json_operation_name:             {"@id": vocabulary(GEOSGeometry), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.kml_operation_name:              {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.length_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.num_coords_operation_name:       {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.num_geom_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.num_points_operation_name:       {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.ogr_operation_name:              {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.overlaps_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.point_on_surface_operation_name: {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.relate_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.relate_pattern_operation_name:   {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.ring_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.simple_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.simplify_operation_name:         {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.srid_operation_name:             {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.srs_operation_name:              {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.sym_difference_operation_name:   {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.touches_operation_name:          {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.transform_operation_name:        {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.union_operation_name:            {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.valid_operation_name:            {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.valid_reason_operation_name:     {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.within_operation_name:           {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.wkb_operation_name:              {"@id": vocabulary(GEOSGeometry), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.wkt_operation_name:              {"@id": vocabulary(GEOSGeometry), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.x_operation_name:                {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.y_operation_name:                {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
+            self.resource.operation_controller.z_operation_name:                {"@id": vocabulary(operation_return_type), "@type": vocabulary(operation_return_type)},
         })
         return dicti
 
@@ -832,6 +853,84 @@ class FeatureResourceContext(ContextResource):
         dict_field = super(FeatureResourceContext, self).attributes_contextualized_dict()
         dict_field.pop(self.resource.geometry_field_name())
         return dict_field
+
+    def get_supported_operations_for(self, operation_return_type):
+        operations_dicts_list = self.resource.operation_controller.supported_operations_for(operation_return_type)
+        if len(operations_dicts_list) == 0:
+            return { HYPER_RESOURCE_SUPPORTED_OPERATIONS_LABEL: [] }
+
+        supported_operations_arr = []
+        for operation_name, type_called in operations_dicts_list.items():
+            exps = []
+            if type_called.has_parameters():
+                for parameter, representation_list in type_called.get_parameters_and_representations():
+                    representation_voc_list = [vocabulary(representation) for representation in representation_list]
+                    exps.append( {"parameter": vocabulary(parameter), "represantations": representation_voc_list} )
+
+            rets = vocabulary(type_called.return_type) if type_called.return_type in vocabularyDict() else "NOT FOUND"
+            link_id = vocabulary(type_called.name)
+            supported_operations_arr.append(SupportedOperation(operation=operation_name,
+                                          title=type_called.name,
+                                          method='GET',
+                                          expects=exps,
+                                          returns=rets,
+                                          type='',
+                                          link=link_id,
+                                          description=type_called.get_operation_description())
+                       )
+
+        return {
+            HYPER_RESOURCE_SUPPORTED_OPERATIONS_LABEL: [supportedOperation.context() for supportedOperation in supported_operations_arr]
+        }
+
+    def term_definition_operation_return_type(self, operation_return_type):
+        return {
+                self.resource.operation_controller.last_operation_name: {
+                    "@id": "https://schema.org/value",
+                    "@type": vocabulary(operation_return_type),
+                }
+            }
+
+    def resource_description_id_by_return_type_dict(self):
+        ''' Defines @id by response return type '''
+        d = super(FeatureResourceContext, self).resource_description_id_by_return_type_dict()
+        d.update({
+            GEOSGeometry:   "https://purl.org/geojson/vocab#geometry"
+        })
+        return d
+
+    def resource_description_type_by_content_type_dict(self):
+        ''' Defines @type by response content-type '''
+        d = super(FeatureResourceContext, self).resource_description_type_by_content_type_dict()
+        d.update({
+            CONTENT_TYPE_GEOJSON:   "https://purl.org/geojson/vocab#geometry", # todo: maybe 'https://schema.org/GeospatialGeometry' could add more semantics
+        })
+        return d
+
+    def get_resource_description_type(self, content_type):
+        if content_type == CONTENT_TYPE_GEOJSON:
+            last_operation_retype = self.resource.operation_controller.operations_dict()[self.resource.operation_controller.last_operation_name].return_type
+            if last_operation_retype == GEOSGeometry: # too generic
+                return super(FeatureResourceContext, self).get_resource_description_type(content_type)
+            return {"@type": vocabulary(last_operation_retype)}
+        return super(FeatureResourceContext, self).get_resource_description_type(content_type)
+
+    def context_for_operation(self, operation_return_type, response_content_type):
+        term_definition_dict = {}
+        term_definition_dict.update(self.get_hydra_term_definition())
+        term_definition_dict.update(self.get_subClassOf_term_definition())
+
+        if not issubclass(operation_return_type, GEOSGeometry) and operation_return_type != bytes:
+            term_definition_dict.update(self.term_definition_operation_return_type(operation_return_type))
+        context_dict = {"@context": term_definition_dict}
+
+        context_dict.update(self.get_supported_operations_for(operation_return_type))
+        context_dict.update(self.get_context_superclass_by_return_type(operation_return_type))
+
+        #context_dict.update(self.get_resource_description_id(operation_return_type))
+        context_dict.update( {"@id": self.resource_id_and_type_by_operation_dict(operation_return_type)[self.resource.operation_controller.last_operation_name]["@id"] } )
+        context_dict.update(self.get_resource_description_type(response_content_type))
+        return context_dict
 
 class AbstractCollectionResourceContext(ContextResource):
 

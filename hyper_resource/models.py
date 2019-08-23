@@ -577,8 +577,8 @@ class BaseOperationController(object):
             self.get_z_operation_name:              Type_Called('get_z', [], str),
             self.has_cs_operation_name:             Type_Called('has_cs', [], bool),
             self.hasz_operation_name:               Type_Called('hasz', [], bool),
-            self.hex_operation_name:                Type_Called('hex', [], str),
-            self.hexewkb_operation_name:            Type_Called('hexewkb', [], str),
+            self.hex_operation_name:                Type_Called('hex', [], bytes),
+            self.hexewkb_operation_name:            Type_Called('hexewkb', [], bytes),
             self.index_operation_name:              Type_Called('index', [], int),
             self.intersection_operation_name:       Type_Called('intersection', [GEOSGeometry], GEOSGeometry),
             self.intersects_operation_name:         Type_Called('intersects', [GEOSGeometry], bool),
@@ -591,7 +591,7 @@ class BaseOperationController(object):
             self.num_geom_operation_name:           Type_Called('num_geom', [], int),
             self.num_points_operation_name:         Type_Called('num_points', [], int),
             #self.ogr_operation_name:                Type_Called('ogr', [], OGRGeometry),
-            self.ogr_operation_name:                Type_Called('ogr', [], str),
+            self.ogr_operation_name:                Type_Called('ogr', [], GEOSGeometry),
             self.overlaps_operation_name:           Type_Called('overlaps', [GEOSGeometry], bool),
             self.point_on_surface_operation_name:   Type_Called('point_on_surface', [], Point),
             self.relate_operation_name:             Type_Called('relate', [GEOSGeometry], str),
@@ -1048,8 +1048,6 @@ class SpatialCollectionOperationController(CollectionResourceOperationController
 
         return d
 
-class OperationNotRecognized(Exception):
-    pass
 
 # todo: Maybe this class could be a new BaseOperationController
 class StringOperationController(object):
@@ -1186,6 +1184,7 @@ class SpatialOperationController(BaseOperationController):
         self.y_operation_name = 'y'
         self.z_operation_name = 'z'
 
+        self.last_operation_name = '' # must be readonly
         self.final_states = [bool, bytes, int, list, float, SpatialReference]
 
         self.join_operation_name = 'join'
@@ -1208,6 +1207,7 @@ class SpatialOperationController(BaseOperationController):
         d.update({
             FeatureModel:           self.operations_dict(),
             GEOSGeometry:           self.operations_dict(),
+            OGRGeometry:            self.operations_dict(),
             GeometryField:          self.operations_dict(),
             PointField:             self.point_operations_dict(),
             LineStringField:        self.line_operations_dict(),
@@ -1234,14 +1234,18 @@ class SpatialOperationController(BaseOperationController):
         d.update(StringOperationController().operations_dict_by_type())
         return d
 
+    def all_operations_dict_by_type(self):
+        d = self.operations_dict_by_type()
+        d.update(self.proxer_operations_dict_by_type())
+        return d
+
+    def supported_operations_for(self, state):
+        if state in self.all_operations_dict_by_type():
+            return self.all_operations_dict_by_type()[state]
+        return []
+
     def recognized_operation(self, state, operation_name):
-        if state in self.operations_dict_by_type() and operation_name in self.operations_dict_by_type()[state]:
-            return True
-
-        if state in self.proxer_operations_dict_by_type() and operation_name in self.proxer_operations_dict_by_type()[state]:
-            return True
-
-        return False
+        return state in self.all_operations_dict_by_type() and operation_name in self.all_operations_dict_by_type()[state]
 
     def get_type_called_by_type(self, operation_name, current_state):
         if current_state in self.operations_dict_by_type() and operation_name in self.operations_dict_by_type()[current_state]:
@@ -1272,6 +1276,7 @@ class SpatialOperationController(BaseOperationController):
             next_state_str = "/".join(snippet_operation_arr) if snippet_operation_arr != [] else None
             if next_state_str:
                 return self.state_machine(next_state_str, current_state)
+            self.last_operation_name = fst_operation_name
             return current_state
 
         params_val = snippet_operation_arr[0].split(PARAM_SEPARATOR)
@@ -1289,6 +1294,7 @@ class SpatialOperationController(BaseOperationController):
 
         next_state_str = "/".join(snippet_operation_arr[1:]) if snippet_operation_arr[1:] != [] else None
         if current_state in self.final_states or next_state_str is None:
+            self.last_operation_name = fst_operation_name
             return current_state
 
         return self.state_machine(next_state_str, current_state)
@@ -1329,8 +1335,8 @@ class SpatialOperationController(BaseOperationController):
             self.get_z_operation_name:              Type_Called(self.get_z_operation_name, [], str),
             self.has_cs_operation_name:             Type_Called(self.has_cs_operation_name, [], bool),
             self.hasz_operation_name:               Type_Called(self.hasz_operation_name, [], bool),
-            self.hex_operation_name:                Type_Called(self.hex_operation_name, [], str),
-            self.hexewkb_operation_name:            Type_Called(self.hexewkb_operation_name, [], str),
+            self.hex_operation_name:                Type_Called(self.hex_operation_name, [], bytes),
+            self.hexewkb_operation_name:            Type_Called(self.hexewkb_operation_name, [], bytes),
             self.index_operation_name:              Type_Called(self.index_operation_name, [], int),
             self.intersection_operation_name:       Type_Called(self.intersection_operation_name, [GEOSGeometry], GEOSGeometry),
             self.intersects_operation_name:         Type_Called(self.intersects_operation_name, [GEOSGeometry], bool),
@@ -1342,7 +1348,7 @@ class SpatialOperationController(BaseOperationController):
             self.num_coords_operation_name:         Type_Called(self.num_coords_operation_name, [], int),
             self.num_geom_operation_name:           Type_Called(self.num_geom_operation_name, [], int),
             self.num_points_operation_name:         Type_Called(self.num_points_operation_name, [], int),
-            self.ogr_operation_name:                Type_Called(self.ogr_operation_name, [], str),
+            self.ogr_operation_name:                Type_Called(self.ogr_operation_name, [], OGRGeometry),
             self.overlaps_operation_name:           Type_Called(self.overlaps_operation_name, [GEOSGeometry], bool),
             self.point_on_surface_operation_name:   Type_Called(self.point_on_surface_operation_name, [], Point),
             self.relate_operation_name:             Type_Called(self.relate_operation_name, [GEOSGeometry], str),
@@ -1350,20 +1356,20 @@ class SpatialOperationController(BaseOperationController):
             self.ring_operation_name:               Type_Called(self.ring_operation_name, [], bool),
             self.simple_operation_name:             Type_Called(self.simple_operation_name, [], bool),
             self.simplify_operation_name:           Type_Called(self.simplify_operation_name, [], GEOSGeometry),  # todo: need to implement tolerance (float) and preserve_topology (bool) optional parameters
-            self.srid_operation_name: Type_Called('srid', [], int),
-            self.srs_operation_name: Type_Called('srs', [], SpatialReference),
-            self.sym_difference_operation_name: Type_Called('sym_difference', [GEOSGeometry], GEOSGeometry),
-            self.touches_operation_name: Type_Called('touches', [GEOSGeometry], bool),
-            self.transform_operation_name: Type_Called('transform', [int], GEOSGeometry),
-            self.union_operation_name: Type_Called('union', [GEOSGeometry], GEOSGeometry),
-            self.valid_operation_name: Type_Called('valid', [], bool),
-            self.valid_reason_operation_name: Type_Called('valid_reason', [], str),
-            self.within_operation_name: Type_Called('within', [GEOSGeometry], bool),
-            self.wkb_operation_name: Type_Called('wkb', [], bytes),
-            self.wkt_operation_name: Type_Called('wkt', [], str),
-            self.x_operation_name: Type_Called('x', [], float),
-            self.y_operation_name: Type_Called('y', [], float),
-            self.z_operation_name: Type_Called('z', [], float)
+            self.srid_operation_name:               Type_Called(self.srid_operation_name, [], int),
+            self.srs_operation_name:                Type_Called(self.srs_operation_name, [], SpatialReference),
+            self.sym_difference_operation_name:     Type_Called(self.sym_difference_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.touches_operation_name:            Type_Called(self.touches_operation_name, [GEOSGeometry], bool),
+            self.transform_operation_name:          Type_Called(self.transform_operation_name, [int], GEOSGeometry),
+            self.union_operation_name:              Type_Called(self.union_operation_name, [GEOSGeometry], GEOSGeometry),
+            self.valid_operation_name:              Type_Called(self.valid_operation_name, [], bool),
+            self.valid_reason_operation_name:       Type_Called(self.valid_reason_operation_name, [], str),
+            self.within_operation_name:             Type_Called(self.within_operation_name, [GEOSGeometry], bool),
+            self.wkb_operation_name:                Type_Called(self.wkb_operation_name, [], bytes),
+            self.wkt_operation_name:                Type_Called(self.wkt_operation_name, [], str),
+            self.x_operation_name:                  Type_Called(self.x_operation_name, [], float),
+            self.y_operation_name:                  Type_Called(self.y_operation_name, [], float),
+            self.z_operation_name:                  Type_Called(self.z_operation_name, [], float)
         })
         return opers_dict
 
@@ -1880,7 +1886,7 @@ class FeatureModel(SpatialModel):
             raise ProgrammingError
 
 class ProxiedFeatureModel(FeatureModel):
-    
+
     #Class to handle FeatureCollection that turns on single Features
 
     #todo: need refactoring (may cause problems in the future, although unlikely, after all the geometry operations is all the same regardless of his subtypes)

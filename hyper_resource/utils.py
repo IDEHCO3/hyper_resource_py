@@ -93,6 +93,9 @@ def get_url_arr_from_arr_of_tuples(arr_of_tuples):
         url_as_arr.append(url)
     return url_as_arr
 
+class OperationNotRecognized(Exception):
+    pass
+
 def operation_with_url_splitted_by_slash(operation_str):
     att_functions_str_url = operation_str
     exp = r'(?=https{0,1}:.+?\*)(https{0,1}:.+?\*)|(https{0,1}:.+?\/?$)'

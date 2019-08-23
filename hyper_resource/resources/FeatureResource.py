@@ -1,3 +1,5 @@
+import pickle
+
 from hyper_resource.resources.AbstractResource import *
 from hyper_resource.resources.SpatialResource import SpatialResource
 IMAGE_RESOURCE_TYPE = "Image"
@@ -71,9 +73,10 @@ class FeatureResource(SpatialResource):
         elif isinstance(a_value, SpatialReference) or isinstance(a_value, OGRGeometry):
             a_value = { self.name_of_last_operation_executed: a_value.wkt.strip('\n')}
         elif isinstance(a_value, memoryview) or isinstance(a_value, buffer):
-            a_value = a_value.hex()
+            return a_value
+            #a_value = a_value.hex()
         elif isinstance(a_value, bytes):
-            a_value = a_value.decode()
+            return a_value# = a_value.decode()
         else:
             try:
                 a_value = {self.name_of_last_operation_executed: str(json.loads(a_value))}
@@ -393,6 +396,7 @@ class FeatureResource(SpatialResource):
     '''
 
     def define_head_content_type(self, request, attributes_functions_str):
+        self.object_model = self.model_class()()
         if self.is_simple_path(attributes_functions_str):
             return self.content_type_by_accept(request)
         if self.path_has_only_attributes(attributes_functions_str):
@@ -455,8 +459,7 @@ class FeatureResource(SpatialResource):
             return self.required_object_for_image( GEOSGeometry(json.dumps(result)), request)
 
         elif isinstance(result, memoryview) or isinstance(result, buffer) or isinstance(result, bytes):
-            return RequiredObject(result, CONTENT_TYPE_IMAGE_PNG, self.object_model, 200)
-
+            return RequiredObject(result.hex(), CONTENT_TYPE_OCTET_STREAM, self.object_model, 200)
         else:
             return RequiredObject(result, operation_contype, self.object_model, 200)
 
@@ -637,6 +640,23 @@ class FeatureResource(SpatialResource):
             return None
         return first_part_name
 
+    def remove_geometry_attribute_from_path(self, attributes_functions_str):
+        attrs_funcs_arr = remove_last_slash(attributes_functions_str).split("/")
+        if attrs_funcs_arr[0] == self.geometry_field_name():
+            return "/".join(attrs_funcs_arr[1:])
+
+        return attributes_functions_str
+
+    def get_required_object_from_method_to_execute(self, request, attributes_functions_str):
+        attributes_functions_str = self.remove_geometry_attribute_from_path(attributes_functions_str)
+        operation_name = self.get_operation_name_from_path(attributes_functions_str)
+        method_to_execute = self.get_operation_to_execute(operation_name)
+
+        if method_to_execute is None:
+            return None
+
+        return method_to_execute(*[request, attributes_functions_str])
+
     def basic_get(self, request, *args, **kwargs):
         self.object_model = self.get_object(kwargs)
         self.current_object_state = self.object_model
@@ -655,6 +675,24 @@ class FeatureResource(SpatialResource):
             return self.required_object_for_invalid_sintax(attributes_functions_str)
         return res
 
+    def content_type_for_response(self, request, return_type=FEATURE_RESOURCE_TYPE):
+        contype_accept = self.content_type_by_accept(request)
+        if contype_accept in self.available_content_types_for(return_type):
+            return contype_accept
+        return self.default_content_type_for(return_type)
+
+    def required_context_for_operation(self, request, attributes_functions_str):
+        context = self.get_required_context_for_operation(request, attributes_functions_str)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
+
+    def get_required_context_for_operation(self, request, attributes_functions_str):
+        operation_return_type = self.operation_controller.state_machine(attributes_functions_str)
+
+        contype = self.content_type_for_response(request, return_type=operation_return_type)
+        context_dict = {}
+        context_dict.update(self.context_resource.context_for_operation(operation_return_type, contype))
+        return context_dict
+
     def basic_options(self, request, *args, **kwargs):
         self.object_model = self.model_class()()
         self.set_basic_context_resource(request)
@@ -668,10 +706,11 @@ class FeatureResource(SpatialResource):
         if self.path_has_only_attributes(attributes_functions_str):
             return self.required_context_for_only_attributes(request, attributes_functions_str)
 
-        res = self.get_required_context_from_method_to_execute(request, attributes_functions_str)
-        if res is None:
+        try:
+            #return self.get_required_context_from_method_to_execute(request, attributes_functions_str)
+            return self.required_context_for_operation(request, attributes_functions_str)
+        except OperationNotRecognized:
             return self.required_object_for_invalid_sintax(attributes_functions_str)
-        return res
 
     def default_content_type(self):
         return CONTENT_TYPE_GEOJSON#self.temporary_content_type if self.temporary_content_type is not None else CONTENT_TYPE_GEOJSON

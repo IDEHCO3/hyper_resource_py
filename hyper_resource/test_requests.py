@@ -87,7 +87,7 @@ arr_get_for_spatial_operations = [
     RequestTest("api/bcim/unidades-federativas/ES/relate_pattern/" + SERVER + "api/bcim/unidades-federativas/GO/&FF*FF****", 200),
     RequestTest("api/bcim/trechos-hidroviarios/59121/ring", 200),
     RequestTest("api/bcim/unidades-federativas/ES/simple", 200),
-    RequestTest("api/bcim/unidades-federativas/ES/simplify/0.0&False", 200),
+    RequestTest("api/bcim/unidades-federativas/ES/simplify", 200),
     RequestTest("api/bcim/unidades-federativas/ES/srid", 200),
     RequestTest("api/bcim/unidades-federativas/ES/srs", 200),
     RequestTest("api/bcim/vegetacoes-de-restinga/2947/sym_difference/" + SERVER + "api/bcim/unidades-federativas/ES", 200),
@@ -471,6 +471,11 @@ if '-a' in args:
     os.system("python manage.py test hyper_resource.tests.AllowedMethodsForFeatureCollectionResourceTest --testrunner=hyper_resource.tests.NoDbTestRunner")
     print("\n\n<<< Testing HeadFeatureResourceTest >>>")
     os.system("python manage.py test hyper_resource.tests.HeadFeatureResourceTest --testrunner=hyper_resource.tests.NoDbTestRunner")
+
+    # Unitary tests
+    print("\n\n\n<<< INITIALIZING UNITARY TEST SET >>>\n")
+    print("\n\n<<< Testing SpatialMachineStateTest >>>")
+    os.system("python manage.py test hyper_resource.tests.SpatialMachineStateTest --testrunner=hyper_resource.tests.NoDbTestRunner")
 
     # Not classified
     print("\n\n\n<<< INITIALIZING NOT CLASSIFIED TEST SET >>>\n")

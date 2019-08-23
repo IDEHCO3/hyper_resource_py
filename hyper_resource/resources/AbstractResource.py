@@ -1551,6 +1551,7 @@ class AbstractResource(APIView):
             float:      [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM],
             str:        [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM],
             bool:       [CONTENT_TYPE_OCTET_STREAM],
+            bytes:      [CONTENT_TYPE_OCTET_STREAM],
             tuple:      [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM],
             CharField:  [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM]
         }

@@ -604,6 +604,8 @@ class AbstractGetRequestTest(AbstractRequestTest):
         response_dict = self.aux_get_dict_from_response(response)
         return sorted(list(response_dict['properties'].keys()))
 
+SCHEMA_THING = "https://schema.org/Thing"
+GEOJSONLD_VOCAB_GEOMETRY = "https://purl.org/geojson/vocab#geometry"
 
 class AbstractOptionsRequestTest(AbstractRequestTest):
     def setUp(self):
@@ -3769,7 +3771,7 @@ class OptionsForRasterTest(AbstractOptionsRequestTest):
         self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations = self.aux_get_supported_operations_names(response)
-        self.assertEquals(supported_operations, [])
+        self.assertEquals(supported_operations, self.raster_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], "https://schema.org/ImageObject")
@@ -3794,7 +3796,7 @@ class OptionsForRasterTest(AbstractOptionsRequestTest):
         self.assertEquals(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations = self.aux_get_supported_operations_names(response)
-        self.assertEquals(supported_operations, [])
+        self.assertEquals(supported_operations, self.raster_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], "https://schema.org/ImageObject")
@@ -6569,8 +6571,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiLineString")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiLineString")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], GEOJSONLD_VOCAB_GEOMETRY)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_buffer_operation(self):
@@ -6590,8 +6592,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#geometry")
+        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#geometry")
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_centroid_operation(self):
@@ -6776,8 +6778,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], GEOJSONLD_VOCAB_GEOMETRY)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_dims_operation(self):
@@ -6957,11 +6959,11 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, self.spatial_operation_names)
+        self.assertListEqual(supported_operations_names, [])
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_ewkt_operation(self):
@@ -6983,8 +6985,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_extent_operation(self):
@@ -7030,8 +7032,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_geom_type_operation(self):
@@ -7163,8 +7165,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, [])
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_hexewkb_operation(self):
@@ -7181,11 +7183,11 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, self.spatial_operation_names)
+        self.assertListEqual(supported_operations_names, [])
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     # todo: GET request for index not working
@@ -7207,12 +7209,12 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, self.spatial_collection_operation_names)
+        self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
         # if there is no intersection between to geometries, intersection operation return a empty GeometryCollection
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#GeometryCollection")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#GeometryCollection")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], GEOJSONLD_VOCAB_GEOMETRY)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_intersects_operation(self):
@@ -7263,8 +7265,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#geometry")
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_kml_operation(self):
@@ -7403,11 +7405,11 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, self.string_operations_names)
+        self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_overlaps_operation(self):
@@ -7566,8 +7568,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#geometry")
+        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#geometry")
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_srid_operation(self):
@@ -7631,11 +7633,11 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, self.spatial_collection_operation_names)
+        self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#GeometryCollection")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#GeometryCollection")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], GEOJSONLD_VOCAB_GEOMETRY)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_touches_operation(self):
@@ -7679,8 +7681,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#geometry")
+        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#geometry")
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_union_operation(self):
@@ -7701,8 +7703,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#geometry")
+        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#geometry")
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_valid_operation(self):
@@ -7789,11 +7791,11 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, self.spatial_operation_names)
+        self.assertListEqual(supported_operations_names, [])
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_wkt_operation(self):
@@ -7815,8 +7817,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#geometry")
+        self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     # todo: x is an operation that works only for Point objects
@@ -8098,8 +8100,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiLineString")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiLineString")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_buffer_operation_accept_octet_stream(self):
@@ -8120,8 +8122,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_centroid_operation_accept_octet_stream(self):
@@ -8143,7 +8145,7 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#Point")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#Point")
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_contains_operation_accept_octet_stream(self):
@@ -8191,7 +8193,7 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#Polygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#Polygon")
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     # todo: coord_seq doesn't return a respose (this operation must be deleted or altered)
@@ -8314,8 +8316,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_dims_operation_accept_octet_stream(self):
@@ -8435,7 +8437,7 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#Polygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#Polygon")
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_equals_operation_accept_octet_stream(self):
@@ -8503,11 +8505,11 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, self.spatial_operation_names)
+        self.assertListEqual(supported_operations_names, [])
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_ewkt_operation_accept_octet_stream(self):
@@ -8527,11 +8529,11 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, [])
+        self.assertListEqual(supported_operations_names, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_extent_operation_accept_octet_stream(self):
@@ -8575,11 +8577,11 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, [])
+        self.assertListEqual(supported_operations_names, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_geom_type_operation_accept_octet_stream(self):
@@ -8599,7 +8601,7 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, [])
+        self.assertListEqual(supported_operations_names, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], "https://schema.org/Text")
@@ -8716,8 +8718,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, [])
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_hexewkb_operation_accept_octet_stream(self):
@@ -8735,11 +8737,11 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, self.spatial_operation_names)
+        self.assertListEqual(supported_operations_names, [])
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     # todo: GET request for index not working
@@ -8766,8 +8768,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
 
         response_dict = self.aux_get_dict_from_response(response)
         # if there is no intersection between to geometries, intersection operation return a empty GeometryCollection
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#GeometryCollection")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#GeometryCollection")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_intersects_operation_accept_octet_stream(self):
@@ -8816,11 +8818,11 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, [])
+        self.assertListEqual(supported_operations_names, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#geometry")
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_kml_operation_accept_octet_stream(self):
@@ -8840,7 +8842,7 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, [])
+        self.assertListEqual(supported_operations_names, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], "https://schema.org/Text")
@@ -8995,7 +8997,7 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#Point")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#Point")
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_relate_operation_accept_octet_stream(self):
@@ -9016,7 +9018,7 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, [])
+        self.assertListEqual(supported_operations_names, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], "https://schema.org/Text")
@@ -9114,8 +9116,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#geometry")
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_srid_operation_accept_octet_stream(self):
@@ -9185,8 +9187,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#GeometryCollection")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#GeometryCollection")
+        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#geometry")
+        self.assertEquals(response_dict["@type"], "https://schema.org/Thing")
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_touches_operation_accept_octet_stream(self):
@@ -9232,8 +9234,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#geometry")
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_union_operation_accept_octet_stream(self):
@@ -9255,8 +9257,8 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(supported_operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#geometry")
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_valid_operation_accept_octet_stream(self):
@@ -9300,7 +9302,7 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, [])
+        self.assertListEqual(supported_operations_names, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], "https://schema.org/Text")
@@ -9347,11 +9349,11 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, self.spatial_operation_names)
+        self.assertListEqual(supported_operations_names, [])
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     def test_options_feature_resource_wkt_operation_accept_octet_stream(self):
@@ -9371,11 +9373,11 @@ class OptionsFeatureResourceTest(AbstractOptionsRequestTest):
         self.assertListEqual(subClassOf_acontext_keys, self.keys_from_attrs_context)
 
         supported_operations_names = self.aux_get_supported_operations_names(response)
-        self.assertListEqual(supported_operations_names, [])
+        self.assertListEqual(supported_operations_names, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#MultiPolygon")
-        self.assertEquals(response_dict["@type"], "https://purl.org/geojson/vocab#MultiPolygon")
+        self.assertEquals(response_dict["@id"], "https://purl.org/geojson/vocab#geometry")
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], self.hydra_class_resource)
 
     # todo: x is an operation that works only for Point objects
@@ -10886,8 +10888,8 @@ class RequestOptionsTest(AbstractOptionsRequestTest):
         self.assertListEqual(operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], 'https://purl.org/geojson/vocab#MultiPolygon')
-        self.assertEquals(response_dict["@type"], 'https://purl.org/geojson/vocab#MultiPolygon')
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], GEOJSONLD_VOCAB_GEOMETRY)
         self.assertEquals(response_dict['subClassOf'], self.hydra_class_resource)
 
     def test_options_for_feature_resource_operation_with_geometry_return_accept_header(self):
@@ -10908,8 +10910,8 @@ class RequestOptionsTest(AbstractOptionsRequestTest):
         self.assertListEqual(operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], 'https://purl.org/geojson/vocab#MultiPolygon')
-        self.assertEquals(response_dict["@type"], 'https://purl.org/geojson/vocab#MultiPolygon')
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict['subClassOf'], self.hydra_class_resource)
 
     def test_options_for_feature_resource_area_operation(self):
@@ -10932,7 +10934,7 @@ class RequestOptionsTest(AbstractOptionsRequestTest):
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], 'https://schema.org/Float')
-        self.assertEquals(response_dict["@type"], 'https://schema.org/Thing')
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict['subClassOf'], self.hydra_class_resource)
 
     def test_options_for_feature_resource_area_operation_accept_octet_stream(self):
@@ -10999,7 +11001,7 @@ class RequestOptionsTest(AbstractOptionsRequestTest):
 
         response_dict = self.aux_get_dict_from_response(response)
         self.assertEquals(response_dict["@id"], 'https://purl.org/geojson/vocab#Point')
-        self.assertEquals(response_dict["@type"], 'https://purl.org/geojson/vocab#Point')
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict['subClassOf'], self.hydra_class_resource)
 
     # --------------- TESTS FOR NON SPATIAL RESOURCE ---------------------------------
@@ -11392,8 +11394,8 @@ class GetRequestContextTest(AbstractOptionsRequestTest):
         self.assertListEqual(operations_names, self.spatial_operation_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], 'https://purl.org/geojson/vocab#MultiPolygon')
-        self.assertEquals(response_dict["@type"], 'https://purl.org/geojson/vocab#MultiPolygon')
+        self.assertEquals(response_dict["@id"], GEOJSONLD_VOCAB_GEOMETRY)
+        self.assertEquals(response_dict["@type"], GEOJSONLD_VOCAB_GEOMETRY)
         self.assertEquals(response_dict["subClassOf"], 'hydra:Resource')
 
     def test_suffixed_request_to_feature_resource_point_on_surface_operation(self):
@@ -12015,8 +12017,8 @@ class OptionsFeatureResourceAsImageTest(AbstractOptionsRequestTest):
         self.assertEquals(supported_operations, self.string_operations_names)
 
         response_dict = self.aux_get_dict_from_response(response)
-        self.assertEquals(response_dict["@id"], "https://schema.org/name")
-        self.assertEquals(response_dict["@type"], "https://schema.org/Text")
+        self.assertEquals(response_dict["@id"], "https://schema.org/Text")
+        self.assertEquals(response_dict["@type"], SCHEMA_THING)
         self.assertEquals(response_dict["subClassOf"], "hydra:Resource")
 
 # python manage.py test hyper_resource.tests.SpatialMachineStateTest --testrunner=hyper_resource.tests.NoDbTestRunner
@@ -12049,4 +12051,4 @@ class SpatialMachineStateTest(SimpleTestCase):
         self.assertEquals(self.feature_resource.operation_controller.state_machine("valid_reason/count/e"), int)
 
     def test_feature_resource_operations_with_url(self):
-        self.assertEquals(self.feature_resource.operation_controller.state_machine("contains/" + HOST + "api/bcim/unidades-federativas/ES/"), bool)
+        self.assertEquals(self.feature_resource.operation_controller.state_machine("contains/http://" + HOST + "api/bcim/unidades-federativas/ES"), bool)
