@@ -16,9 +16,11 @@ If the these dependencies ins't installed you can download the hyper_resource_py
 $ pip install -r requirements.txt
 
 And to install Hyper Resource
+
 $ python setup.py install
 
 If the some of the previous commands require privileges try to run the follow command
+
 $ pip install --user
 
 Installing hyper_resource_py
