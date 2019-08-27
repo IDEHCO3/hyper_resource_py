@@ -2,9 +2,10 @@
 Tool to work with apis of level three.
 
 Dependencies
+
 Certify yourself that GDAL is installed and environment variable properly configured. Type gdalinfo --version in your command pronpt, if you seen GDAL version you are ready to proceed
 
-Windows
+on Windows install
 
 Microsoft Visual C++ 14.0
 
