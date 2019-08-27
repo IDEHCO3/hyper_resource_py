@@ -5,6 +5,7 @@ Dependencies
 Certify yourself that GDAL is installed and environment variable properly configured. Type gdalinfo --version in your command pronpt, if you seen GDAL version you are ready to proceed
 
 Windows
+
 Microsoft Visual C++ 14.0
 
 #Generate code by Reverse engineering
