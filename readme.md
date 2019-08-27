@@ -1,12 +1,24 @@
 # hyper_resource_py
 Tool to work with apis of level three.
 
+Dependencies
+Certify yourself that GDAL is installed and environment variable properly configured. Type gdalinfo --version in your command pronpt, if you seen GDAL version you are ready to proceed
+
+Windows
+Microsoft Visual C++ 14.0
+
 #Generate code by Reverse engineering
 
 IMPORTANT:
 Before any procedure, certify yourself that your python installations has the requirements specified in requirements.txt.
-If the these dependencies ins't installed you can download the hyper_resource_py project and run the follow command on the terminal, inside the hyper_resource_py folder:
+If the these dependencies ins't installed you can download the hyper_resource_py project and run the follow commands on the terminal, inside the hyper_resource_py folder:
 $ pip install -r requirements.txt
+
+And to install Hyper Resource
+$ python setup.py install
+
+If the some of the previous commands require privileges try to run the follow command
+$ pip install --user
 
 Installing hyper_resource_py
 
