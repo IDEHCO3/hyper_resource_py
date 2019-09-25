@@ -120,29 +120,29 @@ def vocabularyDict():
 
     #collection
     dict['filter'] = 'http://opengis.org/operations/filter'
-    dict['filter'] = 'http://172.30.10.86/api/operations-list/collection-operation-interface-list/1/'
+    dict['filter'] = 'http://ggt-des.ibge.gov.br/api/operations-list/collection-operation-interface-list/1/'
     dict['map'] = 'http://opengis.org/operations/map'
     dict['annotate'] = 'http://opengis.org/operations/annotate'
-    dict['group-by'] = "http://172.30.10.86/api/operations-list/collection-operation-interface-list/6/"
-    dict['group-by-sum'] = 'http://172.30.10.86/api/operations-list/collection-operation-interface-list/10/'
-    dict['group-by-count'] = 'http://172.30.10.86/api/operations-list/collection-operation-interface-list/7/'
-    dict['distinct'] = 'http://172.30.10.86/api/operations-list/collection-operation-interface-list/5/'
-    dict['count-resource'] = 'http://172.30.10.86/api/operations-list/collection-operation-interface-list/count-resource/'
+    dict['group-by'] = "http://ggt-des.ibge.gov.br/api/operations-list/collection-operation-interface-list/6/"
+    dict['group-by-sum'] = 'http://ggt-des.ibge.gov.br/api/operations-list/collection-operation-interface-list/10/'
+    dict['group-by-count'] = 'http://ggt-des.ibge.gov.br/api/operations-list/collection-operation-interface-list/7/'
+    dict['distinct'] = 'http://ggt-des.ibge.gov.br/api/operations-list/collection-operation-interface-list/5/'
+    dict['count-resource'] = 'http://ggt-des.ibge.gov.br/api/operations-list/collection-operation-interface-list/count-resource/'
     dict['resource-quantity'] = "https://schema.org/Integer"
-    dict['collect'] = 'http://172.30.10.86/api/operations-list/collection-operation-interface-list/2/'
-    dict['join'] = 'http://172.30.10.86/api/operations-list/object-operations-interface-list/1/'
-    dict['projection'] = 'http://172.30.10.86/api/operations-list/object-operations-interface-list/2/'
-    dict['make_line'] = 'http://172.30.10.86/api/operations-list/spatial-collection-operation-interface-list/30'
+    dict['collect'] = 'http://ggt-des.ibge.gov.br/api/operations-list/collection-operation-interface-list/2/'
+    dict['join'] = 'http://ggt-des.ibge.gov.br/api/operations-list/object-operations-interface-list/1/'
+    dict['projection'] = 'http://ggt-des.ibge.gov.br/api/operations-list/object-operations-interface-list/2/'
+    dict['make_line'] = 'http://ggt-des.ibge.gov.br/api/operations-list/spatial-collection-operation-interface-list/30'
     dict['count_elements'] = 'http://opengis.org/operations/count_elements'
     #dict['offset_limit'] = 'http://opengis.org/operations/offset_limit'
-    dict['offset-limit'] = "http://172.30.10.86/api/operations-list/collection-operation-interface-list/4"
+    dict['offset-limit'] = "http://ggt-des.ibge.gov.br/api/operations-list/collection-operation-interface-list/4"
     dict['distance_lte'] = 'http://opengis.org/operations/distance_lte'
     #dict['area'] = 'http://opengis.org/operations/area'
-    dict['area'] = "http://172.30.10.86/api/operations-list/spatial-operation-interface-list/77"
+    dict['area'] = "http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list/77"
     #dict['boundary'] = 'http://opengis.org/operations/boundary'
-    dict['boundary'] = 'http://172.30.10.86/api/operations-list/spatial-operation-interface-list/78'
+    dict['boundary'] = 'http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list/78'
     #dict['buffer'] = 'http://opengis.org/operations/buffer'
-    dict['buffer'] = 'http://172.30.10.86/api/operations-list/spatial-operation-interface-list/79'
+    dict['buffer'] = 'http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list/79'
     dict['centroid'] = 'http://opengis.org/operations/centroid'
     dict['contains'] = 'http://opengis.org/operations/contains'
     dict['convex_hull'] = 'http://opengis.org/operations/convex_hull'
@@ -251,31 +251,31 @@ def vocabularyDict():
 
 def OperationVocabularyDict():
     dic = {}
-    #dic[int] = ["http://172.30.10.86/api/operations-list/integer-operations-interface/"]
-    #dic[AutoField] = ["http://172.30.10.86/api/operations-list/integer-operations-interface/"]
-    #dic[IntegerField] = ["http://172.30.10.86/api/operations-list/integer-operations-interface/"]
+    #dic[int] = ["http://ggt-des.ibge.gov.br/api/operations-list/integer-operations-interface/"]
+    #dic[AutoField] = ["http://ggt-des.ibge.gov.br/api/operations-list/integer-operations-interface/"]
+    #dic[IntegerField] = ["http://ggt-des.ibge.gov.br/api/operations-list/integer-operations-interface/"]
 
-    dic[str] = ["http://172.30.10.86/api/operations-list/string-operation-interface-list"]
-    dic['str'] = ["http://172.30.10.86/api/operations-list/string-operation-interface-list"]
-    dic[CharField] = ["http://172.30.10.86/api/operations-list/string-operation-interface-list"]
+    dic[str] = ["http://ggt-des.ibge.gov.br/api/operations-list/string-operation-interface-list"]
+    dic['str'] = ["http://ggt-des.ibge.gov.br/api/operations-list/string-operation-interface-list"]
+    dic[CharField] = ["http://ggt-des.ibge.gov.br/api/operations-list/string-operation-interface-list"]
 
-    dic[date] = ["http://172.30.10.86/api/operations-list/date-operation-interface-list"]
+    dic[date] = ["http://ggt-des.ibge.gov.br/api/operations-list/date-operation-interface-list"]
 
-    dic[GEOSGeometry] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[GeometryField] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[GeometryCollection] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[PointField] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[Point] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[MultiPointField] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[MultiPoint] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[LineStringField] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[LineString] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[MultiLineStringField] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[MultiLineString] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[PolygonField] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[Polygon] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[MultiPolygonField] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
-    dic[MultiPolygon] = ["http://172.30.10.86/api/operations-list/spatial-operation-interface-list"]
+    dic[GEOSGeometry] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[GeometryField] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[GeometryCollection] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[PointField] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[Point] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[MultiPointField] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[MultiPoint] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[LineStringField] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[LineString] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[MultiLineStringField] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[MultiLineString] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[PolygonField] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[Polygon] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[MultiPolygonField] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
+    dic[MultiPolygon] = ["http://ggt-des.ibge.gov.br/api/operations-list/spatial-operation-interface-list"]
 
     return dic
 
