@@ -9,15 +9,21 @@ from hyper_resource.models import EntryPointResourceOperationController
 from hyper_resource.resources.AbstractCollectionResource import AbstractCollectionResource
 from hyper_resource.resources.AbstractResource import CORS_ALLOW_HEADERS, CORS_EXPOSE_HEADERS, AbstractResource, \
     RequiredObject, HYPER_RESOURCE_CONTENT_TYPE
-
+from hyper_resource.utils import *
 
 class AbstractEntryPointResource(AbstractCollectionResource):
 
     def __init__(self):
         super(AbstractCollectionResource, self).__init__()
+        self.http_allowed_methods = SAFE_METHODS
         self.operation_controller = EntryPointResourceOperationController()
 
-    def default_resource_representation(self):
+    def dispatch(self, request, *args, **kwargs):
+        response = super(AbstractEntryPointResource, self).dispatch(request, *args, **kwargs)
+        self.set_secure_allowed_methods(response)
+        return response
+
+    def default_resource_type(self):
         return 'EntryPoint'
         #return 'https://www.hydra-cg.com/spec/latest/core/#hydra:entrypoint'
 
@@ -135,10 +141,10 @@ class AbstractEntryPointResource(AbstractCollectionResource):
         return res
 
     def required_object_for_simple_path(self, request):
-        return RequiredObject(self.object_model, self.content_type_or_default_content_type(request), self.object_model, 200)
+        return RequiredObject(self.object_model, self.content_type_by_accept(request), self.object_model, 200)
 
     def required_object_for_count_resource_operation(self,request, attributes_functions_str):
-        c_type_by_operation = self.define_content_type_by_operation(request, self.get_operation_name_from_path(attributes_functions_str))
+        c_type_by_operation = self.content_type_for_operation(request, self.remove_last_slash(attributes_functions_str))
         data = {self.operation_controller.count_resource_collection_operation_name: len(self.object_model)}
         return RequiredObject(data, c_type_by_operation, self.object_model, 200)
 
@@ -172,7 +178,7 @@ class AbstractEntryPointResource(AbstractCollectionResource):
         return res
 
     def head(self, request, *args, **kwargs):
-        content_type = self.content_type_or_default_content_type(request)
+        content_type = self.content_type_by_accept(request)
         response = Response(data={}, status=status.HTTP_200_OK, content_type=content_type)
         self.add_cors_headers_in_header(response)
         return self.add_entry_point_links_in_header(request, response)
@@ -194,6 +200,14 @@ class NonSpatialEntryPointResource(AbstractEntryPointResource):
 
 class RasterEntryPointResource(AbstractEntryPointResource):
 
+    def dispatch(self, request, *args, **kwargs):
+        response = super(AbstractCollectionResource, self).dispatch(request, *args, **kwargs)
+
+        attributes_functions_str = self.kwargs.get("attributes_functions", None)
+        if self.is_simple_path(attributes_functions_str):
+            self.set_list_allowed_methods(response)
+        return response
+
     def initialize_context(self):
         self.context_resource = NonSpatialEntryPointResourceContext()
         self.context_resource.resource = self
@@ -204,15 +218,9 @@ class RasterEntryPointResource(AbstractEntryPointResource):
         attributes_functions_str = self.kwargs.get('attributes_functions')
 
         if self.is_simple_path(attributes_functions_str):
-            self.add_allowed_methods(['post'])
             return self.required_object_for_simple_path(request)
 
         res = self.get_required_object_from_method_to_execute(request, attributes_functions_str)
         if res is None:
             return self.required_object_for_invalid_sintax(attributes_functions_str)
         return res
-
-    def head(self, request, *args, **kwargs):
-        if self.is_simple_path(self.kwargs.get('attributes_functions')):
-            self.add_allowed_methods(['post'])
-        return super(RasterEntryPointResource, self).head(request, *args, **kwargs)

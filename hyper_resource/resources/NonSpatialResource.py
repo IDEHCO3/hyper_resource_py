@@ -18,7 +18,7 @@ class NonSpatialResource(AbstractResource):
     def required_object_for_simple_path(self, request):
         # django context object is required when the serializer has HyperlinkedrelatedField
         serializer = self.serializer_class(self.object_model, context={'request': request})
-        return RequiredObject(serializer.data, self.content_type_or_default_content_type(request), self.object_model, 200)
+        return RequiredObject(serializer.data, self.content_type_by_accept(request), self.object_model, 200)
 
     def get_objects_from_join_operation(self, request, attributes_functions_str):
         join_operation = self.build_join_operation(request, attributes_functions_str)
@@ -97,9 +97,9 @@ class NonSpatialResource(AbstractResource):
             return self.required_object_for_invalid_sintax(attributes_functions_str)
         return res
 
-    def define_resource_representation_by_only_attributes(self, request, attributes_functions_str):
-        r_type = self.resource_representation_or_default_resource_representation(request)
-        if r_type != self.default_resource_representation():
+    def resource_type_by_only_attributes(self, request, attributes_functions_str):
+        r_type = self.resource_type_or_default_resource_type(request)
+        if r_type != self.default_resource_type():
             return r_type
 
         attrs_functs_arr = self.remove_last_slash(attributes_functions_str).split(',')
@@ -107,7 +107,7 @@ class NonSpatialResource(AbstractResource):
             # the field type has priority over default resource type
             return type(self.field_for(attrs_functs_arr[0]))
 
-        return self.default_resource_representation()
+        return self.default_resource_type()
 
     def options(self, request, *args, **kwargs):
         required_object = self.basic_options(request, *args, **kwargs)
@@ -118,8 +118,3 @@ class NonSpatialResource(AbstractResource):
             response = Response(data={"This request is not supported": self.kwargs.get("attributes_functions", None)},
                                 status=required_object.status_code)
         return response
-
-    def head(self, request, *args, **kwargs):
-        if self.is_simple_path(self.kwargs.get('attributes_functions')):
-            self.add_allowed_methods(['delete', 'put'])
-        return super(NonSpatialResource, self).head(request, *args, **kwargs)

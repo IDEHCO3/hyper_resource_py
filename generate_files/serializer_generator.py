@@ -10,6 +10,9 @@ from django.contrib.gis.db.models.fields import GeometryField
 from hyper_resource.models import FeatureModel
 from importlib import import_module, reload
 
+#if sys.version_info[0] >=3:
+#    from importlib import reload
+
 
 def is_spatial(model_class):
     for field in model_class._meta.get_fields():

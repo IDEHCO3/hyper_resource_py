@@ -34,6 +34,7 @@ from hyper_resource.models import FactoryComplexQuery, BusinessModel, ConverterT
 from image_generator.img_generator import BuilderPNG
 from user_management.models import HyperUser
 
+'''
 #SECRET_KEY = '-&t&pd%%((qdof5m#=cp-=-3q+_+pjmu(ru_b%e+6u#ft!yb$$'
 SECRET_KEY = '!ijb)p^wxprqdccf7*kxzu6l^&sf%_+w@!$6e#yl^^47i3j0f6asdfg' # SECRET_KEY from user_management.models
 
@@ -98,6 +99,9 @@ if ENABLE_COMPLEX_REQUESTS:
     print("** Certify that your API isn't using the follow caracter(s) for specific purposes:                                       **")
     print("** '!' (exclamation point)                                                                                               **")
     print ('***************************************************************************************************************************')
+'''
+
+from hyper_resource.utils import *
 
 class IgnoreClientContentNegotiation(BaseContentNegotiation):
     def select_parser(self, request, parsers):
@@ -145,12 +149,14 @@ class AbstractResource(APIView):
         self.iri_style = ''
         self.operation_controller = BaseOperationController()
         self.e_tag = None
-        self.temporary_content_type = None
         self.is_entry_point = False
-        self.http_allowed_methods = ['get', 'head', 'options']
+        self.http_allowed_methods = ELEMENT_METHODS
 
     # Indicates which is the content negotiation class
     content_negotiation_class = IgnoreClientContentNegotiation
+
+    def get_content_types_for_resource(self):
+        return [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM]
 
     def cache_enabled(self):
         return False
@@ -167,7 +173,7 @@ class AbstractResource(APIView):
     def hashed_value(self, request, serialized_data):
         #resource_hash = hashlib.sha1(json.dumps(serialized_data).encode()).hexdigest()
         resource_hash = hashlib.sha1(str(serialized_data).encode()).hexdigest()
-        resource_hash = resource_hash + "." + self.content_type_or_default_content_type(request)
+        resource_hash = resource_hash + "." + self.content_type_by_accept(request)
         self.e_tag = resource_hash
         return resource_hash
 
@@ -264,18 +270,24 @@ class AbstractResource(APIView):
         if self.is_entry_point:
             self.add_url_in_header(iri_base, response, rel='http://schema.org/EntryPoint')
 
+    '''
     def add_allowed_methods(self, methods):
         for method in methods:
             if method not in self.http_allowed_methods:
                 self.http_allowed_methods.append(method)
+    '''
 
+    '''
     def remove_allowed_methods(self, methods):
         for method in methods:
             if method in self.http_allowed_methods:
                 self.http_allowed_methods.remove(method)
+    '''
 
+    '''
     def clear_allowed_methods(self):
         self.http_allowed_methods.clear()
+    '''
 
     def token_has_permission(self, request, a_token):
         payload = jwt.decode(a_token, SECRET_KEY, algorithm=self.jwt_algorithm())
@@ -314,7 +326,19 @@ class AbstractResource(APIView):
                 return a_token
         return None
 
+    def set_secure_allowed_methods(self, response):
+        safe_methods_str = ", ".join(SAFE_METHODS)
+        response._headers["access-control-allow-methods"] = ("access-control-allow-methods", safe_methods_str)
+        response._headers["allow"] = ("allow", safe_methods_str)
+
+    def set_element_allowed_methods(self, response):
+        element_methods_str = ", ".join(ELEMENT_METHODS)
+        response._headers["access-control-allow-methods"] = ("access-control-allow-methods", element_methods_str)
+        response._headers["allow"] = ("allow", element_methods_str)
+
     def dispatch(self, request, *args, **kwargs):
+        attributes_functions_str = self.kwargs.get("attributes_functions", None)
+
         if not self.request_forward(request):
             return HttpResponse(
                 json.dumps({'token is not ok or inexistent': 'not enough permission for this operation'}),
@@ -324,20 +348,32 @@ class AbstractResource(APIView):
 
         if not self.token_is_need():
             response = super(AbstractResource, self).dispatch(request, *args, **kwargs)
-            response['allow'] = self.access_control_allow_methods_str()
+            if self.is_simple_path(attributes_functions_str):
+                self.set_element_allowed_methods(response)
+            else:
+                self.set_secure_allowed_methods(response)
             return response
 
         if self.get_token_or_none(request):
-            return super(AbstractResource, self).dispatch(request, *args, **kwargs)
+            response = super(AbstractResource, self).dispatch(request, *args, **kwargs)
+            if self.is_simple_path(attributes_functions_str):
+                self.set_element_allowed_methods(response)
+            else:
+                self.set_secure_allowed_methods(response)
+            return response
 
-        resp = HttpResponse(
+        response = HttpResponse(
             json.dumps({'token': 'token is needed or it is not ok'}),
             status=status.HTTP_401_UNAUTHORIZED,
             content_type=CONTENT_TYPE_JSON
         )
 
-        resp['WWW-Authenticate'] = 'Bearer realm="Access to the staging site"'
-        return resp
+        response['WWW-Authenticate'] = 'Bearer realm="Access to the staging site"'
+        if self.is_simple_path(attributes_functions_str):
+            self.set_element_allowed_methods(response)
+        else:
+            self.set_secure_allowed_methods(response)
+        return response
 
     # @abstractmethod
     # Could be override
@@ -350,8 +386,8 @@ class AbstractResource(APIView):
         self.context_resource.resource = self
 
     def required_context_for_simple_path(self, request):
-        resource_representation = self.resource_representation_or_default_resource_representation(request)
-        return RequiredObject(self.context_resource.context(resource_representation), HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
+        resource_type = self.resource_type_or_default_resource_type(request)
+        return RequiredObject(self.context_resource.context(resource_type), HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_only_attributes(self, request, attributes_functions_str):
         context = self.get_context_by_only_attributes(request, attributes_functions_str)
@@ -371,10 +407,10 @@ class AbstractResource(APIView):
 
     def get_context_by_only_attributes(self, request, attributes_functions_str):
         attrs_list = self.remove_last_slash(attributes_functions_str).split(",")
-        resource_representation = self.define_resource_representation_by_only_attributes(request, attributes_functions_str)
+        resource_type = self.resource_type_by_only_attributes(request, attributes_functions_str)
         context = {
             "@context": self.context_resource.attributes_term_definition_context_dict(attrs_list),
-            "hydra:supportedOperations": self.context_resource.supportedOperationsFor(self.object_model, resource_representation)
+            "hydra:supportedOperations": self.context_resource.supportedOperationsFor(self.object_model, resource_type)
         }
 
         return_type_by_attributes = self.return_type_by_only_attributes(attributes_functions_str)
@@ -383,12 +419,12 @@ class AbstractResource(APIView):
 
     def get_context_for_operation(self, request, attributes_functions_str):
         operation_name = self.get_operation_name_from_path(attributes_functions_str)
-        resource_representation_by_operation = self.define_resource_representation_from_method_to_execute(request, attributes_functions_str)
+        resource_type_by_operation = self.define_resource_type_from_method_to_execute(request, attributes_functions_str)
         operation_return_type = self.execute_method_to_get_return_type_from_operation(attributes_functions_str)
 
         context = self.context_resource.get_resource_id_and_type_by_operation_return_type(operation_name, operation_return_type)
         context['@context'] = self.context_resource.get_subClassOf_term_definition()
-        context['hydra:supportedOperations'] = self.context_resource.supportedOperationsFor(self.object_model, resource_representation_by_operation)
+        context['hydra:supportedOperations'] = self.context_resource.supportedOperationsFor(self.object_model, resource_type_by_operation)
         return context
 
     def get_context_for_projection_operation(self, request, attributes_functions_str):
@@ -407,10 +443,11 @@ class AbstractResource(APIView):
         response = RequiredObject(image, CONTENT_TYPE_IMAGE_PNG, 200, etag)
         return response
 
-    def required_object_for_only_attributes(self, request, attributes_functions_str):
-        object = self.get_object_by_only_attributes(attributes_functions_str)
-        serialized_data = self.get_object_serialized_by_only_attributes(attributes_functions_str, object)
-        return RequiredObject(serialized_data, self.content_type_or_default_content_type(request), object, 200)
+    def required_object_for_only_attributes(self, request, attributes_str):
+        object = self.get_object_by_only_attributes(attributes_str)
+        serialized_data = self.get_object_serialized_by_only_attributes(attributes_str, object)
+        #return RequiredObject(serialized_data, self.content_type_by_accept(request), object, 200)
+        return RequiredObject(serialized_data, self.content_type_by_attributes(request, attributes_str), object, 200)
 
     # todo
     def path_request_is_ok(self, a_path):
@@ -508,58 +545,59 @@ class AbstractResource(APIView):
     def default_content_type(self):
         return CONTENT_TYPE_JSON
 
-    def default_resource_representation(self):
+    def default_resource_type(self):
         return object
 
-    def define_resource_representation_by_only_attributes(self, request, attributes_functions_str):
-        raise NotImplementedError("'define_resource_representation_by_only_attributes' must be implemented in subclasses")
+    def resource_type_by_only_attributes(self, request, attributes_functions_str):
+        raise NotImplementedError("'define_resource_type_by_only_attributes' must be implemented in subclasses")
 
-    def define_resource_representation_by_operation(self, request, attributes_functions_str):
-        resource_representation_by_accept = self.resource_representation_or_default_resource_representation(request)
-        if resource_representation_by_accept != self.default_resource_representation():
-            return resource_representation_by_accept
+    def resource_type_by_operation(self, request, attributes_functions_str):
+        resource_type_by_accept = self.resource_type_or_default_resource_type(request)
+        if resource_type_by_accept != self.default_resource_type():
+            return resource_type_by_accept
         return self.execute_method_to_get_return_type_from_operation(attributes_functions_str)
-        #raise NotImplementedError("'define_resource_representation_by_operation' must be implemented in subclasses")
 
-    def define_content_type_by_only_attributes(self, request, attributes_functions_str):
-        return self.content_type_or_default_content_type(request)
-        #raise NotImplementedError("'define_content_type_by_only_attributes' must be implemented in subclasses")
+    def content_type_by_attributes(self, request, attributes_str):
+        contype_accept = self.content_type_by_accept(request)
+        if contype_accept in [CONTENT_TYPE_OCTET_STREAM, CONTENT_TYPE_JSON]:
+            return contype_accept
+        return CONTENT_TYPE_JSON
 
-    def define_content_type_by_operation(self, request, operation_name):
-        return self.content_type_or_default_content_type(request)
-        #raise NotImplementedError("'define_content_type_by_operation' must be implemented in subclasses")
+    '''
+    def content_type_by_operation(self, request, operation_name):
+        return self.content_type_by_accept(request)
+    '''
 
-    def content_type_or_default_content_type(self, request):
+    def content_type_by_accept(self, request):
         if request is None:
             return self.default_content_type()
 
         a_content_type = request.META.get(HTTP_ACCEPT, '')
 
-        if a_content_type not in SUPPORTED_CONTENT_TYPES:
+        if a_content_type not in self.get_content_types_for_resource():
             return self.default_content_type()
 
         return a_content_type
 
-    def dict_by_accept_resource_representation(self):
+    def dict_by_accept_resource_type(self):
         dicti = {
             CONTENT_TYPE_OCTET_STREAM: bytes
         }
-
         return dicti
 
-    def resource_representation_by_accept_header(self, accept):
-        return self.dict_by_accept_resource_representation()[accept] if accept in self.dict_by_accept_resource_representation() else None
+    def resource_type_by_accept_header(self, accept):
+        return self.dict_by_accept_resource_type()[accept] if accept in self.dict_by_accept_resource_type() else None
 
-    def resource_representation_or_default_resource_representation(self, request):
+    def resource_type_or_default_resource_type(self, request):
         if request is None:
-            return self.default_resource_representation()
+            return self.default_resource_type()
 
         accept = request.META.get(HTTP_ACCEPT, '')
 
-        if accept not in SUPPORTED_CONTENT_TYPES:
-            return self.default_resource_representation()
+        if accept not in self.get_content_types_for_resource():
+            return self.default_resource_type()
 
-        return self.resource_representation_by_accept_header(accept)
+        return self.resource_type_by_accept_header(accept)
 
     # Answer if a client's etag is equal server's etag
     def conditional_etag_match(self, request):
@@ -583,7 +621,7 @@ class AbstractResource(APIView):
         if a_content_type:
             return self.request.build_absolute_uri() + a_content_type
 
-        return self.request.build_absolute_uri() + self.content_type_or_default_content_type(request)
+        return self.request.build_absolute_uri() + self.content_type_by_accept(request)
 
     def set_key_with_data_in_cache(self, key, etag, data, seconds=3600):
         if isinstance(data, memoryview) or not self.cache_enabled():
@@ -600,7 +638,7 @@ class AbstractResource(APIView):
         return cache.get(key)
 
     def is_image_content_type(self, request, **kwargs):
-        return self.content_type_or_default_content_type(request) == CONTENT_TYPE_IMAGE_PNG or kwargs.get(
+        return self.content_type_by_accept(request) == CONTENT_TYPE_IMAGE_PNG or kwargs.get(
             'format') == 'png' or request.build_absolute_uri().endswith(".png")
 
     def accept_is_binary(self, request):
@@ -669,7 +707,7 @@ class AbstractResource(APIView):
 
             else:
                 resp = Response(data=tuple_etag_serialized_data[1], status=200,
-                                content_type=self.content_type_or_default_content_type(request))
+                                content_type=self.content_type_by_accept(request))
 
             self.set_etag_in_header(resp, tuple_etag_serialized_data[0])
 
@@ -698,13 +736,6 @@ class AbstractResource(APIView):
         if status in [500]:
             return Response({'Error ': 'The server can not process this request. Status:' + str(status)}, status=status)
 
-        '''
-        if self.is_image_content_type(request, **kwargs):
-            response = self.response_base_get_with_image(request, required_object)
-            self.set_etag_in_header(response, self.e_tag)
-            return response
-        '''
-
         if self.required_object_is_image(required_object):
             return HttpResponse(required_object.representation_object, status=200, content_type=CONTENT_TYPE_IMAGE_PNG)
 
@@ -726,7 +757,7 @@ class AbstractResource(APIView):
 
     # Should be overridden
     def response_conditional_get(self, request, *args, **kwargs):
-        a_content_type = self.content_type_or_default_content_type(request)
+        a_content_type = self.content_type_by_accept(request)
 
         if self.conditional_etag_match(request):
             return Response(data={}, status=304, content_type=a_content_type)
@@ -831,12 +862,12 @@ class AbstractResource(APIView):
     def define_head_content_type(self, request, attributes_functions_str):
         self.object_model = self.model_class()()
         if self.is_simple_path(attributes_functions_str):
-            return self.content_type_or_default_content_type(request)
+            return self.content_type_by_accept(request)
         if self.path_has_only_attributes(attributes_functions_str):
-            return self.define_content_type_by_only_attributes(request, attributes_functions_str)
+            return self.content_type_by_attributes(request, attributes_functions_str)
 
         operation_name = self.get_operation_name_from_path(attributes_functions_str)
-        return self.define_content_type_by_operation(request, operation_name)
+        return self.content_type_for_operation(request, operation_name)
 
     def basic_options(self, request, *args, **kwargs):
         self.object_model = self.model_class()()
@@ -844,7 +875,6 @@ class AbstractResource(APIView):
         attributes_functions_str = self.kwargs.get("attributes_functions", None)
 
         if self.is_simple_path(attributes_functions_str):
-            self.add_allowed_methods(['delete', 'put'])
             return self.required_context_for_simple_path(request)
         if self.path_has_only_attributes(attributes_functions_str):
             return self.required_context_for_only_attributes(request, attributes_functions_str)
@@ -1090,11 +1120,69 @@ class AbstractResource(APIView):
 
         return self._execute_attribute_or_method(obj, array_of_attribute_or_method_name[0], array_of_attribute_or_method_name[1:])
 
+    def default_value_for_field(self, field):
+        values_dict = {
+            str: "",
+            CharField: "",
+            IntegerField: 0,
+            FloatField: 0.0,
+            AutoField: 0,
+            ForeignKey: 0
+        }
+        return values_dict[field]
+
+    def get_operation_return_type(self, object, attribute_or_method_name, array_of_attribute_or_method_name):
+        parameters = []
+
+        if self.operation_controller.is_operation(object, attribute_or_method_name):
+            if self.operation_controller.operation_has_parameters(object, attribute_or_method_name):
+                parameters = array_of_attribute_or_method_name[0].split(PARAM_SEPARATOR) if len(
+                    array_of_attribute_or_method_name) > 0 else []
+                array_of_attribute_or_method_name = array_of_attribute_or_method_name[1:]
+
+        result = self.return_type_for_operation(object, attribute_or_method_name, parameters)
+
+        if len(array_of_attribute_or_method_name) == 0:
+            return result
+
+        if inspect.isclass(result):
+            obj = self.default_value_for_field(result)
+        else:
+            obj = result
+        return self.get_operation_return_type(obj, array_of_attribute_or_method_name[0], array_of_attribute_or_method_name[1:])
+
+    def return_type_for_operation(self, object, attribute_or_function_name, parameters):
+        attribute_or_function_name_striped = self.remove_last_slash(attribute_or_function_name)
+        self.name_of_last_operation_executed = attribute_or_function_name_striped
+
+        if self.is_attribute_for(object, attribute_or_function_name):
+            return type(self.field_for(attribute_or_function_name))
+            #return self.get_operation_type_called(attribute_or_function_name_striped).return_type
+        return self.get_operation_type_called(attribute_or_function_name_striped).return_type
+
+        # retornar return type do type called referente a operação em questao
+        # para o python isto é um atributo mais para interface do hyper resource isto é uma operação (como area por exemplo)
+
+        '''
+        if len(parameters) > 0:
+
+            if isinstance(object, BusinessModel) or isinstance(object, GEOSGeometry):
+                params = self.all_parameters_converted(attribute_or_function_name_striped, parameters)
+
+            else:
+                params = ConverterType().convert_parameters(type(object), attribute_or_function_name, parameters)
+
+            return self.get_operation_type_called(attribute_or_function_name_striped).return_type
+
+        return self.get_operation_type_called(attribute_or_function_name_striped).return_type
+        '''
+
     def array_of_operation_name(self):
         return list(self.operation_controller.dict_all_operation_dict().keys())
 
     def get_operation_type_called(self, attributes_functions_str):
-        raise NotImplementedError("'get_operation_type_called' must be implemented in subclasses")
+        operation_name = self.get_operation_name_from_path(attributes_functions_str)
+        return self.operation_controller.dict_all_operation_dict()[operation_name]
 
     def get_operation_name_from_path(self, attributes_functions_str):
         arr_att_funcs = self.remove_last_slash(attributes_functions_str).lower().split('/')
@@ -1133,9 +1221,9 @@ class AbstractResource(APIView):
             return None
         return method_to_execute(attributes_functions_str)
 
-    def define_resource_representation_from_method_to_execute(self, request, attributes_functions_str):
+    def define_resource_type_from_method_to_execute(self, request, attributes_functions_str):
         operation_name = self.get_operation_name_from_path(attributes_functions_str)
-        method_to_execute = self.get_resource_representation_from_operation(operation_name)
+        method_to_execute = self.get_resource_type_from_operation(operation_name)
         if method_to_execute is None:
             return None
         return method_to_execute(*[request, attributes_functions_str])
@@ -1378,13 +1466,13 @@ class AbstractResource(APIView):
 
     def required_object_for_complex_request(self, request):
         response = self.execute_complex_request(request)
-        return RequiredObject(json.loads(response.json), self.content_type_or_default_content_type(request), self, 200)
+        return RequiredObject(json.loads(response.json), self.content_type_by_accept(request), self, 200)
 
     # must be overrided
     def required_object_for_join_operation(self, request, attributes_functions_str):
         join_objects_or_None = self.get_objects_from_join_operation(request, attributes_functions_str)
         if join_objects_or_None:
-            return RequiredObject(join_objects_or_None, self.content_type_or_default_content_type(request), self, 200)
+            return RequiredObject(join_objects_or_None, self.content_type_by_accept(request), self, 200)
 
         join_oper_uri = self.split_join_uri(request, attributes_functions_str)
         message = join_oper_uri[0] + " isn't joinable with " + join_oper_uri[2]
@@ -1397,7 +1485,7 @@ class AbstractResource(APIView):
         projection_attrs_str = self.extract_projection_attributes(attributes_functions_str, as_string=True)
         object = self.get_object_by_only_attributes(projection_attrs_str)
         serialized_data = self.get_object_serialized_by_only_attributes(projection_attrs_str, object)
-        content_type = self.define_content_type_by_only_attributes(request, projection_attrs_str)
+        content_type = self.content_type_by_attributes(request, projection_attrs_str)
         return RequiredObject(serialized_data, content_type, object, 200)
 
     def get_objects_from_join_operation(self, request, attributes_functions_str):
@@ -1452,6 +1540,43 @@ class AbstractResource(APIView):
 
         return (uri_before_oper, join_attrs, uri_after_oper)
 
+    def default_content_type_for(self, resource_type):
+        #if resource_type in [bool]:
+        #    return CONTENT_TYPE_OCTET_STREAM
+        return CONTENT_TYPE_JSON
+
+    def resource_type_content_type_dict(self):
+        return {
+            int:        [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM],
+            float:      [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM],
+            str:        [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM],
+            bool:       [CONTENT_TYPE_OCTET_STREAM],
+            bytes:      [CONTENT_TYPE_OCTET_STREAM],
+            tuple:      [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM],
+            CharField:  [CONTENT_TYPE_JSON, CONTENT_TYPE_OCTET_STREAM]
+        }
+
+    def available_content_types_for(self, resource_type):
+        if resource_type in self.resource_type_content_type_dict():
+            return self.resource_type_content_type_dict()[resource_type]
+        return []
+
+    def content_type_for_operation(self, request, attributes_functions_str):
+        attributes_functions_str = self.remove_last_slash(attributes_functions_str)
+        contype_accept = self.content_type_by_accept(request)
+        if self.path_has_url(attributes_functions_str):
+            attrs_fucs_arr = self.attribute_functions_str_with_url_splitted_by_slash(attributes_functions_str)
+        else:
+            attrs_fucs_arr = self.remove_last_slash(attributes_functions_str).split("/")
+
+        # todo: use self.object_model or a simple object (with CharFields setted to "" and IntegerFields setted to 1)
+        result = self.get_operation_return_type(self.object_model, attrs_fucs_arr[0], attrs_fucs_arr[1:])
+
+        result_type = result if inspect.isclass(result) else type(result)
+        if contype_accept in self.available_content_types_for(result_type):
+            return contype_accept
+        return self.default_content_type_for(result_type)
+
     # Responds a method to be executed.
     def get_operation_to_execute(self, operation_name):
         d = self.operation_name_method_dic()
@@ -1477,8 +1602,8 @@ class AbstractResource(APIView):
 
         return d[operation_name]
 
-    def get_resource_representation_from_operation(self, operation_name):
-        d = self.operation_name_resource_representation_dic()
+    def get_resource_type_from_operation(self, operation_name):
+        d = self.operation_name_resource_type_dic()
 
         if operation_name is None:
             return None
@@ -1488,27 +1613,27 @@ class AbstractResource(APIView):
     # Must be overrided
     def operation_name_method_dic(self):
         d = {
-            self.operation_controller.join_operation_name: self.required_object_for_join_operation,
-            self.operation_controller.projection_operation_name: self.required_object_for_projection_operation
+            self.operation_controller.join_operation_name:          self.required_object_for_join_operation,
+            self.operation_controller.projection_operation_name:    self.required_object_for_projection_operation
         }
         return d
 
     def operation_name_context_dic(self):
         return {
-            self.operation_controller.join_operation_name: self.required_context_for_join_operation,
-            self.operation_controller.projection_operation_name: self.required_context_for_projection_operation
+            self.operation_controller.join_operation_name:          self.required_context_for_join_operation,
+            self.operation_controller.projection_operation_name:    self.required_context_for_projection_operation
         }
 
     def operation_name_return_type_dic(self):
         return {
-            self.operation_controller.join_operation_name: self.return_type_for_join_operation,
-            self.operation_controller.projection_operation_name: self.return_type_for_projection_operation
+            self.operation_controller.join_operation_name:          self.return_type_for_join_operation,
+            self.operation_controller.projection_operation_name:    self.return_type_for_projection_operation
         }
 
-    def operation_name_resource_representation_dic(self):
+    def operation_name_resource_type_dic(self):
         return {
-            self.operation_controller.join_operation_name: self.define_resource_representation_by_operation,
-            self.operation_controller.projection_operation_name: self.define_resource_representation_by_operation
+            self.operation_controller.join_operation_name:          self.resource_type_by_operation,
+            self.operation_controller.projection_operation_name:    self.resource_type_by_operation
         }
 
     def projection_operation_sintax_is_ok(self, attributes_functions_str):

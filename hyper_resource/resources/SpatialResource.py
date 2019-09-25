@@ -5,12 +5,14 @@ from django.contrib.gis.geos import GEOSGeometry, GeometryCollection
 
 from rest_framework.response import Response
 
+from hyper_resource.models import SpatialOperationController
 from hyper_resource.resources.AbstractResource import AbstractResource
 
 
 class SpatialResource(AbstractResource):
     def __init__(self):
         super(SpatialResource, self).__init__()
+        self.operation_controller = SpatialOperationController()
         self.iri_style = ''
 
     def spatial_field_name(self):
@@ -74,8 +76,3 @@ class SpatialResource(AbstractResource):
             response = Response(data={"This request is not supported": self.kwargs.get("attributes_functions", None)},
                                 status=required_object.status_code)
         return response
-
-    def head(self, request, *args, **kwargs):
-        if self.is_simple_path(self.kwargs.get('attributes_functions')):
-            self.add_allowed_methods(['delete', 'put'])
-        return super(SpatialResource, self).head(request, *args, **kwargs)

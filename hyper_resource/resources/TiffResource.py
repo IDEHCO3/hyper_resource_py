@@ -18,66 +18,88 @@ class TiffResource(RasterResource):
     def default_content_type(self):
         return CONTENT_TYPE_IMAGE_TIFF
 
-    def define_content_type_by_only_attributes(self, request, attributes_functions_str):
-        attrs_arr = self.remove_last_slash(attributes_functions_str)
+    def get_content_types_for_resource(self):
+        return [CONTENT_TYPE_IMAGE_TIFF]
+
+    def content_type_by_accept(self, request):
+        if request is None:
+            return self.default_content_type()
+
+        a_content_type = request.META.get(HTTP_ACCEPT, '')
+
+        if a_content_type not in super(TiffResource, self).get_content_types_for_resource():
+            return self.default_content_type()
+
+        return a_content_type
+
+    def content_type_by_attributes(self, request, attributes_str):
+        attrs_arr = self.remove_last_slash(attributes_str)
+        contype_accept = self.content_type_by_accept(request)
+
         if self.spatial_field_name() in attrs_arr:
-            return self.content_type_or_default_content_type(request)
+            return self.default_content_type()
 
-        if self.content_type_or_default_content_type(request) != self.default_content_type():
-           return self.content_type_or_default_content_type(request)
-        return CONTENT_TYPE_JSON
+        if contype_accept in super(TiffResource, self).get_content_types_for_resource():
+            return contype_accept
 
-    def define_content_type_by_operation(self, request, operation_name):
-        operation_type_called = self.operation_controller.dict_all_operation_dict()[operation_name]
-        content_type_by_accept = self.content_type_or_default_content_type(request)
+        return super(TiffResource, self).default_content_type()
 
-        if content_type_by_accept != self.default_content_type():
-            return content_type_by_accept
+    def default_content_type_for(self, resource_type):
+        try:
+            if issubclass(resource_type, GDALRaster):
+                return self.default_content_type()
+        except TypeError:
+            if issubclass(type(resource_type), GDALRaster):
+                return self.default_content_type()
 
-        if issubclass(operation_type_called.return_type, memoryview) or issubclass(operation_type_called.return_type, buffer) or issubclass(operation_type_called.return_type, GDALRaster):
-            return CONTENT_TYPE_IMAGE_TIFF
+        return super(TiffResource, self).default_content_type_for(resource_type)
 
-        if issubclass(operation_type_called.return_type, bytes):
-            return CONTENT_TYPE_OCTET_STREAM
+    '''
+    def content_type_by_operation(self, request, operation_name):
+        operation_retype = self.operation_controller.dict_all_operation_dict()[operation_name].return_type
+        contype_accept = self.content_type_by_accept(request)
+        contypes_oper = self.content_types_by_resource_type(operation_retype)
 
-        return CONTENT_TYPE_JSON
+        if contype_accept in contypes_oper:
+            return contype_accept
 
-    def default_resource_representation(self):
+        return self.default_content_type_by_resource_type(operation_retype)
+    '''
+
+    def default_resource_type(self):
         return 'Tiff'
 
-    def define_resource_representation_by_only_attributes(self, request, attributes_functions_str):
+    def resource_type_by_only_attributes(self, request, attributes_functions_str):
         attrs_arr = self.remove_last_slash(attributes_functions_str).split(",")
-        resource_type_by_accept = self.resource_representation_or_default_resource_representation(request)
+        resource_type_by_accept = self.resource_type_or_default_resource_type(request)
 
-        if resource_type_by_accept != self.default_resource_representation():
+        if resource_type_by_accept != self.default_resource_type():
             return resource_type_by_accept
 
         if self.spatial_field_name() in attrs_arr:
-            return self.default_resource_representation()
+            return self.default_resource_type()
 
         if len(attrs_arr) == 1:
             return type( self.field_for(attrs_arr[0]) )
         return object
 
-    def define_resource_representation_by_operation(self, request, attributes_functions_str):
+    def resource_type_by_operation(self, request, attributes_functions_str):
         operation_return_type = self.execute_method_to_get_return_type_from_operation(attributes_functions_str)
-        res_type_by_accept = self.resource_representation_or_default_resource_representation(request)
+        res_type_by_accept = self.resource_type_or_default_resource_type(request)
 
-        if res_type_by_accept != self.default_resource_representation():
+        if res_type_by_accept != self.default_resource_type():
             return res_type_by_accept
 
         return operation_return_type
 
     def required_object_for_simple_path(self, request):
-        return RequiredObject(self.object_model.vsi_buffer(),  self.content_type_or_default_content_type(request), self.object_model, 200)
+        return RequiredObject(self.object_model.vsi_buffer(), self.content_type_by_accept(request), self.object_model, 200)
 
     def required_object_for_only_attributes(self, request, attributes_functions_str):
         if self.spatial_field_name() in self.remove_last_slash(attributes_functions_str).split(','):
             return self.required_object_for_simple_path(request)
 
-        required_object = super(TiffResource, self).required_object_for_only_attributes(request, attributes_functions_str)
-        required_object.content_type = self.define_content_type_by_only_attributes(request, attributes_functions_str)
-        return required_object
+        return super(TiffResource, self).required_object_for_only_attributes(request, attributes_functions_str)
 
     def get_object_serialized_by_only_attributes(self, attribute_names_str, objects):
         attrs_arr = self.remove_last_slash(attribute_names_str).split(',')
@@ -161,35 +183,35 @@ class TiffResource(RasterResource):
         })
         return dicti
 
-    def operation_name_resource_representation_dic(self):
-        dicti = super(TiffResource, self).operation_name_resource_representation_dic()
+    def operation_name_resource_type_dic(self):
+        dicti = super(TiffResource, self).operation_name_resource_type_dic()
         dicti.update({
-            self.operation_controller.bands_operation_name:         self.define_resource_representation_by_operation,
-            self.operation_controller.destructor_operation_name:    self.define_resource_representation_by_operation,
-            self.operation_controller.driver_operation_name:        self.define_resource_representation_by_operation,
-            self.operation_controller.extent_operation_name:        self.define_resource_representation_by_operation,
-            self.operation_controller.geotransform_operation_name:  self.define_resource_representation_by_operation,
-            self.operation_controller.height_operation_name:        self.define_resource_representation_by_operation,
-            self.operation_controller.info_operation_name:          self.define_resource_representation_by_operation,
-            self.operation_controller.metadata_operation_name:      self.define_resource_representation_by_operation,
-            self.operation_controller.name_operation_name:          self.define_resource_representation_by_operation,
-            self.operation_controller.origin_operation_name:        self.define_resource_representation_by_operation,
-            self.operation_controller.ptr_operation_name:           self.define_resource_representation_by_operation,
-            self.operation_controller.ptr_type_operation_name:      self.define_resource_representation_by_operation,
-            self.operation_controller.scale_operation_name:         self.define_resource_representation_by_operation,
-            self.operation_controller.skew_operation_name:          self.define_resource_representation_by_operation,
-            self.operation_controller.srid_operation_name:          self.define_resource_representation_by_operation,
-            self.operation_controller.srs_operation_name:           self.define_resource_representation_by_operation,
-            self.operation_controller.transform_operation_name:     self.define_resource_representation_by_operation,
-            self.operation_controller.vsi_buffer_operation_name:    self.define_resource_representation_by_operation,
-            self.operation_controller.warp_operation_name:          self.define_resource_representation_by_operation,
-            self.operation_controller.width_operation_name:         self.define_resource_representation_by_operation,
+            self.operation_controller.bands_operation_name:         self.resource_type_by_operation,
+            self.operation_controller.destructor_operation_name:    self.resource_type_by_operation,
+            self.operation_controller.driver_operation_name:        self.resource_type_by_operation,
+            self.operation_controller.extent_operation_name:        self.resource_type_by_operation,
+            self.operation_controller.geotransform_operation_name:  self.resource_type_by_operation,
+            self.operation_controller.height_operation_name:        self.resource_type_by_operation,
+            self.operation_controller.info_operation_name:          self.resource_type_by_operation,
+            self.operation_controller.metadata_operation_name:      self.resource_type_by_operation,
+            self.operation_controller.name_operation_name:          self.resource_type_by_operation,
+            self.operation_controller.origin_operation_name:        self.resource_type_by_operation,
+            self.operation_controller.ptr_operation_name:           self.resource_type_by_operation,
+            self.operation_controller.ptr_type_operation_name:      self.resource_type_by_operation,
+            self.operation_controller.scale_operation_name:         self.resource_type_by_operation,
+            self.operation_controller.skew_operation_name:          self.resource_type_by_operation,
+            self.operation_controller.srid_operation_name:          self.resource_type_by_operation,
+            self.operation_controller.srs_operation_name:           self.resource_type_by_operation,
+            self.operation_controller.transform_operation_name:     self.resource_type_by_operation,
+            self.operation_controller.vsi_buffer_operation_name:    self.resource_type_by_operation,
+            self.operation_controller.warp_operation_name:          self.resource_type_by_operation,
+            self.operation_controller.width_operation_name:         self.resource_type_by_operation,
         })
         return dicti
 
     def required_object_for_transform_operation(self, request, attributes_functions_str):
         object = self.get_object_from_transform_operation(request, attributes_functions_str)
-        content_type = self.define_content_type_by_operation(request, self.operation_controller.transform_operation_name)
+        content_type = self.content_type_for_operation(request, self.operation_controller.transform_operation_name)
         #{self.operation_controller.transform_operation_name: object}
         return RequiredObject(object.vsi_buffer, content_type, self.object_model, 200)
 
@@ -205,38 +227,36 @@ class TiffResource(RasterResource):
     def get_object_from_operation(self, request, attributes_functions_str):
         att_funcs = attributes_functions_str.split('/')
         operation_name = self.get_operation_name_from_path(attributes_functions_str)
-        content_type_by_operation = self.define_content_type_by_operation(request, operation_name)
+        content_type_for_operation = self.content_type_for_operation(request, operation_name)
 
         a_value = self._execute_attribute_or_method(self.object_model, att_funcs[0], att_funcs[1:])
-        #if isinstance(a_value, GDALRaster):
-        #    return RequiredObject( {operation_name: a_value.vsi_buffer} , content_type_by_operation, self.object_model, 200)
 
         if isinstance(a_value, memoryview) or isinstance(a_value, buffer):
-            return RequiredObject( {operation_name: a_value.obj} , content_type_by_operation, self.object_model, 200)
+            return RequiredObject( {operation_name: a_value.obj} , content_type_for_operation, self.object_model, 200)
 
         elif isinstance(a_value, bytes):
-            return RequiredObject(a_value, content_type_by_operation, self.object_model, 200)
+            return RequiredObject(a_value, content_type_for_operation, self.object_model, 200)
 
         elif isinstance(a_value, SpatialReference):
-            return RequiredObject( {operation_name: a_value.wkt} , content_type_by_operation, self.object_model, 200)
+            return RequiredObject( {operation_name: a_value.wkt} , content_type_for_operation, self.object_model, 200)
 
         else:
-            return RequiredObject( {operation_name: a_value} , content_type_by_operation, self.object_model, 200)
+            return RequiredObject( {operation_name: a_value} , content_type_for_operation, self.object_model, 200)
 
     def required_context_for_transform_operation(self, request, attributes_functions_str):
         context = self.get_context_for_transform_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def required_context_for_driver_operation(self, request, attributes_functions_str):
         context = self.get_context_for_driver_operation(request, attributes_functions_str)
-        return RequiredObject(context, CONTENT_TYPE_LD_JSON, self.object_model, 200)
+        return RequiredObject(context, HYPER_RESOURCE_CONTENT_TYPE, self.object_model, 200)
 
     def get_context_by_only_attributes(self, request, attributes_functions_str):
         attrs_list = self.remove_last_slash(attributes_functions_str).split(",")
         if self.spatial_field_name() not in attrs_list:
             return super(TiffResource, self).get_context_by_only_attributes(request, attributes_functions_str)
 
-        resource_representation = self.define_resource_representation_by_only_attributes(request, attributes_functions_str)
+        resource_representation = self.resource_type_by_only_attributes(request, attributes_functions_str)
         context = {
             "@context" :self.context_resource.get_subClassOf_term_definition(),
             'hydra:supportedOperations': self.context_resource.supportedOperationsFor(self.object_model, resource_representation)
@@ -259,7 +279,7 @@ class TiffResource(RasterResource):
     def return_type_by_only_attributes(self, attributes_functions_str):
         attrs = self.remove_last_slash(attributes_functions_str).split(",")
         if self.spatial_field_name() in attrs:
-            return self.default_resource_representation()
+            return self.default_resource_type()
 
         if len(attrs) == 1:
             return object
@@ -402,7 +422,7 @@ class TiffResource(RasterResource):
         #serialized_data = str(serialized_data).encode()
 
         resource_hash = hashlib.sha1(raster_bytes).hexdigest()
-        resource_hash = resource_hash + "." + self.content_type_or_default_content_type(request)
+        resource_hash = resource_hash + "." + self.content_type_by_accept(request)
         return resource_hash
 
     def response_base_get(self, request, *args, **kwargs):
