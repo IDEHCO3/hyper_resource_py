@@ -494,6 +494,9 @@ class FeatureCollectionResource(SpatialCollectionResource):
     def return_type_for_offset_limit_operation(self, attributes_functions_str):
         return FeatureCollection
 
+    def return_type_for_join_operation(self, attributes_functions_str):
+        return FeatureCollection
+
     def return_type_for_distinct_operation(self, attributes_functions_str):
         return FeatureCollection
 
