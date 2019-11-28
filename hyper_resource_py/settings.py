@@ -111,12 +111,12 @@ WSGI_APPLICATION = 'hyper_resource_py.wsgi.application'
 # https://docs.djangoproject.com/en/1.11/ref/settings/#databases
 
 if not 'IP_SGBD' in os.environ:
-    #os.environ['IP_SGBD'] = '127.0.0.1'
-    os.environ['IP_SGBD'] = '172.30.137.117'
+    #os.environ['IP_SGBD'] = '172.30.137.117'
+    os.environ['IP_SGBD'] = 'postgis-bcim'
 
 if not 'PORT_SGBD' in os.environ:
-    #os.environ['PORT_SGBD'] = '2345'
-    os.environ['PORT_SGBD'] = '54322'
+    #os.environ['PORT_SGBD'] = '54322'
+    os.environ['PORT_SGBD'] = '5432'
 
 if not 'DB_NAME' in os.environ:
     #os.environ['DB_NAME'] = 'postgres'
