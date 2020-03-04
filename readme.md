@@ -13,10 +13,10 @@ Microsoft Visual C++ 14.0
 
 IMPORTANT:
 Before any procedure, certify yourself that your python installations has the requirements specified in requirements.txt.
-If the these dependencies ins't installed you can download the hyper_resource_py project and run the follow commands on the terminal, inside the hyper_resource_py folder:
+If the these dependencies ins't installed you can download the hyper_resource_py project and run the follow commands on the terminal, **inside the hyper_resource_py folder**:
 $ pip install -r requirements.txt
 
-And to install Hyper Resource
+And to **install Hyper Resource**
 
 $ python setup.py install
 
@@ -42,11 +42,11 @@ Installing hyper_resource_py
 	
 4. Type the command below and follow the instructions on console
 
-	$ generatemodels [project_name] [app_name]
+	$ generatemodels [project_name] [app_name] # or python generatemodels [project_name] [app_name]
 
 6. Generate the necessary files using the command below
 
-	$ python generatefiles [project_name] [app_name]
+	$ generatefiles [project_name] [app_name] # or python generatefiles [project_name] [app_name]
 
 7. Start your application through console
 
